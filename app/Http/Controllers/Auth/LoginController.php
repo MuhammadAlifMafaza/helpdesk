@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\models\User;
 
 class LoginController extends Controller
 {
@@ -29,14 +30,17 @@ class LoginController extends Controller
 
             $user = Auth::user();
 
-            // ✅ Cek role user dan redirect sesuai role
-            if ($user->hasRole('admin')) {
-                return redirect()->intended('/admin');
+            // ❌ Tolak jika admin/teknisi login via frontend
+            if ($user->hasAnyRole(['admin', 'teknisi'])) {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Gunakan login admin panel'
+                ]);
             }
 
             return redirect()->intended('/');
         }
-
+        
         return back()
             ->withErrors(['email' => 'Email atau password salah'])
             ->onlyInput('email');

@@ -15,14 +15,7 @@ use Spatie\Permission\Traits\HasRoles;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
     use HasRoles;
-
-    /**
-     * Get the attributes that should be cast.
-     * @return array<string, string>
-     */
 
     protected function casts(): array
     {
@@ -32,9 +25,7 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Get the name attribute.
-     */
+    /* Get the name attribute. */
     public function getFilamentName(): string
     {
         return $this->nama ?? 'User';
@@ -55,6 +46,6 @@ class User extends Authenticatable
 
     public function canAccessPanel(): bool
     {
-        return $this->hasRole('admin');
+        return $this->hasAnyRole(['admin', 'teknisi']);
     }
 }
