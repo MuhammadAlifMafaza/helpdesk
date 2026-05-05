@@ -11,23 +11,50 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['nama', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    use HasRoles;
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+    use HasRoles;
 
     /**
      * Get the attributes that should be cast.
      * @return array<string, string>
      */
+
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Get the name attribute.
+     */
+    public function getFilamentName(): string
+    {
+        return $this->nama ?? 'User';
+    }
+
+    public function getNameAttribute()
+    {
+        return $this->nama;
+    }
+
+    /**
+     * Get the email attribute.
+     */
+    public function getEmailAttribute()
+    {
+        return $this->email;
+    }
+
+    public function canAccessPanel(): bool
+    {
+        return $this->hasRole('admin');
     }
 }
