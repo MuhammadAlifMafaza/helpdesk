@@ -7,6 +7,9 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout']);
 
-Route::get('/', function () {
-    return view('welcome');
-})->middleware('auth');
+Route::middleware(['auth', 'pemohon'])->group(function () {
+
+    Route::get('/', function () {
+        return view('welcome');
+    });
+});

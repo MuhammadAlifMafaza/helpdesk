@@ -26,7 +26,7 @@ class LoginController extends Controller
             $user = Auth::user();
 
             // Menolak login untuk user role admin atau teknisi melalui halaman login biasa
-            if ($user->hasAnyRole(['admin', 'teknisi'])) {
+            if (in_array($user->role, ['admin', 'teknisi'])) {
                 Auth::logout();
 
                 return back()->withErrors([

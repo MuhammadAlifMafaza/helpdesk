@@ -4,17 +4,18 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
-class IsPemohon
+class IsStaff
 {
     public function handle(Request $request, Closure $next)
     {
         if (!$request->user()) {
-            return redirect('/login');
+            return redirect('/admin/login');
         }
 
-        if (!$request->user()->hasRole('pemohon')) {
-            abort(403, 'Unauthorized');
+        if (!$request->user()->hasAnyRole(['admin', 'teknisi'])) {
+            abort(403);
         }
 
         return $next($request);
