@@ -3,12 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['nama', 'email', 'password'])]
@@ -16,6 +13,8 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     use HasRoles;
+
+    protected $guard_name = 'web';
 
     protected function casts(): array
     {
@@ -28,20 +27,20 @@ class User extends Authenticatable
     /* Get the name attribute. */
     public function getFilamentName(): string
     {
-        return $this->nama ?? 'User';
+        return $this->nama ?: $this->email ?: 'User';
     }
 
-    public function getNameAttribute()
+    public function getNameAttribute(): string
     {
-        return $this->nama;
+        return $this->nama ?: $this->email ?: 'User';
     }
 
     /**
      * Get the email attribute.
      */
-    public function getEmailAttribute()
+    public function getEmailAttribute(): string
     {
-        return $this->email;
+        return $this->attributes['email'] ?? '';
     }
 
     public function canAccessPanel(): bool

@@ -1,11 +1,12 @@
-<div>
-    <!-- We must ship. - Taylor Otwell -->
-    <form method="POST" action="/login">
-        @csrf
+<form method="POST" action="/login">
+    @csrf
 
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Password" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="password" name="password" placeholder="Password" required>
 
-        <button type="submit">Login</button>
-    </form>
-</div>
+    <button type="submit">Login</button>
+</form>
+
+@if ($errors->any())
+    <div>{{ $errors->first() }}</div>
+@endif
