@@ -26,11 +26,10 @@ class LoginController extends Controller
             $user = Auth::user();
 
             // Menolak login untuk user role admin atau teknisi melalui halaman login biasa
-            if (in_array($user->role, ['admin', 'teknisi'])) {
+            if ($user->role === 'admin' || $user->role === 'teknisi') {
                 Auth::logout();
-
                 return back()->withErrors([
-                    'email' => 'Gunakan login melalui /admin/login',
+                    'email' => 'Akses ditolak untuk role admin atau teknisi',
                 ]);
             }
 

@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Spatie\Permission\Traits\HasRoles;
+use Filament\Models\Contracts\FilamentUser;
 
 #[Fillable(['nama', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasRoles;
 
@@ -43,7 +44,7 @@ class User extends Authenticatable
         return $this->attributes['email'] ?? '';
     }
 
-    public function canAccessPanel(): bool
+    public function canAccessPanel(\Filament\Panel $panel): bool
     {
         return $this->hasAnyRole(['admin', 'teknisi']);
     }

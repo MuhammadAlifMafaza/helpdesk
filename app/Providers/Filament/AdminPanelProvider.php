@@ -56,9 +56,15 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make(),
             ])
+            ->homeUrl(fn() => match (auth()->user()?->getRoleNames()->first()) {
+                'admin' => '/admin/admin-dashboard',
+                'teknisi' => '/admin/teknisi-dashboard',
+                default => '/admin',
+            })
             ->authMiddleware([
                 Authenticate::class,
                 'auth',
             ]);
+
     }
 }
