@@ -14,7 +14,7 @@ class IsStaff
             return redirect('/admin/login');
         }
 
-        if (!$request->user()->hasAnyRole(['admin', 'teknisi'])) {
+        if (!$request->user()->hasAnyRole(['admin', 'teknisi', 'super_admin'])) {
             abort(403);
         }
 
