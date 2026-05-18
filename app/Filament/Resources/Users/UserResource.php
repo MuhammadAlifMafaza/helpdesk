@@ -9,6 +9,7 @@ use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
 use App\Models\User;
 use BackedEnum;
+use unitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -18,9 +19,15 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    // protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'UserResource';
+
+    protected static UnitEnum|string|null $navigationGroup = 'Manajemen User';
+
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-users';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
@@ -47,4 +54,37 @@ class UserResource extends Resource
             'edit' => EditUser::route('/{record}/edit'),
         ];
     }
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->hasAnyRole([
+            'super_admin',
+            'admin',
+        ]);
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->hasAnyRole([
+            'super_admin',
+            'admin',
+        ]);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()->hasAnyRole([
+            'super_admin',
+            'admin',
+        ]);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->hasAnyRole([
+            'super_admin',
+            'admin',
+        ]);
+    }
+
+
 }

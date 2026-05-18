@@ -10,6 +10,6 @@ class AdminDashboard extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check() && auth()->user()->role === 'admin';
+        return auth()->check() && auth()->user()->hasAnyRole(['admin', 'super_admin']);
     }
 }

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
+// use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class LoginController extends Controller
+class LoginController
 {
     public function showLoginForm()
     {
@@ -26,10 +26,10 @@ class LoginController extends Controller
             $user = Auth::user();
 
             // Menolak login untuk user role admin atau teknisi melalui halaman login biasa
-            if ($user->role === 'admin' || $user->role === 'teknisi') {
+            if ($user->role === 'admin' || $user->role === 'teknisi' || $user->role === 'super_admin') {
                 Auth::logout();
                 return back()->withErrors([
-                    'email' => 'Akses ditolak untuk role admin atau teknisi',
+                    'email' => 'Akses ditolak untuk role admin, teknisi, atau super_admin. Silakan gunakan halaman login admin',
                 ]);
             }
 
