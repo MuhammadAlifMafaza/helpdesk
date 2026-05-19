@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class UserResource extends Resource
 {
@@ -56,7 +57,7 @@ class UserResource extends Resource
     }
     public static function canViewAny(): bool
     {
-        return auth()->user()->hasAnyRole([
+        return Auth::user()->hasAnyRole([
             'super_admin',
             'admin',
         ]);
@@ -64,7 +65,7 @@ class UserResource extends Resource
 
     public static function canCreate(): bool
     {
-        return auth()->user()->hasAnyRole([
+        return Auth::user()->hasAnyRole([
             'super_admin',
             'admin',
         ]);
@@ -72,7 +73,7 @@ class UserResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return auth()->user()->hasAnyRole([
+        return Auth::user()->hasAnyRole([
             'super_admin',
             'admin',
         ]);
@@ -80,11 +81,9 @@ class UserResource extends Resource
 
     public static function canDelete($record): bool
     {
-        return auth()->user()->hasAnyRole([
+        return Auth::user()->hasAnyRole([
             'super_admin',
             'admin',
         ]);
     }
-
-
 }

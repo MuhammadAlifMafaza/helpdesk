@@ -6,16 +6,28 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Filament\Models\Contracts\FilamentUser;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-#[Fillable(['nama', 'email', 'password'])]
+#[Fillable(['nama', 'email', 'password', 'unit_bidang', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
-    use HasRoles;
+    use HasRoles, HasFactory, Notifiable;
 
     protected $guard_name = 'web';
+
+    protected $table = 'users';
+
+    protected $fillable = [
+        'nama',
+        'email',
+        'password',
+        'unit_bidang',
+        'is_active'
+    ];
 
     protected function casts(): array
     {
@@ -46,6 +58,10 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
-        return $this->hasAnyRole(['admin', 'teknisi', 'super_admin']);
+        return $this->hasAnyRole([
+            'admin',
+            'teknisi',
+            'super_admin'
+        ]);
     }
 }

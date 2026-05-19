@@ -9,7 +9,7 @@ use App\Filament\Resources\MasterRuangan\Pages\ViewMasterRuangan;
 use App\Filament\Resources\MasterRuangan\Schemas\MasterRuanganForm;
 use App\Filament\Resources\MasterRuangan\Schemas\MasterRuanganInfolist;
 use App\Filament\Resources\MasterRuangan\Tables\MasterRuanganTable;
-use App\Models\MasterRuangan;
+use App\Models\Modules\Master\Models\MasterRuangan;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -55,4 +55,14 @@ class MasterRuanganResource extends Resource
             'edit' => EditMasterRuangan::route('/{record}/edit'),
         ];
     }
+    public static function canViewAny(): bool
+    {
+        return auth()->check() &&
+            auth()->user()->hasAnyRole([
+                'admin',
+                'teknisi',
+                'super_admin'
+            ]);
+    }
+    
 }
