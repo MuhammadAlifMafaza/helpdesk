@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 #[Hidden(['created_at', 'updated_at'])]
 class TiketPerbaikan extends Model
 {
+
     protected $table = 'tiket_perbaikan';
 
     protected $fillable = [
