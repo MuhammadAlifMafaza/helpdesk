@@ -11,7 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-#[Fillable(['nama', 'email', 'password', 'unit_bidang', 'is_active'])]
+#[Fillable(['name', 'email', 'password', 'role', 'unit_bidang'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -22,11 +22,11 @@ class User extends Authenticatable implements FilamentUser
     protected $table = 'users';
 
     protected $fillable = [
-        'nama',
+        'name',
         'email',
         'password',
-        'unit_bidang',
-        'is_active'
+        'role',
+        'unit_bidang'
     ];
 
     protected function casts(): array
@@ -40,12 +40,7 @@ class User extends Authenticatable implements FilamentUser
     /* Get the name attribute. */
     public function getFilamentName(): string
     {
-        return $this->nama ?: $this->email ?: 'User';
-    }
-
-    public function getNameAttribute(): string
-    {
-        return $this->nama ?: $this->email ?: 'User';
+        return $this->name ?: $this->email ?: 'User';
     }
 
     /**
