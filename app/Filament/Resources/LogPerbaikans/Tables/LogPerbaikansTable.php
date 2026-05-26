@@ -1,33 +1,27 @@
 <?php
 
-namespace App\Filament\Resources\Users\Tables;
+namespace App\Filament\Resources\LogPerbaikans\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Table;
 
-class UsersTable
+class LogPerbaikansTable
 {
     public static function configure(Table $table): Table
     {
         return $table
             ->columns([
                 //
-                // TextColumn::make('index')->label('No')->rowIndex(),
-                // TextColumn::make('name')->label('Nama Pengguna')->searchable()->sortable(),
-                // TextColumn::make('email')->label('Email')->searchable()->sortable(),
-                // // TextColumn::make('password')->label('Password'),
-                // TextColumn::make('role')->label('Role')->searchable()->sortable(),
             ])
             ->filters([
                 //
-
             ])
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
-
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

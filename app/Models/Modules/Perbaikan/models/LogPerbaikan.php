@@ -2,12 +2,10 @@
 
 namespace App\Models\Modules\Perbaikan\Models;
 
+use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
+use App\Models\User;
 
-#[Fillable(['tiket_id', 'user_id', 'kategori_log', 'deskripsi'])]
-#[Hidden(['created_at', 'updated_at'])]
 class LogPerbaikan extends Model
 {
     protected $table = 'log_data_tiket_perbaikan';
@@ -16,7 +14,9 @@ class LogPerbaikan extends Model
         'tiket_id',
         'user_id',
         'kategori_log',
-        'deskripsi',
+        'data_lama',
+        'data_baru',
+        'keterangan',
     ];
 
     public function tiket()
@@ -30,7 +30,7 @@ class LogPerbaikan extends Model
     public function user()
     {
         return $this->belongsTo(
-            \App\Models\User::class,
+            User::class,
             'user_id'
         );
     }

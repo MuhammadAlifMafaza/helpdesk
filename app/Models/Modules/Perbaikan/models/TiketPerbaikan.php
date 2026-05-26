@@ -3,28 +3,69 @@
 namespace App\Models\Modules\Perbaikan\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
+use App\Models\User;
+use App\Models\Modules\Master\Models\MasterRuangan;
+use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
 
-#[Fillable(['user_id', 'ruangan_id', 'judul', 'deskripsi', 'status'])]
-#[Hidden(['created_at', 'updated_at'])]
 class TiketPerbaikan extends Model
 {
-
     protected $table = 'tiket_perbaikan';
 
     protected $fillable = [
+        'kode_tiket',
         'user_id',
         'ruangan_id',
         'judul',
         'deskripsi',
         'status',
+        'prioritas',
     ];
+
+    protected static function booted()
+    {
+        // Generate kode_tiket secara otomatis saat membuat tiket baru
+        static::creating(function ($tiket) {
+
+            $lastId = self::max('id') + 1;
+
+            $tiket->kode_tiket =
+                'TKT-' . str_pad($lastId, 5, '0', STR_PAD_LEFT);
+        });
+
+        // Log saat tiket dibuat
+        static::created(function ($tiket) {
+
+            LogPerbaikan::create([
+                'tiket_id' => $tiket->id,
+                'user_id' => auth()->id(),
+                'kategori_log' => 'Status',
+                'data_lama' => null,
+                'data_baru' => 'Open',
+                'keterangan' => 'Tiket dibuat',
+            ]);
+        });
+
+        // Log perubahan status tiket
+        static::updated(function ($tiket) {
+
+            if ($tiket->wasChanged('status')) {
+
+                LogPerbaikan::create([
+                    'tiket_id' => $tiket->id,
+                    'user_id' => auth()->id(),
+                    'kategori_log' => 'Status',
+                    'data_lama' => $tiket->getOriginal('status'),
+                    'data_baru' => $tiket->status,
+                    'keterangan' => 'Status tiket diperbarui',
+                ]);
+            }
+        });
+    }
 
     public function user()
     {
         return $this->belongsTo(
-            \App\Models\User::class,
+            User::class,
             'user_id'
         );
     }
@@ -32,7 +73,7 @@ class TiketPerbaikan extends Model
     public function ruangan()
     {
         return $this->belongsTo(
-            \App\Models\Modules\Master\Models\MasterRuangan::class,
+            MasterRuangan::class,
             'ruangan_id'
         );
     }

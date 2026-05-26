@@ -10,23 +10,49 @@ use App\Filament\Resources\MasterRuangan\Schemas\MasterRuanganForm;
 use App\Filament\Resources\MasterRuangan\Schemas\MasterRuanganInfolist;
 use App\Filament\Resources\MasterRuangan\Tables\MasterRuanganTable;
 use App\Models\Modules\Master\Models\MasterRuangan;
+
+// import untuk enum data and form
+use Filament\Forms\Form;
+use Filament\Tables\Table;
+
+use Filament\Forms\Components\TextInput;
+
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables;
+use UnitEnum;
 use BackedEnum;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Table;
+
 
 class MasterRuanganResource extends Resource
 {
+    protected static ?string $slug = 'master-ruangan';
     protected static ?string $model = MasterRuangan::class;
-
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
-    protected static ?string $recordTitleAttribute = 'app\Models\Modules\Master\Models\MasterRuangan.php';
+    protected static ?string $navigationLabel = 'Master Ruangan';
+    protected static ?string $recordTitleAttribute = 'Master Ruangan';
+    protected static UnitEnum|string|null $navigationGroup = 'Master Data';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-building-office';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {
-        return MasterRuanganForm::configure($schema);
+        return $schema
+            ->schema([
+
+                TextInput::make('nama_ruangan')
+                    ->required()
+                    ->maxLength(255),
+
+                TextInput::make('nama_gedung')
+                    ->required()
+                    ->maxLength(255),
+            ]);
+
     }
 
     public static function infolist(Schema $schema): Schema
@@ -36,7 +62,30 @@ class MasterRuanganResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return MasterRuanganTable::configure($table);
+        // return MasterRuanganTable::configure($table);
+        return $table
+            ->columns([
+                TextColumn::make('index')
+                    ->label('#')
+                    ->rowIndex()
+                    ->sortable(),
+                TextColumn::make('nama_ruangan')
+                    ->searchable(),
+
+                TextColumn::make('nama_gedung')
+                    ->searchable(),
+
+                TextColumn::make('created_at')
+                    ->dateTime('d M Y'),
+            ])
+            ->actions([
+                EditAction::make(),
+                DeleteAction::make(),
+            ])
+            ->bulkActions([
+                DeleteBulkAction::make(),
+            ]);
+
     }
 
     public static function getRelations(): array
@@ -64,5 +113,5 @@ class MasterRuanganResource extends Resource
                 'super_admin'
             ]);
     }
-    
+
 }
