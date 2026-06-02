@@ -11,7 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-#[Fillable(['name', 'email', 'password', 'role', 'unit_bidang'])]
+#[Fillable(['name', 'email', 'password', 'unit_bidang'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -25,7 +25,6 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
-        'role',
         'unit_bidang'
     ];
 
@@ -54,9 +53,10 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(\Filament\Panel $panel): bool
     {
         return $this->hasAnyRole([
+            'super_admin',
             'admin',
             'teknisi',
-            'super_admin'
+            // 'pemohon',
         ]);
     }
 }

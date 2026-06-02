@@ -2,13 +2,20 @@
 
 namespace App\Models\Modules\Perbaikan\Models;
 
-use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
+// use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 
 class LogPerbaikan extends Model
 {
     protected $table = 'log_data_tiket_perbaikan';
+
+    const STATUS = 'Status';
+    const CHAT = 'Chat';
+    const UPDATE_DATA = 'Update Data';
+    const PRIORITAS = 'Prioritas';
+
+    public $timestamps = false;
 
     protected $fillable = [
         'tiket_id',
@@ -17,6 +24,11 @@ class LogPerbaikan extends Model
         'data_lama',
         'data_baru',
         'keterangan',
+        'created_at',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
     ];
 
     public function tiket()

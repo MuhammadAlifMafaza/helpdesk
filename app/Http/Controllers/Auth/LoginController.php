@@ -26,10 +26,10 @@ class LoginController
             $user = Auth::user();
 
             // Menolak login untuk user role admin atau teknisi melalui halaman login biasa
-            if ($user->role === 'admin' || $user->role === 'teknisi' || $user->role === 'super_admin') {
+            if ($user->hasAnyRole(['super_admin', 'admin', 'teknisi'])) {
                 Auth::logout();
                 return back()->withErrors([
-                    'email' => 'Akses ditolak untuk role admin, teknisi, atau super_admin. Silakan gunakan halaman login admin',
+                    'email' => 'Akses ditolak. Silakan gunakan login admin panel.',
                 ]);
             }
 

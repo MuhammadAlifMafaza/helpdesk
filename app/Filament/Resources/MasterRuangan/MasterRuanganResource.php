@@ -51,6 +51,14 @@ class MasterRuanganResource extends Resource
                 TextInput::make('nama_gedung')
                     ->required()
                     ->maxLength(255),
+                TextInput::make('created_at')
+                    ->disabled()
+                    ->label('Tanggal Dibuat')
+                    ->dateTime('d M Y H:i:s'),
+                TextInput::make('updated_at')
+                    ->disabled()
+                    ->label('Tanggal Diperbarui')
+                    ->dateTime('d M Y H:i:s'),
             ]);
 
     }
@@ -69,6 +77,7 @@ class MasterRuanganResource extends Resource
                     ->label('#')
                     ->rowIndex()
                     ->sortable(),
+
                 TextColumn::make('nama_ruangan')
                     ->searchable(),
 
@@ -76,7 +85,7 @@ class MasterRuanganResource extends Resource
                     ->searchable(),
 
                 TextColumn::make('created_at')
-                    ->dateTime('d M Y'),
+                    ->dateTime('d M Y H:i'),
             ])
             ->actions([
                 EditAction::make(),

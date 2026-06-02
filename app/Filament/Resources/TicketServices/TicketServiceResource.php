@@ -42,19 +42,43 @@ class TicketServiceResource extends Resource
     {
         return $schema
             ->schema([
+                Select::make('user_id')
+                    ->relationship(
+                        'user',
+                        'name'
+                    )
+                    ->label('Nama Pemohon')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
                 Select::make('ruangan_id')
-                    ->relationship('ruangan', 'nama_ruangan')
+                    ->relationship(
+                        'ruangan',
+                        'nama_ruangan'
+                    )
+                    ->label('Nama Ruangan')
                     ->searchable()
                     ->preload()
                     ->required(),
 
-                TextInput::make('judul')
+                TextInput::make('keluhan')
+                    ->label('Keluhan')
                     ->required()
                     ->maxLength(255),
 
+                Select::make('kepemilikan')
+                    ->options([
+                        'Inventaris Kantor' => 'Inventaris Kantor',
+                        'Pribadi' => 'Pribadi',
+                        'Lainnya' => 'Lainnya',
+                    ])
+                    ->label('Kepemilikan')
+                    ->required(),
+
                 Textarea::make('deskripsi')
-                    ->required()
-                    ->rows(5),
+                    ->label('Deskripsi')
+                    ->rows(5)
+                    ->required(),
 
                 Select::make('prioritas')
                     ->options([
@@ -64,6 +88,7 @@ class TicketServiceResource extends Resource
                         'Critical' => 'Critical',
                     ])
                     ->default('Medium')
+                    ->label('Prioritas')
                     ->required(),
 
                 Select::make('status')
@@ -75,6 +100,7 @@ class TicketServiceResource extends Resource
                         'Closed' => 'Closed',
                     ])
                     ->default('Open')
+                    ->label('Status Tiket')
                     ->required(),
             ]);
     }
@@ -90,14 +116,18 @@ class TicketServiceResource extends Resource
             ->columns([
 
                 TextColumn::make('id')
-                    ->label('Id Tiket')
-                    ->searchable(),
+                    ->label('No Tiket'),
 
-                TextColumn::make('Keluhan')
-                    ->searchable(),
+                TextColumn::make('user.name')
+                    ->label('Pemohon'),
 
                 TextColumn::make('ruangan.nama_ruangan')
                     ->label('Ruangan'),
+
+                TextColumn::make('keluhan')
+                    ->label('Keluhan')
+                    ->wrap()
+                    ->searchable(),
 
                 TextColumn::make('status')
                     ->badge(),
@@ -106,9 +136,7 @@ class TicketServiceResource extends Resource
                     ->badge(),
 
                 TextColumn::make('created_at')
-                    ->dateTime('d M Y'),
-                TextColumn::make('updated_at')
-                    ->dateTime('d M Y'),
+                    ->dateTime('d M Y H:i'),
 
             ])
             ->actions([
@@ -164,8 +192,8 @@ class TicketServiceResource extends Resource
     public static function canDelete($record): bool
     {
         return auth()->user()->hasAnyRole([
-            'admin',
             'super_admin',
+            'admin',
         ]);
     }
 }
