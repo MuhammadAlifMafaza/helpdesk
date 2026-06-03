@@ -14,14 +14,23 @@ use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
 use BackedEnum;
 use UnitEnum;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 
-use Filament\Tables\Table;
+// Filament Forms imports
+use Filament\Schemas\Schema;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+
+// Filament Tables(Data) imports
+use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\EditAction;
@@ -30,9 +39,10 @@ class LogPerbaikanResource extends Resource
 {
     protected static ?string $slug = 'log-perbaikan';
     protected static ?string $model = LogPerbaikan::class;
+    protected static ?string $pluralLabel = 'Timeline Perbaikan';
 
+    // protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
     protected static UnitEnum|string|null $navigationGroup = 'Monitoring';
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
     protected static ?string $navigationLabel = 'Timeline Perbaikan';
     protected static ?string $recordTitleAttribute = 'LogPerbaikan';
 
@@ -51,6 +61,10 @@ class LogPerbaikanResource extends Resource
         return $table
             ->columns([
 
+                TextColumn::make('index')
+                    ->label('#')
+                    ->rowIndex(),
+
                 TextColumn::make('tiket.id')
                     ->label('Kode Tiket')
                     ->searchable(),
@@ -58,8 +72,13 @@ class LogPerbaikanResource extends Resource
                 TextColumn::make('user.name')
                     ->label('User'),
 
-                TextColumn::make('kategori_log')
-                    ->badge(),
+                BadgeColumn::make('kategori_log')
+                    ->label('Kategori')
+                    ->colors([
+                        'primary' => 'Update',
+                        'success' => 'Komentar',
+                        'warning' => 'Status',
+                    ]),
 
                 TextColumn::make('data_lama')
                     ->label('Sebelumnya'),

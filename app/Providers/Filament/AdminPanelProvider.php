@@ -19,6 +19,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Navigation\NavigationGroup;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -64,6 +65,20 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 'auth',
+            ])
+            ->navigationGroups([
+                'Dashboard',
+                'Admin Dashboard',
+                NavigationGroup::make('Service Desk')
+                    ->collapsed(false),
+                NavigationGroup::make('Monitoring')
+                    ->collapsed(false)
+                    ->icon('heroicon-o-clock'),
+                NavigationGroup::make('Filament Shield')
+                    ->collapsed(true),
+                NavigationGroup::make('Master Data')
+                    ->collapsed(true),
+
             ]);
 
     }

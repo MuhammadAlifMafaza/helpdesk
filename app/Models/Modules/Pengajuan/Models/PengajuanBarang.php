@@ -43,7 +43,7 @@ class PengajuanBarang extends Model
                 'kategori_log' => 'Status',
                 'data_lama' => null,
                 'data_baru' => 'Open',
-                'keterangan' => 'Pengajuan dibuat',
+                'keterangan' => 'Pengajuan barang dikirim.',
                 'created_at' => now(),
             ]);
 

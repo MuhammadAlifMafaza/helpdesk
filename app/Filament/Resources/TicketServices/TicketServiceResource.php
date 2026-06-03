@@ -115,8 +115,9 @@ class TicketServiceResource extends Resource
         return $table
             ->columns([
 
-                TextColumn::make('id')
-                    ->label('No Tiket'),
+                TextColumn::make('index')
+                    ->label('#')
+                    ->rowIndex(),
 
                 TextColumn::make('user.name')
                     ->label('Pemohon'),
@@ -139,6 +140,7 @@ class TicketServiceResource extends Resource
                     ->dateTime('d M Y H:i'),
 
             ])
+            ->defaultSort('prioritas', 'desc')
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
