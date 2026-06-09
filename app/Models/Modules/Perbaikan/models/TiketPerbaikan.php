@@ -36,6 +36,13 @@ class TiketPerbaikan extends Model
             'ruangan_id'
         );
     }
+    public function getKodeTiketAttribute(): string
+    {
+        return sprintf(
+            'TKT-%06d',
+            $this->id
+        );
+    }
 
     public function logs()
     {
@@ -51,7 +58,7 @@ class TiketPerbaikan extends Model
 
             LogPerbaikan::create([
                 'tiket_id' => $tiket->id,
-                'user_id' => auth()->id() ?? $this->user_id,
+                'user_id' => auth()->id() ?? $tiket->user_id,
                 'kategori_log' => 'Status',
                 'data_lama' => null,
                 'data_baru' => 'Open',
@@ -69,7 +76,7 @@ class TiketPerbaikan extends Model
     ) {
         return LogPerbaikan::create([
             'tiket_id' => $this->id,
-            'user_id' => auth()->id() ?? 1,
+            'user_id' => auth()->id() ?? $this->user_id,
             'kategori_log' => $kategori,
             'data_lama' => $lama,
             'data_baru' => $baru,
@@ -77,6 +84,7 @@ class TiketPerbaikan extends Model
             'created_at' => now(),
         ]);
     }
+
     public function updateStatus(
         string $statusBaru,
         ?string $catatan = null
@@ -92,6 +100,36 @@ class TiketPerbaikan extends Model
             $statusLama,
             $statusBaru,
             $catatan
+        );
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->status === 'Close';
+    }
+
+    public function reopen(?string $catatan = null)
+    {
+        return $this->updateStatus(
+            'In Progress',
+            $catatan ?? 'Tiket dibuka kembali'
+        );
+    }
+
+    public function closeAsComplete(?string $catatan)
+    {
+        return $this->updateStatus(
+            'Close',
+            '[SELESAI]' . $catatan
+        );
+    }
+
+    public function closeAsRejected(
+        string $catatan
+    ) {
+        return $this->updateStatus(
+            'Close',
+            '[DITOLAK] ' . $catatan
         );
     }
 
@@ -145,7 +183,7 @@ class TiketPerbaikan extends Model
     {
         return $this->logs()
             ->with('user')
-            ->orderBy('created_at');
+            ->lastest('created_at');
     }
 
 }
