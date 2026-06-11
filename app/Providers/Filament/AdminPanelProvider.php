@@ -27,6 +27,10 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->default()
+            ->brandName('Helpdesk System')
+            ->brandLogo('')
+            ->favicon('')
+            ->tittle('Helpdesk System')
             ->id('admin')
             ->path('admin')
             ->login()
