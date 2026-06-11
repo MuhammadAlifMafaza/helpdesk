@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\LogPengajuanBarangs\Schemas;
+namespace App\Filament\Resources\LogPengajuanBarang\Schemas;
 
 use Filament\Schemas\Schema;
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\LogPengajuanBarangs\Pages;
+namespace App\Filament\Resources\LogPengajuanBarang\Pages;
 
-use App\Filament\Resources\LogPengajuanBarangs\LogPengajuanBarangResource;
+use App\Filament\Resources\LogPengajuanBarang\LogPengajuanBarangResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateLogPengajuanBarang extends CreateRecord

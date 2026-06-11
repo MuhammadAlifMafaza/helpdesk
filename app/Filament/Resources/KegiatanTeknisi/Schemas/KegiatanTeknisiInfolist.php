@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Resources\LogPengajuanBarangs\Schemas;
+namespace App\Filament\Resources\KegiatanTeknisi\Schemas;
 
 use Filament\Schemas\Schema;
 
-class LogPengajuanBarangForm
+class KegiatanTeknisiInfolist
 {
     public static function configure(Schema $schema): Schema
     {

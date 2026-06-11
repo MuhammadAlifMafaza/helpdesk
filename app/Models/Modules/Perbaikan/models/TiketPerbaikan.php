@@ -10,7 +10,13 @@ use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
 class TiketPerbaikan extends Model
 {
     protected $table = 'tiket_perbaikan';
-
+    protected $appends = ['kode_tiket'];
+    protected array $allowedUpdateFields = [
+        'keluhan',
+        'deskripsi',
+        'kepemilikan',
+        'ruangan_id',
+    ];
     protected $fillable = [
         'user_id',
         'ruangan_id',
@@ -18,7 +24,6 @@ class TiketPerbaikan extends Model
         'kepemilikan',
         'deskripsi',
         'status',
-        'prioritas',
     ];
 
     public function user()
@@ -39,19 +44,11 @@ class TiketPerbaikan extends Model
     public function getKodeTiketAttribute(): string
     {
         return sprintf(
-            'TKT-%06d',
+            'TKT-%s-%06d',
+            $this->created_at->format('Ym'),
             $this->id
         );
     }
-
-    public function logs()
-    {
-        return $this->hasMany(
-            LogPerbaikan::class,
-            'tiket_id'
-        );
-    }
-
     protected static function booted()
     {
         static::created(function ($tiket) {
@@ -66,6 +63,18 @@ class TiketPerbaikan extends Model
             ]);
 
         });
+    }
+
+    /**
+     * Ringkasan Data LogsPerbaikan
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<LogPerbaikan, TiketPerbaikan>
+     */
+    public function logs()
+    {
+        return $this->hasMany(
+            LogPerbaikan::class,
+            'tiket_id'
+        );
     }
 
     public function tambahLog(
@@ -108,49 +117,36 @@ class TiketPerbaikan extends Model
         return $this->status === 'Close';
     }
 
-    public function reopen(?string $catatan = null)
-    {
+    public function reopen(
+        ?string $catatan = null
+    ) {
         return $this->updateStatus(
             'In Progress',
-            $catatan ?? 'Tiket dibuka kembali'
+            '[REOPEN] ' .
+            ($catatan ?? 'Tiket dibuka kembali')
         );
     }
 
-    public function closeAsComplete(?string $catatan)
-    {
+    public function closeAsCompleted(
+        ?string $catatan = null
+    ) {
         return $this->updateStatus(
             'Close',
-            '[SELESAI]' . $catatan
+            '[SELESAI] ' . ($catatan ?? '')
         );
     }
 
     public function closeAsRejected(
-        string $catatan
+        ?string $catatan = null
     ) {
         return $this->updateStatus(
             'Close',
-            '[DITOLAK] ' . $catatan
+            '[DITOLAK] ' . ($catatan ?? '')
         );
     }
 
-    public function updatePrioritas(
-        string $prioritasBaru,
-        ?string $catatan = null
-    ) {
-        $prioritasLama = $this->prioritas;
-
-        $this->update([
-            'prioritas' => $prioritasBaru
-        ]);
-
-        $this->tambahLog(
-            'Update Data',
-            $prioritasLama,
-            $prioritasBaru,
-            'Prioritas diperbarui'
-        );
-    }
-
+    /* Chats Logs Data */
+    // Kirim Pesan
     public function sendMessage(
         string $pesan
     ) {
@@ -161,14 +157,40 @@ class TiketPerbaikan extends Model
             $pesan
         );
     }
+
+    public function chatLogs()
+    {
+        return $this->logs()
+            ->where(
+                'kategori_log',
+                'Chat'
+            );
+    }
+
     public function updateField(
         string $field,
         mixed $valueBaru
     ) {
+        if (
+            !in_array(
+                $field,
+                [
+                    'keluhan',
+                    'deskripsi',
+                    'kepemilikan',
+                    'ruangan_id',
+                ]
+            )
+        ) {
+            throw new \Exception(
+                'Field tidak boleh diubah.'
+            );
+        }
+
         $valueLama = $this->$field;
 
         $this->update([
-            $field => $valueBaru
+            $field => $valueBaru,
         ]);
 
         $this->tambahLog(
@@ -179,11 +201,61 @@ class TiketPerbaikan extends Model
         );
     }
 
+    //
     public function timeline()
     {
         return $this->logs()
             ->with('user')
-            ->lastest('created_at');
+            ->orderBy('created_at');
     }
 
+
+    /* HELPER Filament Button */
+    public function isOpen(): bool
+    {
+        return $this->status === 'Open';
+    }
+
+    public function isInProgress(): bool
+    {
+        return $this->status === 'In Progress';
+    }
+
+    public function isClosed(): bool
+    {
+        return $this->status === 'Close';
+    }
+
+    /* HELPER Outcome */
+    public function getCloseOutcomeAttribute()
+    {
+        $log = $this->logs()
+            ->where('kategori_log', 'Status')
+            ->latest()
+            ->first();
+
+        if (!$log) {
+            return null;
+        }
+
+        if (
+            str_contains(
+                $log->keterangan,
+                '[SELESAI]'
+            )
+        ) {
+            return 'Completed';
+        }
+
+        if (
+            str_contains(
+                $log->keterangan,
+                '[DITOLAK]'
+            )
+        ) {
+            return 'Rejected';
+        }
+
+        return null;
+    }
 }

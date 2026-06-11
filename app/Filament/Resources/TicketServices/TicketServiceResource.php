@@ -6,37 +6,46 @@ use App\Filament\Resources\TicketServices\Pages\CreateTicketService;
 use App\Filament\Resources\TicketServices\Pages\EditTicketService;
 use App\Filament\Resources\TicketServices\Pages\ListTicketServices;
 use App\Filament\Resources\TicketServices\Pages\ViewTicketService;
-use App\Filament\Resources\TicketServices\Schemas\TicketServiceForm;
-use App\Filament\Resources\TicketServices\Schemas\TicketServiceInfolist;
-use App\Filament\Resources\TicketServices\Tables\TicketServicesTable;
 use App\Models\Modules\Perbaikan\models\TiketPerbaikan as TicketService;
-
-use UnitEnum;
 use BackedEnum;
-use Filament\Tables;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ViewAction;
+use Filament\Actions\Action;
+/* FILAMENT IMPORT */
+// Filament Actions imports
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
+// Filament Forms imports
 use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
+// Filament Resources imports
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+// Filament Details imports
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class TicketServiceResource extends Resource
 {
     protected static ?string $model = TicketService::class;
 
-    // url slug untuk resource, Navigation label, dan icon
+    // url slug
     protected static ?string $slug = 'ticket-services';
-    protected static ?string $navigationLabel = 'Tiket Perbaikan';
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';
-    protected static UnitEnum|string|null $navigationGroup = 'Service Desk';
+
+    // navigation
+    protected static UnitEnum|string|null $navigationGroup = 'Service Desk'; // Navigation Group
+
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver'; // Navigation Icon
+
+    protected static ?string $navigationLabel = 'Tiket Perbaikan'; // Navigation Label
+
     protected static ?int $navigationSort = 1;
-    protected static ?string $recordTitleAttribute = 'TiketPerbaikan';
+
+    protected static ?string $recordTitleAttribute = 'keluhan';
 
     public static function form(Schema $schema): Schema
     {
@@ -79,35 +88,80 @@ class TicketServiceResource extends Resource
                     ->label('Deskripsi')
                     ->rows(5)
                     ->required(),
-
-                Select::make('prioritas')
-                    ->options([
-                        'Low' => 'Low',
-                        'Medium' => 'Medium',
-                        'High' => 'High',
-                        'Critical' => 'Critical',
-                    ])
-                    ->default('Medium')
-                    ->label('Prioritas')
-                    ->required(),
-
                 Select::make('status')
                     ->options([
                         'Open' => 'Open',
                         'In Progress' => 'In Progress',
-                        'Pending' => 'Pending',
-                        'Completed' => 'Completed',
-                        'Closed' => 'Closed',
+                        'Close' => 'Closed',
                     ])
                     ->default('Open')
                     ->label('Status Tiket')
-                    ->required(),
+                    ->required()
+                    ->disabled(),
             ]);
     }
 
     public static function infolist(Schema $schema): Schema
     {
-        return TicketServiceInfolist::configure($schema);
+        return $schema
+            ->columns(1)
+            ->schema([
+
+                Section::make('Informasi Tiket')
+                    ->columns(2)
+                    ->columnSpanFull()
+                    ->schema([
+
+                        TextEntry::make('kode_tiket')
+                            ->label('Nomor Tiket'),
+
+                        TextEntry::make('user.name')
+                            ->label('Nama Pemohon'),
+
+                        TextEntry::make('ruangan.nama_ruangan')
+                            ->label('Ruangan'),
+
+                        TextEntry::make('keluhan'),
+
+                        TextEntry::make('kepemilikan'),
+
+                        TextEntry::make('status')
+                            ->badge(),
+
+                        TextEntry::make('created_at')
+                            ->dateTime(),
+
+                        TextEntry::make('updated_at')
+                            ->dateTime(),
+
+                    ]),
+                Section::make('Deskripsi Kerusakan')
+                    ->columnSpanFull()
+                    ->schema([
+
+                        TextEntry::make('deskripsi')
+                            ->columnSpanFull(),
+
+                    ]),
+
+                Section::make('Timeline Aktivitas')
+                    ->columnSpanFull()
+                    ->schema([
+                        ViewEntry::make('id')
+                            ->view('filament.pages.tiket.timeline'),
+                    ]),
+
+                Section::make('Diskusi')
+                    ->columnSpanFull()
+                    ->schema([
+
+                        ViewEntry::make('id')
+                            ->view(
+                                'filament.pages.tiket.chat'
+                            ),
+
+                    ]),
+            ]);
     }
 
     public static function table(Table $table): Table
@@ -131,20 +185,103 @@ class TicketServiceResource extends Resource
                     ->searchable(),
 
                 TextColumn::make('status')
-                    ->badge(),
-
-                TextColumn::make('prioritas')
-                    ->badge(),
-
-                TextColumn::make('created_at')
-                    ->dateTime('d M Y H:i'),
+                    ->badge()
+                    ->color(fn(string $state) => match ($state) {
+                        'Open' => 'danger',
+                        'In Progress' => 'warning',
+                        'Close' => 'success',
+                        default => 'gray',
+                    }),
+                TextColumn::make('close_outcome')
+                    ->badge()
+                    ->color(fn(?string $state): string => match ($state) {
+                        'Completed' => 'success',
+                        'Rejected' => 'danger',
+                        default => 'gray',
+                    }),
+                TextColumn::make('created_at')->dateTime('d M Y'),
 
             ])
-            ->defaultSort('prioritas', 'desc')
             ->actions([
+                Action::make('ambil_tiket')
+                    ->label('Ambil Tiket')
+                    ->icon('heroicon-o-wrench-screwdriver')
+                    ->visible(
+                        fn($record) => $record->status === 'Open'
+                    )
+                    ->action(function ($record) {
+
+                        $record->updateStatus(
+                            'In Progress',
+                            'Tiket mulai dikerjakan {oleh ' . auth()->user()->name . '}'
+                        );
+
+                    }),
+                Action::make('selesai')
+                    ->label('Selesai')
+                    ->icon('heroicon-o-check-circle')
+                    ->visible(
+                        fn($record) => $record->status === 'In Progress'
+                    )
+                    ->requiresConfirmation()
+                    ->form([
+                        Textarea::make('catatan')
+                            ->required(),
+                    ])
+                    ->action(function ($record, array $data) {
+
+                        $record->closeAsCompleted(
+                            $data['catatan']
+                        );
+
+                    }),
+                Action::make('tolak')
+                    ->label('Tolak')
+                    ->color('danger')
+                    ->icon('heroicon-o-x-circle')
+                    ->visible(
+                        fn($record) => $record->status === 'In Progress'
+                    )
+                    ->requiresConfirmation()
+                    ->form([
+                        Textarea::make('catatan')
+                            ->required(),
+                    ])
+                    ->action(function ($record, array $data) {
+
+                        $record->closeAsRejected(
+                            $data['catatan']
+                        );
+
+                    }),
                 ViewAction::make(),
-                EditAction::make(),
-            ]);
+                EditAction::make()
+                    ->visible(function ($record) {
+
+                        if (
+                            auth()->user()->hasRole('admin')
+                            || auth()->user()->hasRole('super_admin')
+                        ) {
+                            return true;
+                        }
+
+                        return !$record->isLocked();
+                    }),
+                DeleteAction::make()
+                    ->visible(function ($record) {
+
+                        if (
+                            auth()->user()->hasRole('admin')
+                            || auth()->user()->hasRole('super_admin')
+                        ) {
+                            return true;
+                        }
+
+                        return !$record->isLocked();
+                    }),
+            ])
+            ->actionsColumnLabel('Action Button');
+
     }
 
     public static function getRelations(): array

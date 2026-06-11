@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Filament\Resources\LogPengajuanBarangs\Pages;
+namespace App\Filament\Resources\LogPengajuanBarang\Pages;
 
-use App\Filament\Resources\LogPengajuanBarangs\LogPengajuanBarangResource;
+use App\Filament\Resources\LogPengajuanBarang\LogPengajuanBarangResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
-class ListLogPengajuanBarangs extends ListRecords
+class ListLogPengajuanBarang extends ListRecords
 {
     protected static string $resource = LogPengajuanBarangResource::class;
 
