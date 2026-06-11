@@ -8,9 +8,10 @@ use App\Filament\Resources\TicketServices\Pages\ListTicketServices;
 use App\Filament\Resources\TicketServices\Pages\ViewTicketService;
 use App\Models\Modules\Perbaikan\models\TiketPerbaikan as TicketService;
 use BackedEnum;
-use Filament\Actions\Action;
+
 /* FILAMENT IMPORT */
 // Filament Actions imports
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -124,9 +125,22 @@ class TicketServiceResource extends Resource
                         TextEntry::make('keluhan'),
 
                         TextEntry::make('kepemilikan'),
-
                         TextEntry::make('status')
-                            ->badge(),
+                            ->badge()
+                            ->color(fn(string $state) => match ($state) {
+                                'Open' => 'danger',
+                                'In Progress' => 'warning',
+                                'Close' => 'success',
+                                default => 'gray',
+                            }),
+                        TextEntry::make('close_outcome')
+                            ->label('Hasil Close')
+                            ->badge()
+                            ->color(fn(?string $state): string => match ($state) {
+                                'Completed' => 'success',
+                                'Rejected' => 'danger',
+                                default => 'gray',
+                            }),
 
                         TextEntry::make('created_at')
                             ->dateTime(),
@@ -159,6 +173,7 @@ class TicketServiceResource extends Resource
                             ->view(
                                 'filament.pages.tiket.chat'
                             ),
+
 
                     ]),
             ]);
@@ -213,7 +228,8 @@ class TicketServiceResource extends Resource
 
                         $record->updateStatus(
                             'In Progress',
-                            'Tiket mulai dikerjakan {oleh ' . auth()->user()->name . '}'
+                            'Tiket mulai dikerjakan oleh '
+                            . auth()->user()->name
                         );
 
                     }),
@@ -250,6 +266,26 @@ class TicketServiceResource extends Resource
                     ->action(function ($record, array $data) {
 
                         $record->closeAsRejected(
+                            $data['catatan']
+                        );
+
+                    }),
+                Action::make('reopen')
+                    ->label('Reopen Ticket')
+                    ->color('primary')
+                    ->icon('heroicon-o-arrow-path')
+                    ->visible(
+                        fn($record) => $record->isClosed()
+                    )
+                    ->requiresConfirmation()
+                    ->form([
+                        Textarea::make('catatan')
+                            ->label('Alasan Reopen')
+                            ->required(),
+                    ])
+                    ->action(function ($record, array $data) {
+
+                        $record->reopen(
                             $data['catatan']
                         );
 
