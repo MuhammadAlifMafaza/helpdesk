@@ -31,12 +31,14 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName('Helpdesk System')
-            // ->brandLogo('')
-            // ->favicon('')
+            ->brandLogo(asset('branding/logo-tag.svg'))
+            ->brandLogoHeight('5rem')
+            ->favicon(asset('branding/logo.svg'))
             ->colors([
                 'primary' => Color::Blue,
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->collapsedSidebarWidth('5rem')
             ->maxContentWidth('full')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

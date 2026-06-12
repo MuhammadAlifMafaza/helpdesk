@@ -10,6 +10,7 @@ use App\Models\Modules\Perbaikan\models\TiketPerbaikan as TicketService;
 use BackedEnum;
 
 /* FILAMENT IMPORT */
+use Filament\Support\Colors\Color;
 // Filament Actions imports
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -237,6 +238,7 @@ class TicketServiceResource extends Resource
                 Action::make('selesai')
                     ->label('Selesai')
                     ->icon('heroicon-o-check-circle')
+                    ->color('success')
                     ->visible(
                         fn($record) => $record->status === 'In Progress'
                     )
