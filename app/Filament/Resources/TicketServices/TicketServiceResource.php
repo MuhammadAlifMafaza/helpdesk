@@ -217,6 +217,7 @@ class TicketServiceResource extends Resource
                 TextColumn::make('created_at')->dateTime('d M Y'),
 
             ])
+
             ->actions([
                 Action::make('ambil_tiket')
                     ->label('Ambil Tiket')

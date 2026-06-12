@@ -33,6 +33,15 @@ class PengajuanBarang extends Model
         );
     }
 
+    public function getKodeTiketAttribute(): string
+    {
+        return sprintf(
+            'TKT-%s-%06d',
+            $this->created_at->format('Ym'),
+            $this->id
+        );
+    }
+
     protected static function booted()
     {
         static::created(function ($pengajuan) {

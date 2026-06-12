@@ -45,7 +45,7 @@ class TiketPerbaikan extends Model
     {
         return sprintf(
             'TKT-%s-%06d',
-            $this->created_at->format('Ym'),
+            $this->created_at->format('Ymd'),
             $this->id
         );
     }

@@ -9,12 +9,16 @@ use App\Filament\Resources\KegiatanTeknisi\Pages\ViewKegiatanTeknisi;
 use App\Filament\Resources\KegiatanTeknisi\Schemas\KegiatanTeknisiForm;
 use App\Filament\Resources\KegiatanTeknisi\Schemas\KegiatanTeknisiInfolist;
 use App\Filament\Resources\KegiatanTeknisi\Tables\KegiatanTeknisiTable;
-use app\Models\Modules\Log\Models\LogHarian as KegiatanTeknisi;
+use App\Models\Modules\Log\Models\LogHarian as KegiatanTeknisi;
+
+use UnitEnum;
 use BackedEnum;
+
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 
 class KegiatanTeknisiResource extends Resource
 {
@@ -36,7 +40,20 @@ class KegiatanTeknisiResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return KegiatanTeknisiTable::configure($table);
+        return $table
+            ->columns([
+                TextColumn::make('id')
+                    ->label('#'),
+
+                TextColumn::make('tanggal')
+                    ->label('Tanggal Kegiatan')
+                    ->date('d/m/Y'),
+
+                TextColumn::make('deskripsi_kegiatan')
+                    ->label('Deskripsi Kegiatan'),
+
+
+            ]);
     }
 
     public static function getRelations(): array
