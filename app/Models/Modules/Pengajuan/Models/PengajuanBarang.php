@@ -25,6 +25,10 @@ class PengajuanBarang extends Model
         );
     }
 
+    /**
+     * Ringkasan Data LogsPerbaikan
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany<LogPengajuan, PengajuanBarang>
+     */
     public function logs()
     {
         return $this->hasMany(
@@ -36,24 +40,22 @@ class PengajuanBarang extends Model
     public function getKodeTiketAttribute(): string
     {
         return sprintf(
-            'TKT-%s-%06d',
-            $this->created_at->format('Ym'),
+            'PJB-%s-%06d',
+            $this->created_at->format('Ymd'),
             $this->id
         );
     }
-
     protected static function booted()
     {
-        static::created(function ($pengajuan) {
+        static::created(function ($tiket) {
 
             LogPengajuan::create([
-                'pengajuan_id' => $pengajuan->id,
-                'user_id' => auth()->id() ?? $pengajuan->user_id,
+                'pengajuan_id' => $tiket->id,
+                'user_id' => auth()->id() ?? $tiket->user_id,
                 'kategori_log' => 'Status',
                 'data_lama' => null,
                 'data_baru' => 'Open',
-                'keterangan' => 'Pengajuan barang dikirim.',
-                'created_at' => now(),
+                'keterangan' => 'Tiket dibuat',
             ]);
 
         });
@@ -94,6 +96,41 @@ class PengajuanBarang extends Model
         );
     }
 
+    public function isLocked(): bool
+    {
+        return $this->status === 'Close';
+    }
+
+    public function reopen(
+        ?string $catatan = null
+    ) {
+        return $this->updateStatus(
+            'In Progress',
+            '[REOPEN] ' .
+            ($catatan ?? 'Tiket dibuka kembali')
+        );
+    }
+
+    public function closeAsCompleted(
+        ?string $catatan = null
+    ) {
+        return $this->updateStatus(
+            'Close',
+            '[SELESAI] ' . ($catatan ?? '')
+        );
+    }
+
+    public function closeAsRejected(
+        ?string $catatan = null
+    ) {
+        return $this->updateStatus(
+            'Close',
+            '[DITOLAK] ' . ($catatan ?? '')
+        );
+    }
+
+    /* Chats Logs Data */
+    // Kirim Pesan
     public function sendMessage(
         string $pesan
     ) {
@@ -105,14 +142,39 @@ class PengajuanBarang extends Model
         );
     }
 
+    public function chatLogs()
+    {
+        return $this->logs()
+            ->where(
+                'kategori_log',
+                'Chat'
+            );
+    }
+
     public function updateField(
         string $field,
         mixed $valueBaru
     ) {
+        if (
+            !in_array(
+                $field,
+                [
+                    'keluhan',
+                    'deskripsi',
+                    'kepemilikan',
+                    'ruangan_id',
+                ]
+            )
+        ) {
+            throw new \Exception(
+                'Field tidak boleh diubah.'
+            );
+        }
+
         $valueLama = $this->$field;
 
         $this->update([
-            $field => $valueBaru
+            $field => $valueBaru,
         ]);
 
         $this->tambahLog(
@@ -123,10 +185,61 @@ class PengajuanBarang extends Model
         );
     }
 
+    //
     public function timeline()
     {
         return $this->logs()
             ->with('user')
             ->orderBy('created_at');
+    }
+
+
+    /* HELPER Filament Button */
+    public function isOpen(): bool
+    {
+        return $this->status === 'Open';
+    }
+
+    public function isInProgress(): bool
+    {
+        return $this->status === 'In Progress';
+    }
+
+    public function isClosed(): bool
+    {
+        return $this->status === 'Close';
+    }
+
+    /* HELPER Outcome */
+    public function getCloseOutcomeAttribute()
+    {
+        $log = $this->logs()
+            ->where('kategori_log', 'Status')
+            ->latest()
+            ->first();
+
+        if (!$log) {
+            return null;
+        }
+
+        if (
+            str_contains(
+                $log->keterangan,
+                '[SELESAI]'
+            )
+        ) {
+            return 'Completed';
+        }
+
+        if (
+            str_contains(
+                $log->keterangan,
+                '[DITOLAK]'
+            )
+        ) {
+            return 'Rejected';
+        }
+
+        return null;
     }
 }

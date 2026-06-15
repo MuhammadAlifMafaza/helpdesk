@@ -101,8 +101,8 @@
       d="M 0 5 C 0 2, 2 0, 5 0 L 20 0 C 23 0, 25 2, 25 5 L 25 38 L 55 38 L 55 5 C 55 2, 57 0, 60 0 L 75 0 C 78 0, 80 2, 80 5 L 80 95 C 80 98, 78 100, 75 100 L 60 100 C 57 100, 55 98, 55 95 L 55 62 L 25 62 L 25 95 C 25 98, 23 100, 20 100 L 5 100 C 2 100, 0 98, 0 95 Z" />
   </g> -->
 
-  <text x="155" y="68" class="brand-text">HELPDESK</text>
-  <rect x="535" y="23" width="3" height="52" class="separator-line" rx="1.5" />
-  <text x="560" y="45" class="tagline-text">SISTEM MANAJEMEN</text>
-  <text x="560" y="68" class="tagline-text">PELAYANAN INTERNAL</text>
+  <text x="155" y="58" class="brand-text">HELPDESK</text>
+  <rect x="155" y="64" width="430" height="6" class="separator-line" rx="1.5" />
+  <text x="155" y="88" class="tagline-text">SISTEM MANAJEMEN PELAYANAN INTERNAL</text>
+  <!-- <text x="355" y="88" class="tagline-text">PELAYANAN INTERNAL</text> -->
 </svg>
