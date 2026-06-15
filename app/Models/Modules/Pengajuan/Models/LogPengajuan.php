@@ -9,6 +9,10 @@ class LogPengajuan extends Model
 {
     protected $table = 'log_data_pengajuan_barang';
 
+    const STATUS = 'Status';
+    const CHAT = 'Chat';
+    const UPDATE_DATA = 'Update Data';
+    const PRIORITAS = 'Prioritas';
     public $timestamps = false;
 
     protected $fillable = [

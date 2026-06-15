@@ -7,7 +7,9 @@ use App\Filament\Resources\TicketServices\Pages\EditTicketService;
 use App\Filament\Resources\TicketServices\Pages\ListTicketServices;
 use App\Filament\Resources\TicketServices\Pages\ViewTicketService;
 use App\Models\Modules\Perbaikan\models\TiketPerbaikan as TicketService;
+
 use BackedEnum;
+use UnitEnum;
 
 /* FILAMENT IMPORT */
 use Filament\Support\Colors\Color;
@@ -29,7 +31,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use UnitEnum;
 
 class TicketServiceResource extends Resource
 {
@@ -40,10 +41,9 @@ class TicketServiceResource extends Resource
 
     // navigation
     protected static UnitEnum|string|null $navigationGroup = 'Service Desk'; // Navigation Group
-
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver'; // Navigation Icon
-
     protected static ?string $navigationLabel = 'Tiket Perbaikan'; // Navigation Label
+    protected static ?string $pluralLabel =  'Tiket Perbaikan';
 
     protected static ?int $navigationSort = 1;
 
@@ -208,13 +208,16 @@ class TicketServiceResource extends Resource
                         'Close' => 'success',
                         default => 'gray',
                     }),
-                TextColumn::make('close_outcome')
+
+                TextColumn::make('status_outcome')
                     ->badge()
                     ->color(fn(?string $state): string => match ($state) {
                         'Completed' => 'success',
+                        'Reopen' => 'primary',
                         'Rejected' => 'danger',
                         default => 'gray',
                     }),
+
                 TextColumn::make('created_at')->dateTime('d M Y'),
 
             ])

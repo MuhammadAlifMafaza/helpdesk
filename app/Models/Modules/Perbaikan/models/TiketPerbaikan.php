@@ -227,7 +227,7 @@ class TiketPerbaikan extends Model
     }
 
     /* HELPER Outcome */
-    public function getCloseOutcomeAttribute()
+    public function getStatusOutcomeAttribute()
     {
         $log = $this->logs()
             ->where('kategori_log', 'Status')
@@ -245,6 +245,15 @@ class TiketPerbaikan extends Model
             )
         ) {
             return 'Completed';
+        }
+
+        if (
+            str_contains(
+                $log->keterangan,
+                '[REOPEN]'
+            )
+        ){
+            return 'Reopen';
         }
 
         if (

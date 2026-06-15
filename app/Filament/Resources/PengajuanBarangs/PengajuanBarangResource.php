@@ -17,25 +17,25 @@ use UnitEnum;
 use Filament\Support\Icons\Heroicon;
 use Filament\Resources\Resource;
 
-// Filament Forms imports
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-
-// Filament Tables imports
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
-use Filament\Tables\Filters\Filter;
+/* FILAMENT IMPORT */
+use Filament\Support\Colors\Color;
+// Filament Actions imports
 use Filament\Actions\Action;
-use Filament\Forms\Components\DatePicker;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Tables\Actions\BulkAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ViewAction;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
+// Filament Forms imports
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
+// Filament Resources imports
+use Filament\Infolists\Components\ViewEntry;
+use Filament\Schemas\Components\Section;
+// Filament Details imports
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class PengajuanBarangResource extends Resource
 {
@@ -43,10 +43,10 @@ class PengajuanBarangResource extends Resource
 
 
     protected static ?string $slug = 'pengajuan-barang';
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-archive-box';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cube';
     protected static UnitEnum|string|null $navigationGroup = 'Service Desk';
+    protected static ?string $pluralLabel = 'Pengajuan Barang';
     protected static ?string $navigationLabel = 'Pengajuan Barang';
-
     protected static ?string $recordTitleAttribute = 'PengajuanBarang';
 
     public static function form(Schema $schema): Schema
@@ -111,22 +111,128 @@ class PengajuanBarangResource extends Resource
                 TextColumn::make('jumlah')
                     ->sortable(),
 
-                BadgeColumn::make('status')
-                    ->colors([
-                        'warning' => 'Open',
-                        'info' => 'In Progress',
-                        'success' => 'Close',
-                        // 'danger' => 'Close',
-                    ]),
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn(string $state) => match ($state) {
+                        'Open' => 'danger',
+                        'In Progress' => 'warning',
+                        'Close' => 'success',
+                        default => 'gray',
+                    }),
+
+                TextColumn::make('status_outcome')
+                    ->badge()
+                    ->color(fn(?string $state): string => match ($state) {
+                        'Completed' => 'success',
+                        'Reopen' => 'primary',
+                        'Rejected' => 'danger',
+                        default => 'gray',
+                    }),
 
                 TextColumn::make('created_at')
                     ->dateTime('d/m/Y H:i'),
             ])
             ->actions([
+                Action::make('ambil_tiket')
+                    ->label('Ambil Tiket')
+                    ->icon('heroicon-o-wrench-screwdriver')
+                    ->visible(
+                        fn($record) => $record->status === 'Open'
+                    )
+                    ->action(function ($record) {
+
+                        $record->updateStatus(
+                            'In Progress',
+                            'Pengajuan Barang telah ditangani Oleh '
+                            . auth()->user()->name
+                        );
+
+                    }),
+                Action::make('selesai')
+                    ->label('Selesai')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(
+                        fn($record) => $record->status === 'In Progress'
+                    )
+                    ->requiresConfirmation()
+                    ->form([
+                        Textarea::make('catatan')
+                            ->required(),
+                    ])
+                    ->action(function ($record, array $data) {
+
+                        $record->closeAsCompleted(
+                            $data['catatan']
+                        );
+
+                    }),
+                Action::make('tolak')
+                    ->label('Tolak')
+                    ->color('danger')
+                    ->icon('heroicon-o-x-circle')
+                    ->visible(
+                        fn($record) => $record->status === 'In Progress'
+                    )
+                    ->requiresConfirmation()
+                    ->form([
+                        Textarea::make('catatan')
+                            ->required(),
+                    ])
+                    ->action(function ($record, array $data) {
+
+                        $record->closeAsRejected(
+                            $data['catatan']
+                        );
+
+                    }),
+                Action::make('reopen')
+                    ->label('Reopen Ticket')
+                    ->color('primary')
+                    ->icon('heroicon-o-arrow-path')
+                    ->visible(
+                        fn($record) => $record->isClosed()
+                    )
+                    ->requiresConfirmation()
+                    ->form([
+                        Textarea::make('catatan')
+                            ->label('Alasan Reopen')
+                            ->required(),
+                    ])
+                    ->action(function ($record, array $data) {
+
+                        $record->reopen(
+                            $data['catatan']
+                        );
+
+                    }),
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()
+                    ->visible(function ($record) {
+
+                        if (
+                            auth()->user()->hasRole('admin')
+                            || auth()->user()->hasRole('super_admin')
+                        ) {
+                            return true;
+                        }
+
+                        return !$record->isLocked();
+                    }),
+                DeleteAction::make()
+                    ->visible(function ($record) {
+
+                        if (
+                            auth()->user()->hasRole('admin')
+                            || auth()->user()->hasRole('super_admin')
+                        ) {
+                            return true;
+                        }
+
+                        return !$record->isLocked();
+                    }),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->actionsColumnLabel('Action Button');
     }
 
     public static function getRelations(): array

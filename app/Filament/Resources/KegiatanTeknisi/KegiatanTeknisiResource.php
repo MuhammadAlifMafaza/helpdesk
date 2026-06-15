@@ -24,13 +24,18 @@ class KegiatanTeknisiResource extends Resource
 {
     protected static ?string $model = KegiatanTeknisi::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
+    protected static ?string $plural = 'kegiatan-teknisi';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
+    protected static ?string $pluralLabel = 'Catatan Kegiatan Teknisi';
+    protected static ?string $navigationLabel = 'Kegiatan Teknisi';
     protected static ?string $recordTitleAttribute = 'LogHarian';
 
     public static function form(Schema $schema): Schema
     {
-        return KegiatanTeknisiForm::configure($schema);
+        return $schema
+            ->schema([
+                TextColumn::make('')
+            ]);
     }
 
     public static function infolist(Schema $schema): Schema

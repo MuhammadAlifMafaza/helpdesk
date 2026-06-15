@@ -37,7 +37,7 @@ class PengajuanBarang extends Model
         );
     }
 
-    public function getKodeTiketAttribute(): string
+    public function getKodePengajuanAttribute(): string
     {
         return sprintf(
             'PJB-%s-%06d',
@@ -47,15 +47,15 @@ class PengajuanBarang extends Model
     }
     protected static function booted()
     {
-        static::created(function ($tiket) {
+        static::created(function ($pengajuan) {
 
             LogPengajuan::create([
-                'pengajuan_id' => $tiket->id,
-                'user_id' => auth()->id() ?? $tiket->user_id,
+                'pengajuan_id' => $pengajuan->id,
+                'user_id' => auth()->id() ?? $pengajuan->user_id,
                 'kategori_log' => 'Status',
                 'data_lama' => null,
                 'data_baru' => 'Open',
-                'keterangan' => 'Tiket dibuat',
+                'keterangan' => 'Pengajuan Barang telah dibuat',
             ]);
 
         });
@@ -107,7 +107,7 @@ class PengajuanBarang extends Model
         return $this->updateStatus(
             'In Progress',
             '[REOPEN] ' .
-            ($catatan ?? 'Tiket dibuka kembali')
+            ($catatan ?? 'Pengajuan dibuka kembali')
         );
     }
 
@@ -210,8 +210,8 @@ class PengajuanBarang extends Model
         return $this->status === 'Close';
     }
 
-    /* HELPER Outcome */
-    public function getCloseOutcomeAttribute()
+    /* HELPER Aplakasi Layering Status Outcome */
+    public function getStatusOutcomeAttribute()
     {
         $log = $this->logs()
             ->where('kategori_log', 'Status')
@@ -229,6 +229,15 @@ class PengajuanBarang extends Model
             )
         ) {
             return 'Completed';
+        }
+
+        if (
+            str_contains(
+                $log->keterangan,
+                '[REOPEN]'
+            )
+        ) {
+            return 'Reopen';
         }
 
         if (
