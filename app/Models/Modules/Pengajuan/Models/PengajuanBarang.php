@@ -39,12 +39,20 @@ class PengajuanBarang extends Model
 
     public function getKodePengajuanAttribute(): string
     {
+        $firstIdToday = self::whereDate(
+            'created_at',
+            $this->created_at->toDateString()
+        )->min('id');
+
+        $nomorUrut = ($this->id - $firstIdToday) + 1;
+
         return sprintf(
-            'PJB-%s-%06d',
-            $this->created_at->format('Ymd'),
-            $this->id
+            'PJB-%s-%04d',
+            $this->created_at->format('dmY'),
+            $nomorUrut
         );
     }
+    
     protected static function booted()
     {
         static::created(function ($pengajuan) {

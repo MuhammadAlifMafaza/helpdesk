@@ -41,13 +41,22 @@ class TiketPerbaikan extends Model
             'ruangan_id'
         );
     }
+
     public function getKodeTiketAttribute(): string
     {
+        $firstIdToday = self::whereDate(
+            'created_at',
+            $this->created_at->toDateString()
+        )->min('id');
+
+        $nomorUrut = ($this->id - $firstIdToday) + 1;
+
         return sprintf(
-            'TKT-%s-%06d',
-            $this->created_at->format('Ymd'),
-            $this->id
+            'TK-%s-%04d',
+            $this->created_at->format('dmY'),
+            $nomorUrut
         );
+
     }
     protected static function booted()
     {
@@ -201,14 +210,13 @@ class TiketPerbaikan extends Model
         );
     }
 
-    //
+    // Timeline
     public function timeline()
     {
         return $this->logs()
             ->with('user')
-            ->orderBy('created_at');
+            ->latest('created_at');
     }
-
 
     /* HELPER Filament Button */
     public function isOpen(): bool
@@ -252,7 +260,7 @@ class TiketPerbaikan extends Model
                 $log->keterangan,
                 '[REOPEN]'
             )
-        ){
+        ) {
             return 'Reopen';
         }
 
@@ -266,5 +274,45 @@ class TiketPerbaikan extends Model
         }
 
         return null;
+    }
+
+    /* HELPER TIMELINE */
+    public function getTimelineTitleAttribute(): string
+    {
+        return match (true) {
+
+            $this->kategori_log === 'Status'
+            && blank($this->data_lama)
+            && $this->data_baru === 'Open'
+            => 'Tiket Dibuat',
+
+            $this->kategori_log === 'Status'
+            && $this->data_lama === 'Open'
+            && $this->data_baru === 'In Progress'
+            => 'Pengerjaan Dimulai',
+
+            $this->kategori_log === 'Status'
+            && $this->data_lama === 'In Progress'
+            && $this->data_baru === 'Close'
+            => 'Tiket Diselesaikan',
+
+            $this->kategori_log === 'Status'
+            && $this->data_lama === 'Close'
+            && $this->data_baru === 'In Progress'
+            => 'Tiket Dibuka Kembali',
+
+            default => $this->kategori_log,
+        };
+    }
+
+    public function getTimelineIconAttribute(): string
+    {
+        return match ($this->timeline_title) {
+            'Tiket Dibuat' => 'heroicon-o-plus-circle',
+            'Pengerjaan Dimulai' => 'heroicon-o-wrench-screwdriver',
+            'Tiket Diselesaikan' => 'heroicon-o-check-circle',
+            'Tiket Dibuka Kembali' => 'heroicon-o-arrow-path',
+            default => 'heroicon-o-clock',
+        };
     }
 }

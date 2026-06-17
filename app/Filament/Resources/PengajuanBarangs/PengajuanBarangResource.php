@@ -90,8 +90,98 @@ class PengajuanBarangResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
-        return PengajuanBarangInfolist::configure($schema);
+        return $schema
+            ->columns(2)
+            ->schema([
+
+                Section::make('Informasi Tiket')
+                    ->columns(2)
+                    ->columnSpanFull()
+                    ->schema([
+
+                        TextEntry::make('kode_pengajuan')
+                            ->label('Nomor Pengajuan'),
+
+                        TextEntry::make('user.name')
+                            ->label('Nama Pemohon'),
+
+                        TextEntry::make('status')
+                            ->badge()
+                            ->icon(fn(string $state) => match ($state) {
+                                'Open' => 'heroicon-o-folder-open',
+                                'In Progress' => 'heroicon-o-arrow-path',
+                                'Close' => 'heroicon-o-check-circle',
+                                default => 'heroicon-o-question-mark-circle',
+                            })
+                            ->color(fn(string $state) => match ($state) {
+                                'Open' => 'info',
+                                'In Progress' => 'warning',
+                                'Close' => 'success',
+                                default => 'gray',
+                            }),
+
+                        TextEntry::make('nama_barang'),
+
+                        TextEntry::make('status_outcome')
+                            ->badge()
+                            ->icon(fn(?string $state) => match ($state) {
+                                'Completed' => 'heroicon-o-check-circle',
+                                'Rejected' => 'heroicon-o-x-circle',
+                                'Reopen' => 'heroicon-o-arrow-path',
+                                default => 'heroicon-o-question-mark-circle',
+                            })
+                            ->color(fn(?string $state): string => match ($state) {
+                                'Completed' => 'success',
+                                'Rejected' => 'danger',
+                                'Reopen' => 'warning',
+                                default => 'gray',
+                            }),
+
+                        TextEntry::make('jumlah')
+                            ->label('Jumlah Barang'),
+
+                        TextEntry::make('created_at')
+                            ->dateTime(),
+
+                        TextEntry::make('kepemilikan'),
+
+                        TextEntry::make('updated_at')
+                            ->dateTime(),
+
+                    ]),
+
+                Section::make('Deskripsi Kerusakan')
+                    ->columnSpanFull()
+                    ->schema([
+
+                        TextEntry::make('deskripsi')
+                            ->hiddenLabel()
+                            ->columnSpanFull(),
+
+                    ]),
+
+                Section::make('Timeline Aktivitas')
+                    ->columnSpan(1)
+                    ->schema([
+
+                        ViewEntry::make('id')
+                            ->view('filament.pages.tiket.timeline'),
+
+                    ]),
+
+                Section::make('Diskusi')
+                    ->columnSpan(1)
+                    ->schema([
+
+                        ViewEntry::make('id')
+                            ->view(
+                                'filament.pages.tiket.chat'
+                            ),
+
+                    ]),
+            ]);
     }
+
 
     public static function table(Table $table): Table
     {
@@ -113,8 +203,14 @@ class PengajuanBarangResource extends Resource
 
                 TextColumn::make('status')
                     ->badge()
+                    ->icon(fn(string $state) => match ($state) {
+                        'Open' => 'heroicon-o-folder-open',
+                        'In Progress' => 'heroicon-o-arrow-path',
+                        'Close' => 'heroicon-o-check-circle',
+                        default => 'heroicon-o-question-mark-circle',
+                    })
                     ->color(fn(string $state) => match ($state) {
-                        'Open' => 'danger',
+                        'Open' => 'info',
                         'In Progress' => 'warning',
                         'Close' => 'success',
                         default => 'gray',
@@ -122,14 +218,21 @@ class PengajuanBarangResource extends Resource
 
                 TextColumn::make('status_outcome')
                     ->badge()
+                    ->icon(fn(?string $state) => match ($state) {
+                        'Completed' => 'heroicon-o-check-circle',
+                        'Rejected' => 'heroicon-o-x-circle',
+                        'Reopen' => 'heroicon-o-arrow-path',
+                        default => 'heroicon-o-question-mark-circle',
+                    })
                     ->color(fn(?string $state): string => match ($state) {
                         'Completed' => 'success',
-                        'Reopen' => 'primary',
                         'Rejected' => 'danger',
+                        'Reopen' => 'warning',
                         default => 'gray',
                     }),
 
                 TextColumn::make('created_at')
+                    ->label('Tanggal Permintaan')
                     ->dateTime('d/m/Y H:i'),
             ])
             ->actions([

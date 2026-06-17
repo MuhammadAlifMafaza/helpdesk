@@ -1,98 +1,100 @@
 {{-- Page content | Filament pages timeline --}}
 @php
-    $logs = $getRecord()->timeline()->with('user')->latest()->get();
+    $logs = $getRecord()
+        ->timeline()
+        ->with('user')
+        ->get();
 @endphp
 
-<div class="space-y-4">
+<div class="space-y-6">
 
     @forelse ($logs as $log)
-        <div
-            class="
-                fi-section-content
-                rounded-xl
-                border
-                border-gray-200
-                dark:border-gray-800
-                p-4
-            ">
 
-            <div class="flex items-center justify-between">
+        <div class="relative flex gap-4">
 
-                <div>
-
-                    <p class="font-medium">
-                        {{ $log->user?->name ?? 'System' }}
-                    </p>
-
-                    <p class="text-xs text-gray-500">
-                        {{ $log->created_at->format('d M Y H:i') }}
-                    </p>
-
+            {{-- Timeline line --}}
+            <div class="flex flex-col items-center">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                    <x-filament::icon
+                        :icon="$log->timeline_icon"
+                        class="h-5 w-5 text-gray-600 dark:text-gray-300"
+                    />
                 </div>
 
-                <span
-                    class="
-                        inline-flex
-                        items-center
-                        rounded-md
-                        px-2
-                        py-1
-                        text-xs
-                        font-medium
-                        ring-1
-                        ring-inset
-                    ">
-                    {{ $log->kategori_log }}
-                </span>
-
+                @if (! $loop->last)
+                    <div class="mt-1 w-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+                @endif
             </div>
 
-            @if ($log->data_lama || $log->data_baru)
-                <div class="mt-3 text-sm">
+            {{-- Content --}}
+            <div class="flex-1 pb-6">
 
-                    <span class="font-medium">
-                        {{ $log->data_lama }}
-                    </span>
+                {{-- Header --}}
+                <div class="flex items-start justify-between gap-2">
 
-                    <span class="mx-2">
-                        →
-                    </span>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ $log->user?->name ?? 'System' }}
+                        </p>
 
-                    <span class="font-medium">
-                        {{ $log->data_baru }}
-                    </span>
+                        <p class="text-xs text-gray-500">
+                            {{ $log->created_at->format('d M Y H:i') }}
+                        </p>
+                    </div>
+
+                    <x-filament::badge
+                        :color="match($log->kategori_log) {
+                            'Status' => 'info',
+                            'Update' => 'warning',
+                            'Create' => 'success',
+                            'Delete' => 'danger',
+                            default => 'gray',
+                        }"
+                    >
+                        {{ $log->kategori_log }}
+                    </x-filament::badge>
 
                 </div>
-            @endif
 
-            @if ($log->keterangan)
-                <div class="mt-3 text-sm">
+                {{-- Title --}}
+                <p class="mt-2 text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {{ $log->timeline_title }}
+                </p>
 
-                    {{ $log->keterangan }}
+                {{-- Change data --}}
+                @if ($log->data_lama || $log->data_baru)
+                    <div class="mt-2 text-sm text-gray-600 dark:text-gray-300">
 
-                </div>
-            @endif
+                        <span class="font-medium">
+                            {{ $log->data_lama ?? '-' }}
+                        </span>
+
+                        <span class="mx-2 text-gray-400">→</span>
+
+                        <span class="font-medium">
+                            {{ $log->data_baru ?? '-' }}
+                        </span>
+
+                    </div>
+                @endif
+
+                {{-- Description --}}
+                @if ($log->keterangan)
+                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                        {{ $log->keterangan }}
+                    </p>
+                @endif
+
+            </div>
 
         </div>
 
     @empty
 
-        <div
-            class="
-                rounded-xl
-                border
-                border-dashed
-                border-gray-300
-                dark:border-gray-700
-                p-6
-                text-center
-                text-sm
-                text-gray-500
-            ">
-
+        <div class="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-700">
             Belum ada aktivitas.
-
         </div>
+
     @endforelse
 
 </div>

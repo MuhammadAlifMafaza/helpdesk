@@ -43,16 +43,15 @@ class TicketServiceResource extends Resource
     protected static UnitEnum|string|null $navigationGroup = 'Service Desk'; // Navigation Group
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver'; // Navigation Icon
     protected static ?string $navigationLabel = 'Tiket Perbaikan'; // Navigation Label
-    protected static ?string $pluralLabel =  'Tiket Perbaikan';
-
+    protected static ?string $pluralLabel = 'Tiket Perbaikan';
     protected static ?int $navigationSort = 1;
-
     protected static ?string $recordTitleAttribute = 'keluhan';
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->schema([
+
                 Select::make('user_id')
                     ->relationship(
                         'user',
@@ -62,6 +61,7 @@ class TicketServiceResource extends Resource
                     ->searchable()
                     ->preload()
                     ->required(),
+
                 Select::make('ruangan_id')
                     ->relationship(
                         'ruangan',
@@ -90,23 +90,25 @@ class TicketServiceResource extends Resource
                     ->label('Deskripsi')
                     ->rows(5)
                     ->required(),
+
                 Select::make('status')
+                    ->label('Status Tiket')
+                    ->default('Open')
                     ->options([
                         'Open' => 'Open',
                         'In Progress' => 'In Progress',
                         'Close' => 'Closed',
                     ])
-                    ->default('Open')
-                    ->label('Status Tiket')
                     ->required()
                     ->disabled(),
+
             ]);
     }
 
     public static function infolist(Schema $schema): Schema
     {
         return $schema
-            ->columns(1)
+            ->columns(2)
             ->schema([
 
                 Section::make('Informasi Tiket')
@@ -120,12 +122,6 @@ class TicketServiceResource extends Resource
                         TextEntry::make('user.name')
                             ->label('Nama Pemohon'),
 
-                        TextEntry::make('ruangan.nama_ruangan')
-                            ->label('Ruangan'),
-
-                        TextEntry::make('keluhan'),
-
-                        TextEntry::make('kepemilikan'),
                         TextEntry::make('status')
                             ->badge()
                             ->color(fn(string $state) => match ($state) {
@@ -134,47 +130,58 @@ class TicketServiceResource extends Resource
                                 'Close' => 'success',
                                 default => 'gray',
                             }),
-                        TextEntry::make('close_outcome')
-                            ->label('Hasil Close')
+
+                        TextEntry::make('keluhan'),
+
+                        TextEntry::make('status_outcome')
                             ->badge()
                             ->color(fn(?string $state): string => match ($state) {
                                 'Completed' => 'success',
                                 'Rejected' => 'danger',
+                                'Reopen' => 'primary',
                                 default => 'gray',
                             }),
 
+                        TextEntry::make('ruangan.nama_ruangan')
+                            ->label('Ruangan'),
+
                         TextEntry::make('created_at')
                             ->dateTime(),
+
+                        TextEntry::make('kepemilikan'),
 
                         TextEntry::make('updated_at')
                             ->dateTime(),
 
                     ]),
+
                 Section::make('Deskripsi Kerusakan')
                     ->columnSpanFull()
                     ->schema([
 
                         TextEntry::make('deskripsi')
+                            ->hiddenLabel()
                             ->columnSpanFull(),
 
                     ]),
 
                 Section::make('Timeline Aktivitas')
-                    ->columnSpanFull()
+                    ->columnSpan(1)
                     ->schema([
+
                         ViewEntry::make('id')
                             ->view('filament.pages.tiket.timeline'),
+
                     ]),
 
                 Section::make('Diskusi')
-                    ->columnSpanFull()
+                    ->columnSpan(1)
                     ->schema([
 
                         ViewEntry::make('id')
                             ->view(
                                 'filament.pages.tiket.chat'
                             ),
-
 
                     ]),
             ]);
@@ -202,8 +209,14 @@ class TicketServiceResource extends Resource
 
                 TextColumn::make('status')
                     ->badge()
+                    ->icon(fn(string $state) => match ($state) {
+                        'Open' => 'heroicon-o-folder-open',
+                        'In Progress' => 'heroicon-o-arrow-path',
+                        'Close' => 'heroicon-o-check-circle',
+                        default => 'heroicon-o-question-mark-circle',
+                    })
                     ->color(fn(string $state) => match ($state) {
-                        'Open' => 'danger',
+                        'Open' => 'info',
                         'In Progress' => 'warning',
                         'Close' => 'success',
                         default => 'gray',
@@ -211,14 +224,22 @@ class TicketServiceResource extends Resource
 
                 TextColumn::make('status_outcome')
                     ->badge()
+                    ->icon(fn(?string $state) => match ($state) {
+                        'Completed' => 'heroicon-o-check-circle',
+                        'Rejected' => 'heroicon-o-x-circle',
+                        'Reopen' => 'heroicon-o-arrow-path',
+                        default => 'heroicon-o-question-mark-circle',
+                    })
                     ->color(fn(?string $state): string => match ($state) {
                         'Completed' => 'success',
-                        'Reopen' => 'primary',
                         'Rejected' => 'danger',
+                        'Reopen' => 'warning',
                         default => 'gray',
                     }),
-
-                TextColumn::make('created_at')->dateTime('d M Y'),
+                    
+                TextColumn::make('created_at')
+                    ->label('Tanggal Dibuat')
+                    ->dateTime('d M Y'),
 
             ])
 
@@ -238,6 +259,7 @@ class TicketServiceResource extends Resource
                         );
 
                     }),
+
                 Action::make('selesai')
                     ->label('Selesai')
                     ->icon('heroicon-o-check-circle')
@@ -257,6 +279,7 @@ class TicketServiceResource extends Resource
                         );
 
                     }),
+
                 Action::make('tolak')
                     ->label('Tolak')
                     ->color('danger')
@@ -276,6 +299,7 @@ class TicketServiceResource extends Resource
                         );
 
                     }),
+
                 Action::make('reopen')
                     ->label('Reopen Ticket')
                     ->color('primary')
@@ -296,7 +320,9 @@ class TicketServiceResource extends Resource
                         );
 
                     }),
+
                 ViewAction::make(),
+
                 EditAction::make()
                     ->visible(function ($record) {
 
@@ -309,6 +335,7 @@ class TicketServiceResource extends Resource
 
                         return !$record->isLocked();
                     }),
+
                 DeleteAction::make()
                     ->visible(function ($record) {
 
@@ -321,6 +348,7 @@ class TicketServiceResource extends Resource
 
                         return !$record->isLocked();
                     }),
+
             ])
             ->actionsColumnLabel('Action Button');
 
