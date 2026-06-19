@@ -36,6 +36,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('branding/logo.svg'))
             ->colors([
                 'primary' => Color::Blue,
+                'yellow' => Color::rgb('224,125,255'),
             ])
             ->sidebarCollapsibleOnDesktop()
             ->collapsedSidebarWidth('5rem')

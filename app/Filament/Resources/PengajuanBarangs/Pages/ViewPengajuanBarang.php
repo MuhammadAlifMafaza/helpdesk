@@ -20,7 +20,8 @@ class ViewPengajuanBarang extends ViewRecord
         return [
             EditAction::make('edit')
                 ->label('Edit Tiket')
-                ->icon('heroicon-o-pencil'),
+                ->icon('heroicon-o-pencil')
+                ->color('yellow'),
 
 
             Action::make('ambil_tiket')
