@@ -143,7 +143,7 @@ class PengajuanBarangResource extends Resource
                         TextEntry::make('created_at')
                             ->dateTime(),
 
-                        TextEntry::make('kepemilikan'),
+                        TextEntry::make('alasan'),
 
                         TextEntry::make('updated_at')
                             ->dateTime(),

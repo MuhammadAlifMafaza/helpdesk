@@ -19,7 +19,9 @@ class ViewTicketService extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make('edit'),
+            EditAction::make('edit')
+            ->label('Edit Tiket')
+            ->icon('heroicon-o-pencil'),
 
 
             Action::make('ambil_tiket')

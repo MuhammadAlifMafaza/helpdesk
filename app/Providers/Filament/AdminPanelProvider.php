@@ -32,7 +32,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('Helpdesk System')
             ->brandLogo(asset('branding/logo-tag.svg'))
-            ->brandLogoHeight('5rem')
+            ->brandLogoHeight('4rem')
             ->favicon(asset('branding/logo.svg'))
             ->colors([
                 'primary' => Color::Blue,
