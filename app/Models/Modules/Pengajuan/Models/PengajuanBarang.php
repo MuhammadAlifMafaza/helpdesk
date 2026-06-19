@@ -4,6 +4,7 @@ namespace App\Models\Modules\Pengajuan\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
+use App\Models\Modules\Pengajuan\Models\LogPengajuan;
 
 class PengajuanBarang extends Model
 {
@@ -52,7 +53,7 @@ class PengajuanBarang extends Model
             $nomorUrut
         );
     }
-    
+
     protected static function booted()
     {
         static::created(function ($pengajuan) {

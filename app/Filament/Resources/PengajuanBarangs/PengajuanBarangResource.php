@@ -94,7 +94,7 @@ class PengajuanBarangResource extends Resource
             ->columns(2)
             ->schema([
 
-                Section::make('Informasi Tiket')
+                Section::make('Informasi Pengajuan')
                     ->columns(2)
                     ->columnSpanFull()
                     ->schema([
