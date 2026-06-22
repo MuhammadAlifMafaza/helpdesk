@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Filament\Resources\Laporan\LaporanPerbaikans;
+
+use App\Filament\Resources\Laporan\LaporanPerbaikans\Pages\CreateLaporanPerbaikan;
+use App\Filament\Resources\Laporan\LaporanPerbaikans\Pages\EditLaporanPerbaikan;
+use App\Filament\Resources\Laporan\LaporanPerbaikans\Pages\ListLaporanPerbaikans;
+use App\Filament\Resources\Laporan\LaporanPerbaikans\Pages\ViewLaporanPerbaikan;
+use App\Filament\Resources\Laporan\LaporanPerbaikans\Schemas\LaporanPerbaikanForm;
+use App\Filament\Resources\Laporan\LaporanPerbaikans\Schemas\LaporanPerbaikanInfolist;
+use App\Filament\Resources\Laporan\LaporanPerbaikans\Tables\LaporanPerbaikansTable;
+use App\Models\Laporan\LaporanPerbaikan;
+use BackedEnum;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
+
+class LaporanPerbaikanResource extends Resource
+{
+    protected static ?string $model = LaporanPerbaikan::class;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
+    protected static ?string $recordTitleAttribute = 'LaporanPerbaikan';
+
+    public static function form(Schema $schema): Schema
+    {
+        return LaporanPerbaikanForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return LaporanPerbaikanInfolist::configure($schema);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return LaporanPerbaikansTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListLaporanPerbaikans::route('/'),
+            'create' => CreateLaporanPerbaikan::route('/create'),
+            'view' => ViewLaporanPerbaikan::route('/{record}'),
+            'edit' => EditLaporanPerbaikan::route('/{record}/edit'),
+        ];
+    }
+}
