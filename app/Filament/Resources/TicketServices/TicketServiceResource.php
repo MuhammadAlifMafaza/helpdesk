@@ -192,9 +192,11 @@ class TicketServiceResource extends Resource
         return $table
             ->columns([
 
-                TextColumn::make('index')
-                    ->label('#')
-                    ->rowIndex(),
+                TextColumn::make('kode_tiket')
+                    ->label('Kode Tiket')
+                    ->searchable()
+                    ->copyable()
+                    ->weight('bold'),
 
                 TextColumn::make('user.name')
                     ->label('Pemohon'),
@@ -210,10 +212,18 @@ class TicketServiceResource extends Resource
                 TextColumn::make('status')
                     ->badge()
                     ->icon(fn(string $state) => match ($state) {
-                        'Open' => 'heroicon-o-folder-open',
-                        'In Progress' => 'heroicon-o-arrow-path',
-                        'Close' => 'heroicon-o-check-circle',
-                        default => 'heroicon-o-question-mark-circle',
+
+                        'Open'
+                        => 'heroicon-o-exclamation-circle',
+
+                        'In Progress'
+                        => 'heroicon-o-wrench-screwdriver',
+
+                        'Close'
+                        => 'heroicon-o-check-badge',
+
+                        default
+                        => 'heroicon-o-question-mark-circle',
                     })
                     ->color(fn(string $state) => match ($state) {
                         'Open' => 'info',
@@ -236,7 +246,7 @@ class TicketServiceResource extends Resource
                         'Reopen' => 'warning',
                         default => 'gray',
                     }),
-                    
+
                 TextColumn::make('created_at')
                     ->label('Tanggal Dibuat')
                     ->dateTime('d M Y'),
@@ -244,6 +254,7 @@ class TicketServiceResource extends Resource
             ])
 
             ->actions([
+
                 Action::make('ambil_tiket')
                     ->label('Ambil Tiket')
                     ->icon('heroicon-o-wrench-screwdriver')
@@ -258,7 +269,19 @@ class TicketServiceResource extends Resource
                             . auth()->user()->name
                         );
 
-                    }),
+                        $record->updateStatus(
+                            'In Progress',
+                            'Tiket mulai dikerjakan oleh '
+                            . auth()->user()->name
+                        );
+
+                        $record->sendMessage(
+                            'Teknisi '
+                            . auth()->user()->name
+                            . ' mengambil tiket ini.'
+                        );
+                    })
+                ,
 
                 Action::make('selesai')
                     ->label('Selesai')
@@ -278,7 +301,12 @@ class TicketServiceResource extends Resource
                             $data['catatan']
                         );
 
-                    }),
+                    })
+                    ->modalHeading('Konfirmasi Penyelesaian')
+                    ->modalDescription(
+                        'Tindakan ini akan menutup tiket.'
+                    )
+                ,
 
                 Action::make('tolak')
                     ->label('Tolak')
@@ -298,14 +326,26 @@ class TicketServiceResource extends Resource
                             $data['catatan']
                         );
 
-                    }),
+                    })
+                    ->modalHeading('Konfirmasi Penyelesaian')
+                    ->modalDescription(
+                        'Tindakan ini akan menutup tiket.'
+                    )
+                ,
 
                 Action::make('reopen')
                     ->label('Reopen Ticket')
                     ->color('primary')
                     ->icon('heroicon-o-arrow-path')
                     ->visible(
-                        fn($record) => $record->isClosed()
+                        fn($record) =>
+                        $record->isClosed()
+                        &&
+                        (
+                            auth()->user()->hasRole('admin')
+                            ||
+                            auth()->user()->hasRole('super_admin')
+                        )
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -319,35 +359,29 @@ class TicketServiceResource extends Resource
                             $data['catatan']
                         );
 
-                    }),
+                    })
+                ,
 
                 ViewAction::make(),
 
                 EditAction::make()
-                    ->visible(function ($record) {
-
-                        if (
-                            auth()->user()->hasRole('admin')
-                            || auth()->user()->hasRole('super_admin')
-                        ) {
-                            return true;
-                        }
-
-                        return !$record->isLocked();
-                    }),
+                    ->visible(
+                        fn($record) =>
+                        $record->canEdit()
+                    ),
 
                 DeleteAction::make()
-                    ->visible(function ($record) {
-
-                        if (
+                    ->visible(
+                        fn($record) =>
+                        $record->isClosed()
+                        &&
+                        (
                             auth()->user()->hasRole('admin')
-                            || auth()->user()->hasRole('super_admin')
-                        ) {
-                            return true;
-                        }
-
-                        return !$record->isLocked();
-                    }),
+                            ||
+                            auth()->user()->hasRole('super_admin')
+                        )
+                    )
+                ,
 
             ])
             ->actionsColumnLabel('Action Button');
@@ -393,7 +427,6 @@ class TicketServiceResource extends Resource
     {
         return auth()->user()->hasAnyRole([
             'admin',
-            'teknisi',
             'super_admin',
         ]);
     }

@@ -13,7 +13,6 @@ class LogPerbaikan extends Model
     const STATUS = 'Status';
     const CHAT = 'Chat';
     const UPDATE_DATA = 'Update Data';
-    const PRIORITAS = 'Prioritas';
 
     public $timestamps = false;
 
@@ -46,4 +45,45 @@ class LogPerbaikan extends Model
             'user_id'
         );
     }
+
+    /* HELPER TIMELINE */
+    public function getTimelineTitleAttribute(): string
+    {
+        return match (true) {
+
+            $this->kategori_log === 'Status'
+            && blank($this->data_lama)
+            && $this->data_baru === 'Open'
+            => 'Tiket Dibuat',
+
+            $this->kategori_log === 'Status'
+            && $this->data_lama === 'Open'
+            && $this->data_baru === 'In Progress'
+            => 'Pengerjaan Dimulai',
+
+            $this->kategori_log === 'Status'
+            && $this->data_lama === 'In Progress'
+            && $this->data_baru === 'Close'
+            => 'Tiket Diselesaikan',
+
+            $this->kategori_log === 'Status'
+            && $this->data_lama === 'Close'
+            && $this->data_baru === 'In Progress'
+            => 'Tiket Dibuka Kembali',
+
+            default => $this->kategori_log,
+        };
+    }
+
+    public function getTimelineIconAttribute(): string
+    {
+        return match ($this->timeline_title) {
+            'Tiket Dibuat' => 'heroicon-o-plus-circle',
+            'Pengerjaan Dimulai' => 'heroicon-o-wrench-screwdriver',
+            'Tiket Diselesaikan' => 'heroicon-o-check-circle',
+            'Tiket Dibuka Kembali' => 'heroicon-o-arrow-path',
+            default => 'heroicon-o-clock',
+        };
+    }
+
 }

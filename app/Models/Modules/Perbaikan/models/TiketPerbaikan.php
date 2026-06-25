@@ -10,7 +10,13 @@ use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
 class TiketPerbaikan extends Model
 {
     protected $table = 'tiket_perbaikan';
-    protected $appends = ['kode_tiket'];
+    protected $appends = [
+        'kode_tiket',
+        'status_outcome',
+        'waktu_mulai',
+        'waktu_selesai',
+        'durasi_pengerjaan',
+    ];
     protected array $allowedUpdateFields = [
         'keluhan',
         'deskripsi',
@@ -42,6 +48,10 @@ class TiketPerbaikan extends Model
         );
     }
 
+    /**
+     * Summary of getKodeTiketAttribute
+     * @return string
+     */
     public function getKodeTiketAttribute(): string
     {
         $firstIdToday = self::whereDate(
@@ -58,6 +68,11 @@ class TiketPerbaikan extends Model
         );
 
     }
+
+    /**
+     * Summary of booted
+     * @return void
+     */
     protected static function booted()
     {
         static::created(function ($tiket) {
@@ -74,6 +89,21 @@ class TiketPerbaikan extends Model
         });
     }
 
+    /**
+     * Summary of canEdit
+     * @return bool
+     */
+    public function canEdit(): bool
+    {
+        if (
+            auth()->user()->hasRole('admin')
+            || auth()->user()->hasRole('super_admin')
+        ) {
+            return true;
+        }
+
+        return !$this->isClosed();
+    }
     /**
      * Ringkasan Data LogsPerbaikan
      * @return \Illuminate\Database\Eloquent\Relations\HasMany<LogPerbaikan, TiketPerbaikan>
@@ -178,25 +208,28 @@ class TiketPerbaikan extends Model
 
     public function updateField(
         string $field,
-        mixed $valueBaru
+        mixed $valueBaru,
+        ?string $catatan = null
     ) {
         if (
             !in_array(
                 $field,
-                [
-                    'keluhan',
-                    'deskripsi',
-                    'kepemilikan',
-                    'ruangan_id',
-                ]
+                $this->allowedUpdateFields
             )
         ) {
             throw new \Exception(
-                'Field tidak boleh diubah.'
+                "Field {$field} tidak boleh diubah."
             );
         }
 
-        $valueLama = $this->$field;
+        $valueLama = $this->{$field};
+
+        if (
+            (string) $valueLama ===
+            (string) $valueBaru
+        ) {
+            return false;
+        }
 
         $this->update([
             $field => $valueBaru,
@@ -206,7 +239,36 @@ class TiketPerbaikan extends Model
             'Update Data',
             (string) $valueLama,
             (string) $valueBaru,
-            "{$field} diperbarui"
+            $catatan
+            ?? "Field {$field} diperbarui"
+        );
+
+        return true;
+    }
+
+    /**
+     * Summary of updateRuangan
+     * @param int $ruanganIdBaru
+     * @return void
+     */
+    public function updateRuangan(
+        int $ruanganIdBaru
+    ) {
+        $lama = $this->ruangan?->nama_ruangan;
+
+        $baru = MasterRuangan::find(
+            $ruanganIdBaru
+        )?->nama_ruangan;
+
+        $this->update([
+            'ruangan_id' => $ruanganIdBaru,
+        ]);
+
+        $this->tambahLog(
+            'Update Data',
+            $lama,
+            $baru,
+            'Ruangan dipindahkan'
         );
     }
 
@@ -216,6 +278,43 @@ class TiketPerbaikan extends Model
         return $this->logs()
             ->with('user')
             ->latest('created_at');
+    }
+
+    /* Summary of getWaktuMulaiAttribute */
+    public function getWaktuMulaiAttribute()
+    {
+        return $this->logs()
+            ->where('kategori_log', 'Status')
+            ->where('data_baru', 'In Progress')
+            ->orderBy('created_at')
+            ->value('created_at');
+    }
+
+    /* Summary of getDurasiPengerjaanAttribute */
+    public function getDurasiPengerjaanAttribute()
+    {
+        if (
+            !$this->waktu_mulai ||
+            !$this->waktu_selesai
+        ) {
+            return null;
+        }
+
+        return $this->waktu_mulai
+            ->diffForHumans(
+                $this->waktu_selesai,
+                true
+            );
+    }
+
+    /* Summary of getWaktuSelesaiAttribute */
+    public function getWaktuSelesaiAttribute()
+    {
+        return $this->logs()
+            ->where('kategori_log', 'Status')
+            ->where('data_baru', 'Close')
+            ->latest()
+            ->value('created_at');
     }
 
     /* HELPER Filament Button */
@@ -234,85 +333,43 @@ class TiketPerbaikan extends Model
         return $this->status === 'Close';
     }
 
+    public function isCompleted(): bool
+    {
+        return $this->outcome === 'Completed';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->outcome === 'Rejected';
+    }
+
     /* HELPER Outcome */
     public function getStatusOutcomeAttribute()
     {
-        $log = $this->logs()
-            ->where('kategori_log', 'Status')
-            ->latest()
-            ->first();
-
-        if (!$log) {
+        if ($this->status !== 'Close') {
             return null;
         }
 
-        if (
-            str_contains(
-                $log->keterangan,
-                '[SELESAI]'
-            )
-        ) {
+        $closeLog = $this->logs()
+            ->where('kategori_log', 'Status')
+            ->where('data_baru', 'Close')
+            ->latest()
+            ->first();
+
+        if (!$closeLog) {
+            return null;
+        }
+
+        if (str_contains($closeLog->keterangan, '[SELESAI]')) {
             return 'Completed';
         }
 
-        if (
-            str_contains(
-                $log->keterangan,
-                '[REOPEN]'
-            )
-        ) {
-            return 'Reopen';
-        }
-
-        if (
-            str_contains(
-                $log->keterangan,
-                '[DITOLAK]'
-            )
-        ) {
+        if (str_contains($closeLog->keterangan, '[DITOLAK]')) {
             return 'Rejected';
         }
 
         return null;
     }
 
-    /* HELPER TIMELINE */
-    public function getTimelineTitleAttribute(): string
-    {
-        return match (true) {
 
-            $this->kategori_log === 'Status'
-            && blank($this->data_lama)
-            && $this->data_baru === 'Open'
-            => 'Tiket Dibuat',
-
-            $this->kategori_log === 'Status'
-            && $this->data_lama === 'Open'
-            && $this->data_baru === 'In Progress'
-            => 'Pengerjaan Dimulai',
-
-            $this->kategori_log === 'Status'
-            && $this->data_lama === 'In Progress'
-            && $this->data_baru === 'Close'
-            => 'Tiket Diselesaikan',
-
-            $this->kategori_log === 'Status'
-            && $this->data_lama === 'Close'
-            && $this->data_baru === 'In Progress'
-            => 'Tiket Dibuka Kembali',
-
-            default => $this->kategori_log,
-        };
-    }
-
-    public function getTimelineIconAttribute(): string
-    {
-        return match ($this->timeline_title) {
-            'Tiket Dibuat' => 'heroicon-o-plus-circle',
-            'Pengerjaan Dimulai' => 'heroicon-o-wrench-screwdriver',
-            'Tiket Diselesaikan' => 'heroicon-o-check-circle',
-            'Tiket Dibuka Kembali' => 'heroicon-o-arrow-path',
-            default => 'heroicon-o-clock',
-        };
-    }
 }
