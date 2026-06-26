@@ -3,11 +3,13 @@
 namespace App\Models\Modules\Pengajuan\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 use App\Models\Modules\Pengajuan\Models\LogPengajuan;
 
 class PengajuanBarang extends Model
 {
+    use softDeletes;
     protected $table = 'pengajuan_barang';
 
     protected $fillable = [
@@ -16,6 +18,14 @@ class PengajuanBarang extends Model
         'jumlah',
         'alasan',
         'status',
+    ];
+
+    protected $appends = [
+        'kode_pengajuan',
+        'status_outcome',
+        'waktu_mulai',
+        'waktu_selesai',
+        'durasi_pengerjaan',
     ];
 
     public function user()
@@ -68,6 +78,38 @@ class PengajuanBarang extends Model
             ]);
 
         });
+
+        static::deleting(function ($pengajuan) {
+
+            if ($pengajuan->isForceDeleting()) {
+                return;
+            }
+
+            $pengajuan->tambahLog(
+                'Delete Data',
+                null,
+                null,
+                'Pengajuan barang telah dihapus (soft Delete)'
+                . auth()->user()->name
+            );
+
+        });
+    }
+
+    /**
+     * Summary of canEdit
+     * @return bool
+     */
+    public function canEdit(): bool
+    {
+        if (
+            auth()->user()->hasRole('admin')
+            || auth()->user()->hasRole('super_admin')
+        ) {
+            return true;
+        }
+
+        return !$this->isClosed();
     }
 
     public function tambahLog(
@@ -203,6 +245,42 @@ class PengajuanBarang extends Model
     }
 
 
+    public function getWaktuMulaiAttribute()
+    {
+        return $this->logs()
+            ->where('kategori_log', 'Status')
+            ->where('data_baru', 'In Progress')
+            ->orderBy('created_at')
+            ->value('created_at');
+    }
+
+    /* Summary of getDurasiPengerjaanAttribute */
+    public function getDurasiPengerjaanAttribute()
+    {
+        if (
+            !$this->waktu_mulai ||
+            !$this->waktu_selesai
+        ) {
+            return null;
+        }
+
+        return $this->waktu_mulai
+            ->diffForHumans(
+                $this->waktu_selesai,
+                true
+            );
+    }
+
+    /* Summary of getWaktuSelesaiAttribute */
+    public function getWaktuSelesaiAttribute()
+    {
+        return $this->logs()
+            ->where('kategori_log', 'Status')
+            ->where('data_baru', 'Close')
+            ->latest()
+            ->value('created_at');
+    }
+
     /* HELPER Filament Button */
     public function isOpen(): bool
     {
@@ -219,42 +297,38 @@ class PengajuanBarang extends Model
         return $this->status === 'Close';
     }
 
-    /* HELPER Aplakasi Layering Status Outcome */
+    public function isCompleted(): bool
+    {
+        return $this->outcome === 'Completed';
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->outcome === 'Rejected';
+    }
+
+    /* HELPER Outcome */
     public function getStatusOutcomeAttribute()
     {
-        $log = $this->logs()
-            ->where('kategori_log', 'Status')
-            ->latest()
-            ->first();
-
-        if (!$log) {
+        if ($this->status !== 'Close') {
             return null;
         }
 
-        if (
-            str_contains(
-                $log->keterangan,
-                '[SELESAI]'
-            )
-        ) {
+        $closeLog = $this->logs()
+            ->where('kategori_log', 'Status')
+            ->where('data_baru', 'Close')
+            ->latest()
+            ->first();
+
+        if (!$closeLog) {
+            return null;
+        }
+
+        if (str_contains($closeLog->keterangan, '[SELESAI]')) {
             return 'Completed';
         }
 
-        if (
-            str_contains(
-                $log->keterangan,
-                '[REOPEN]'
-            )
-        ) {
-            return 'Reopen';
-        }
-
-        if (
-            str_contains(
-                $log->keterangan,
-                '[DITOLAK]'
-            )
-        ) {
+        if (str_contains($closeLog->keterangan, '[DITOLAK]')) {
             return 'Rejected';
         }
 

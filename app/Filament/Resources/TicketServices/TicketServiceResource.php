@@ -7,30 +7,39 @@ use App\Filament\Resources\TicketServices\Pages\EditTicketService;
 use App\Filament\Resources\TicketServices\Pages\ListTicketServices;
 use App\Filament\Resources\TicketServices\Pages\ViewTicketService;
 use App\Models\Modules\Perbaikan\models\TiketPerbaikan as TicketService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 use BackedEnum;
 use UnitEnum;
 
 /* FILAMENT IMPORT */
 use Filament\Support\Colors\Color;
+
 // Filament Actions imports
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Select;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\ForceDeleteAction;
+
 // Filament Forms imports
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
+
 // Filament Resources imports
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
-// Filament Details imports
+
+// Filament Table import
+use Filament\Tables\Table;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
+use Filament\Tables\Filters\TrashedFilter;
 
 class TicketServiceResource extends Resource
 {
@@ -192,6 +201,10 @@ class TicketServiceResource extends Resource
         return $table
             ->columns([
 
+                TextColumn::make('index')
+                    ->label('No')
+                    ->rowIndex(),
+
                 TextColumn::make('kode_tiket')
                     ->label('Kode Tiket')
                     ->searchable()
@@ -251,6 +264,20 @@ class TicketServiceResource extends Resource
                     ->label('Tanggal Dibuat')
                     ->dateTime('d M Y'),
 
+                TextColumn::make('waktu_mulai')
+                    ->dateTime('d M Y h:m:s'),
+
+                TextColumn::make('waktu_selesai')
+                    ->dateTime('d M Y h:m:s'),
+
+                TextColumn::make('durasi_pengerjaan')
+                    ->timezone(''),
+
+            ])
+
+            ->filters([
+                TrashedFilter::make(),
+
             ])
 
             ->actions([
@@ -262,12 +289,6 @@ class TicketServiceResource extends Resource
                         fn($record) => $record->status === 'Open'
                     )
                     ->action(function ($record) {
-
-                        $record->updateStatus(
-                            'In Progress',
-                            'Tiket mulai dikerjakan oleh '
-                            . auth()->user()->name
-                        );
 
                         $record->updateStatus(
                             'In Progress',
@@ -364,6 +385,9 @@ class TicketServiceResource extends Resource
 
                 ViewAction::make(),
 
+                RestoreAction::make()
+                    ->visible(fn($record) => $record->trashed()),
+
                 EditAction::make()
                     ->visible(
                         fn($record) =>
@@ -381,10 +405,19 @@ class TicketServiceResource extends Resource
                             auth()->user()->hasRole('super_admin')
                         )
                     )
+                    ->requiresConfirmation()
                 ,
 
+                ForceDeleteAction::make()
+                    ->visible(
+                        fn() =>
+                        auth()->user()->hasRole('super_admin')
+                    ),
+
             ])
-            ->actionsColumnLabel('Action Button');
+            ->actionsColumnLabel('Action Button')
+        ;
+
 
     }
 
@@ -403,6 +436,14 @@ class TicketServiceResource extends Resource
             'view' => ViewTicketService::route('/{record}'),
             'edit' => EditTicketService::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 
     public static function canViewAny(): bool

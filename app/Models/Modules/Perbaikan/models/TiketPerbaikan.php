@@ -3,12 +3,14 @@
 namespace App\Models\Modules\Perbaikan\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 use App\Models\Modules\Master\Models\MasterRuangan;
 use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
 
 class TiketPerbaikan extends Model
 {
+    use SoftDeletes;
     protected $table = 'tiket_perbaikan';
     protected $appends = [
         'kode_tiket',
@@ -87,6 +89,22 @@ class TiketPerbaikan extends Model
             ]);
 
         });
+
+        static::deleting(function ($tiket) {
+
+            if ($tiket->isForceDeleting()) {
+                return;
+            }
+
+            $tiket->tambahLog(
+                'Delete Data',
+                null,
+                null,
+                'Tiket dihapus (Soft Delete)'
+                . auth()->user()->name
+            );
+
+        });
     }
 
     /**
@@ -104,6 +122,7 @@ class TiketPerbaikan extends Model
 
         return !$this->isClosed();
     }
+    
     /**
      * Ringkasan Data LogsPerbaikan
      * @return \Illuminate\Database\Eloquent\Relations\HasMany<LogPerbaikan, TiketPerbaikan>

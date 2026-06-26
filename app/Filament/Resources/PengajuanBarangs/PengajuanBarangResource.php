@@ -10,6 +10,8 @@ use App\Filament\Resources\PengajuanBarangs\Schemas\PengajuanBarangForm;
 use App\Filament\Resources\PengajuanBarangs\Schemas\PengajuanBarangInfolist;
 use App\Filament\Resources\PengajuanBarangs\Tables\PengajuanBarangsTable;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 use BackedEnum;
 use UnitEnum;
@@ -18,24 +20,31 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Resources\Resource;
 
 /* FILAMENT IMPORT */
+
 use Filament\Support\Colors\Color;
 // Filament Actions imports
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Select;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\ForceDeleteAction;
+
 // Filament Forms imports
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
+
 // Filament Resources imports
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Section;
-// Filament Details imports
+
+// Filament Table imports
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
 
 class PengajuanBarangResource extends Resource
 {
@@ -232,10 +241,29 @@ class PengajuanBarangResource extends Resource
                     }),
 
                 TextColumn::make('created_at')
-                    ->label('Tanggal Permintaan')
-                    ->dateTime('d/m/Y H:i'),
+                    ->label('Tanggal Permintaan Dibuat')
+                    ->dateTime('d M Y'),
+
+                TextColumn::make('waktu_mulai')
+                    ->label('Waktu Permintaan Diterima')
+                    ->dateTime('d M Y h:m:s'),
+
+                TextColumn::make('waktu_selesai')
+                    ->label('Waktu Permintaan Selesai')
+                    ->dateTime('d M Y h:m:s'),
+
+                TextColumn::make('durasi_pengerjaan')
+                    ->timezone(''),
+
             ])
+
+            ->filters([
+                TrashedFilter::make(),
+
+            ])
+
             ->actions([
+
                 Action::make('ambil_tiket')
                     ->label('Ambil Tiket')
                     ->icon('heroicon-o-wrench-screwdriver')
@@ -246,11 +274,18 @@ class PengajuanBarangResource extends Resource
 
                         $record->updateStatus(
                             'In Progress',
-                            'Pengajuan Barang telah ditangani Oleh '
+                            'Tiket mulai dikerjakan oleh '
                             . auth()->user()->name
                         );
 
-                    }),
+                        $record->sendMessage(
+                            'Teknisi '
+                            . auth()->user()->name
+                            . ' mengambil tiket ini.'
+                        );
+                    })
+                ,
+
                 Action::make('selesai')
                     ->label('Selesai')
                     ->icon('heroicon-o-check-circle')
@@ -269,7 +304,13 @@ class PengajuanBarangResource extends Resource
                             $data['catatan']
                         );
 
-                    }),
+                    })
+                    ->modalHeading('Konfirmasi Penyelesaian')
+                    ->modalDescription(
+                        'Tindakan ini akan menutup tiket.'
+                    )
+                ,
+
                 Action::make('tolak')
                     ->label('Tolak')
                     ->color('danger')
@@ -288,13 +329,26 @@ class PengajuanBarangResource extends Resource
                             $data['catatan']
                         );
 
-                    }),
+                    })
+                    ->modalHeading('Konfirmasi Penyelesaian')
+                    ->modalDescription(
+                        'Tindakan ini akan menutup tiket.'
+                    )
+                ,
+
                 Action::make('reopen')
                     ->label('Reopen Ticket')
                     ->color('primary')
                     ->icon('heroicon-o-arrow-path')
                     ->visible(
-                        fn($record) => $record->isClosed()
+                        fn($record) =>
+                        $record->isClosed()
+                        &&
+                        (
+                            auth()->user()->hasRole('admin')
+                            ||
+                            auth()->user()->hasRole('super_admin')
+                        )
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -308,34 +362,50 @@ class PengajuanBarangResource extends Resource
                             $data['catatan']
                         );
 
-                    }),
+                    })
+                ,
+
                 ViewAction::make(),
+
+                RestoreAction::make()
+                    ->visible(fn($record) => $record->trashed()),
+
                 EditAction::make()
-                    ->visible(function ($record) {
+                    ->visible(
+                        fn($record) =>
+                        $record->canEdit()
+                    ),
 
-                        if (
-                            auth()->user()->hasRole('admin')
-                            || auth()->user()->hasRole('super_admin')
-                        ) {
-                            return true;
-                        }
-
-                        return !$record->isLocked();
-                    }),
                 DeleteAction::make()
-                    ->visible(function ($record) {
-
-                        if (
+                    ->visible(
+                        fn($record) =>
+                        $record->isClosed()
+                        &&
+                        (
                             auth()->user()->hasRole('admin')
-                            || auth()->user()->hasRole('super_admin')
-                        ) {
-                            return true;
-                        }
+                            ||
+                            auth()->user()->hasRole('super_admin')
+                        )
+                    )
+                    ->requiresConfirmation()
+                ,
 
-                        return !$record->isLocked();
-                    }),
+                ForceDeleteAction::make()
+                    ->visible(
+                        fn() =>
+                        auth()->user()->hasRole('super_admin')
+                    ),
+
             ])
             ->actionsColumnLabel('Action Button');
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 
     public static function getRelations(): array
@@ -353,5 +423,40 @@ class PengajuanBarangResource extends Resource
             'view' => ViewPengajuanBarang::route('/{record}'),
             'edit' => EditPengajuanBarang::route('/{record}/edit'),
         ];
+    }
+
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->hasAnyRole([
+            'admin',
+            'teknisi',
+            'super_admin',
+        ]);
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()->hasAnyRole([
+            'admin',
+            'teknisi',
+            'super_admin',
+        ]);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()->hasAnyRole([
+            'admin',
+            'super_admin',
+        ]);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()->hasAnyRole([
+            'super_admin',
+            'admin',
+        ]);
     }
 }
