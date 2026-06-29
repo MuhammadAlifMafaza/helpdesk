@@ -62,7 +62,7 @@ class LogPengajuanBarangResource extends Resource
                     ->label('#')
                     ->rowIndex(),
 
-                TextColumn::make('pengajuan.id')
+                TextColumn::make('pengajuan.kode_pengajuan')
                     ->label('Kode Pengajuan')
                     ->searchable(),
 

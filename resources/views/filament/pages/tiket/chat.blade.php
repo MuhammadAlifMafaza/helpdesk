@@ -1,11 +1,16 @@
 {{-- Page content | Filament pages chat --}}
 @php
-
     $record = $getRecord();
 
-    $messages = $record->chatLogs()->with('user')->oldest()->get();
+    $messages = $record
+        ->chatLogs()
+        ->with('user')
+        ->oldest()
+        ->get();
 
+    $currentUser = auth()->id();
 @endphp
+
 
 <div class="space-y-4">
 

@@ -100,7 +100,7 @@ class TiketPerbaikan extends Model
                 'Delete Data',
                 null,
                 null,
-                'Tiket dihapus (Soft Delete)'
+                'Tiket telah dihapus oleh'
                 . auth()->user()->name
             );
 

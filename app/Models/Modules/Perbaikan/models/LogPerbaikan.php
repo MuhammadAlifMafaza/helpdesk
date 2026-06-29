@@ -35,9 +35,9 @@ class LogPerbaikan extends Model
         return $this->belongsTo(
             TiketPerbaikan::class,
             'tiket_id'
-        );
+        )->withTrashed();
     }
-
+    
     public function user()
     {
         return $this->belongsTo(

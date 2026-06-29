@@ -386,7 +386,16 @@ class TicketServiceResource extends Resource
                 ViewAction::make(),
 
                 RestoreAction::make()
-                    ->visible(fn($record) => $record->trashed()),
+                    ->visible(
+                        fn($record) => $record->trashed()
+                        &&
+                        (
+                            auth()->user()->hasRole('admin')
+                            ||
+                            auth()->user()->hasRole('super_admin')
+                        )
+
+                    ),
 
                 EditAction::make()
                     ->visible(

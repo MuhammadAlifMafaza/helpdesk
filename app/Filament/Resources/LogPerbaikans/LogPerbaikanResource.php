@@ -65,7 +65,7 @@ class LogPerbaikanResource extends Resource
                     ->label('#')
                     ->rowIndex(),
 
-                TextColumn::make('tiket.id')
+                TextColumn::make('tiket.kode_tiket')
                     ->label('Kode Tiket')
                     ->searchable(),
 
