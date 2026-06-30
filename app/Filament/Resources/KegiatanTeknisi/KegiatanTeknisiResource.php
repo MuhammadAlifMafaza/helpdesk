@@ -9,7 +9,7 @@ use App\Filament\Resources\KegiatanTeknisi\Pages\ViewKegiatanTeknisi;
 use App\Filament\Resources\KegiatanTeknisi\Schemas\KegiatanTeknisiForm;
 use App\Filament\Resources\KegiatanTeknisi\Schemas\KegiatanTeknisiInfolist;
 use App\Filament\Resources\KegiatanTeknisi\Tables\KegiatanTeknisiTable;
-use App\Models\Modules\Log\Models\LogHarian as KegiatanTeknisi;
+use App\Models\Modules\Teknisi\Models\KegiatanTeknisi;
 
 use UnitEnum;
 use BackedEnum;
