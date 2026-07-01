@@ -74,6 +74,7 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
                 'auth',
             ])
+ 
             ->navigationGroups([
                 'Dashboard',
                 'Admin Dashboard',
