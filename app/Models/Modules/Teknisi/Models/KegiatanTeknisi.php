@@ -10,12 +10,26 @@ use App\Models\User;
 class KegiatanTeknisi extends Model
 {
     use SoftDeletes;
-    
+
     protected $table = 'log_harian_teknisi';
+    protected $cast = [
+        'tanggal' => 'date',
+
+    ];
     protected $fillable = [
         'id',
         'teknisi_id',
         'tanggal',
         'deskripsi_kegiatan',
     ];
+
+    public function teknisi()
+    {
+        return $this->belongsTo(
+            User::class,
+            'teknisi_id'
+        );
+    }
+
+    
 }

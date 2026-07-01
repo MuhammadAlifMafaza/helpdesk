@@ -9,7 +9,7 @@ use App\Filament\Resources\Laporan\LaporanPerbaikans\Pages\ViewLaporanPerbaikan;
 use App\Filament\Resources\Laporan\LaporanPerbaikans\Schemas\LaporanPerbaikanForm;
 use App\Filament\Resources\Laporan\LaporanPerbaikans\Schemas\LaporanPerbaikanInfolist;
 use App\Filament\Resources\Laporan\LaporanPerbaikans\Tables\LaporanPerbaikansTable;
-use App\Models\Laporan\LaporanPerbaikan;
+use App\Models\Modules\Laporan\Models\LaporanPerbaikan;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

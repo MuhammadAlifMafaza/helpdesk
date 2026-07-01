@@ -9,7 +9,7 @@ use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Pages\ViewLaporanPer
 use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Schemas\LaporanPermintaanBarangForm;
 use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Schemas\LaporanPermintaanBarangInfolist;
 use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Tables\LaporanPermintaanBarangsTable;
-use App\Models\Laporan\LaporanPermintaanBarang;
+use App\Models\Modules\Laporan\Models\LaporanPermintaanBarang;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

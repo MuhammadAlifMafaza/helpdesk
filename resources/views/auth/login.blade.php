@@ -143,7 +143,7 @@
 
             <div class="h-[calc(100vh-3rem)] rounded-l-[40px] overflow-hidden shadow-2xl">
 
-                <img src="{{ asset('images/login-side.jpg') }}" alt="Campus" class="w-full h-full object-cover">
+                <img src="{{ asset('images/kampus.png') }}" alt="Campus" class="w-full h-full object-cover">
 
             </div>
 
