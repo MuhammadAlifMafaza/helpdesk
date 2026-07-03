@@ -2,11 +2,12 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Http\Middleware\Authenticate;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -19,8 +20,6 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -38,6 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Blue,
                 'yellow' => Color::rgb('224,125,255'),
+                'pending' => Color::Amber,
             ])
             ->sidebarCollapsibleOnDesktop()
             ->collapsedSidebarWidth('5rem')
@@ -66,7 +66,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make(),
             ])
-            ->homeUrl(fn() => match (auth()->user()?->getRoleNames()->first()) {
+            ->homeUrl(fn () => match (auth()->user()?->getRoleNames()->first()) {
                 'admin' => '/admin/admin-dashboard',
                 'teknisi' => '/admin/teknisi-dashboard',
                 default => '/admin',
@@ -90,8 +90,7 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsed(true)
                     ->icon('heroicon-o-shield-check'),
 
-            ])
-        ;
+            ]);
 
     }
 }

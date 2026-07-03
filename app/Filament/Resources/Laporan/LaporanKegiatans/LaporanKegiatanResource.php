@@ -9,23 +9,25 @@ use App\Filament\Resources\Laporan\LaporanKegiatans\Pages\ViewLaporanKegiatan;
 use App\Filament\Resources\Laporan\LaporanKegiatans\Schemas\LaporanKegiatanForm;
 use App\Filament\Resources\Laporan\LaporanKegiatans\Schemas\LaporanKegiatanInfolist;
 use App\Filament\Resources\Laporan\LaporanKegiatans\Tables\LaporanKegiatansTable;
-use app\Models\Modules\Laporan\Models\LaporanKegiatan;
-use BackedEnum;
-use UnitEnum;
+use App\Models\Modules\Laporan\Models\LaporanKegiatan;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class LaporanKegiatanResource extends Resource
 {
     protected static ?string $model = LaporanKegiatan::class;
 
     protected static ?string $slug = 'Laporan-Kegiatan';
+
     // navigation
     protected static UnitEnum|string|null $navigationGroup = 'Laporan'; // Navigation Group
+
     protected static ?string $navigationLabel = 'Laporan Kegiatan Teknisi'; // Navigation Label
+
     protected static ?string $pluralLabel = 'Laporan Kegiatan Teknisi';
+
     protected static ?string $recordTitleAttribute = 'LaporanKegiatan';
 
     public static function form(Schema $schema): Schema

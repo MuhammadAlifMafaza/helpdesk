@@ -122,7 +122,7 @@ class TiketPerbaikan extends Model
 
         return !$this->isClosed();
     }
-    
+
     /**
      * Ringkasan Data LogsPerbaikan
      * @return \Illuminate\Database\Eloquent\Relations\HasMany<LogPerbaikan, TiketPerbaikan>
@@ -185,6 +185,16 @@ class TiketPerbaikan extends Model
         );
     }
 
+    public function pending(string $catatan)
+    {
+        return $this->tambahLog(
+            'Pending',
+            null,
+            null,
+            "[PENDING] {$catatan}"
+        );
+    }
+    
     public function closeAsCompleted(
         ?string $catatan = null
     ) {
