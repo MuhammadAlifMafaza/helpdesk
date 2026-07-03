@@ -10,7 +10,10 @@ use App\Filament\Resources\Laporan\LaporanPerbaikans\Schemas\LaporanPerbaikanFor
 use App\Filament\Resources\Laporan\LaporanPerbaikans\Schemas\LaporanPerbaikanInfolist;
 use App\Filament\Resources\Laporan\LaporanPerbaikans\Tables\LaporanPerbaikansTable;
 use App\Models\Modules\Laporan\Models\LaporanPerbaikan;
+
 use BackedEnum;
+use UnitEnum;
+
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -19,8 +22,11 @@ use Filament\Tables\Table;
 class LaporanPerbaikanResource extends Resource
 {
     protected static ?string $model = LaporanPerbaikan::class;
-
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $slug = 'Laporan-Perbaikan';
+    // navigation
+    protected static UnitEnum|string|null $navigationGroup = 'Laporan'; // Navigation Group
+    protected static ?string $navigationLabel = 'Laporan Perbaikan'; // Navigation Label
+    protected static ?string $pluralLabel = 'Laporan Perbaikan';
 
     protected static ?string $recordTitleAttribute = 'LaporanPerbaikan';
 

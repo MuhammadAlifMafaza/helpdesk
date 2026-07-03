@@ -49,8 +49,6 @@ use Filament\Tables\Filters\TrashedFilter;
 class PengajuanBarangResource extends Resource
 {
     protected static ?string $model = PengajuanBarang::class;
-
-
     protected static ?string $slug = 'pengajuan-barang';
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cube';
     protected static UnitEnum|string|null $navigationGroup = 'Service Desk';

@@ -4,9 +4,13 @@ namespace App\Filament\Pages\Admin;
 
 use Filament\Pages\Page;
 
+
 class AdminDashboard extends Page
 {
-    protected string $view = 'filament.pages.admin.admin-dashboard';
+    protected static ?string $navigationLabel = 'Dashboard';
+    protected static $navigationGroup = 'Dashboard';
+    protected static ?int $navigationSort = -100;
+    protected static string $view = 'filament.pages.admin-dashboard';
 
     public static function canAccess(): bool
     {

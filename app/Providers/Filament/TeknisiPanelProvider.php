@@ -3,7 +3,6 @@
 namespace App\Providers\Filament;
 
 use Filament\Http\Middleware\Authenticate;
-use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -19,35 +18,29 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
 
-class AdminPanelProvider extends PanelProvider
+class TeknisiPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
             ->default()
             ->login()
-            ->id('admin')
-            ->path('admin')
+            ->id('teknisi')
+            ->path('teknisi')
             ->brandName('Helpdesk System')
             ->brandLogo(asset('branding/logo-tag.svg'))
             ->brandLogoHeight('4rem')
             ->favicon(asset('branding/logo.svg'))
             ->colors([
-                'primary' => Color::Blue,
-                'yellow' => Color::rgb('224,125,255'),
+                'primary' => Color::Amber,
             ])
-            ->sidebarCollapsibleOnDesktop()
-            ->collapsedSidebarWidth('5rem')
-            ->maxContentWidth('full')
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+            ->discoverResources(in: app_path('Filament/Teknisi/Resources'), for: 'App\Filament\Teknisi\Resources')
+            ->discoverPages(in: app_path('Filament/Teknisi/Pages'), for: 'App\Filament\Teknisi\Pages')
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Teknisi/Widgets'), for: 'App\Filament\Teknisi\Widgets')
             ->widgets([
                 AccountWidget::class,
                 FilamentInfoWidget::class,
@@ -63,35 +56,9 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->plugins([
-                FilamentShieldPlugin::make(),
-            ])
-            ->homeUrl(fn() => match (auth()->user()?->getRoleNames()->first()) {
-                'admin' => '/admin/admin-dashboard',
-                'teknisi' => '/admin/teknisi-dashboard',
-                default => '/admin',
-            })
             ->authMiddleware([
                 Authenticate::class,
-                'auth',
-            ])
-            ->navigationGroups([
-                NavigationGroup::make('Service Desk')
-                    ->collapsed(true),
-                NavigationGroup::make('Monitoring')
-                    ->collapsed(false)
-                    ->icon('heroicon-o-clock'),
-                NavigationGroup::make('Laporan')
-                    ->collapsed(true)
-                    ->icon('heroicon-o-document-text'),
-                NavigationGroup::make('Master Data')
-                    ->collapsed(true),
-                NavigationGroup::make('Filament Shield')
-                    ->collapsed(true)
-                    ->icon('heroicon-o-shield-check'),
-
             ])
         ;
-
     }
 }

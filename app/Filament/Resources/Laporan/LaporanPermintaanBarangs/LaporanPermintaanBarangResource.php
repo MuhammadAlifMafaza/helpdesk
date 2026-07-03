@@ -11,6 +11,7 @@ use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Schemas\LaporanPermi
 use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Tables\LaporanPermintaanBarangsTable;
 use App\Models\Modules\Laporan\Models\LaporanPermintaanBarang;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -20,8 +21,11 @@ class LaporanPermintaanBarangResource extends Resource
 {
     protected static ?string $model = LaporanPermintaanBarang::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
+    protected static ?string $slug = 'Laporan-Permintaan-Barang';
+    // navigation
+    protected static UnitEnum|string|null $navigationGroup = 'Laporan'; // Navigation Group
+    protected static ?string $navigationLabel = 'Laporan Permintaan Barang'; // Navigation Label
+    protected static ?string $pluralLabel = 'Laporan Permintaan Barang';
     protected static ?string $recordTitleAttribute = 'LaporanPermintaanBarang';
 
     public static function form(Schema $schema): Schema

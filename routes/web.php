@@ -15,24 +15,3 @@ Route::middleware(['auth', 'pemohon'])->group(function () {
         return view('welcome');
     });
 });
-
-// Route::post(
-//     '/ticket/{ticket}/chat',
-//     function (Request $request, TiketPerbaikan $ticket) {
-
-//         $request->validate([
-//             'message' => ['required']
-//         ]);
-
-//         $ticket->sendMessage(
-//             $request->message
-//         );
-
-//         return back();
-//     }
-// )
-//     ->name('ticket.chat.send');
-// Route::middlewareGroup(['auth', 'staff'])->prefix('admin')->group(function () {
-//     Route::get('/admin-dashboard', \App\Filament\Pages\IsStaff\AdminDashboard::class)->name('admin-dashboard');
-//     Route::get('/teknisi-dashboard', \App\Filament\Pages\IsStaff\TeknisiDashboard::class)->name('teknisi-dashboard');
-// });
