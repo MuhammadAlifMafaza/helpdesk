@@ -27,18 +27,12 @@ use UnitEnum;
 class LogPengajuanBarangResource extends Resource
 {
     protected static ?string $slug = 'log-pengajuan-barang';
-
     protected static ?string $model = LogPengajuan::class; // Model yang digunakan untuk resource ini
-
     protected static ?string $navigationLabel = 'Timeline Pengajuan Barang'; // Label yang muncul di navigasi
-
     protected static ?string $pluralLabel = 'Timeline Pengajuan Barang'; // Label jamak untuk resource ini
-
     protected static ?string $modelLabel = 'LogPengajuan'; // Label untuk model, digunakan dalam berbagai tempat di Filament
-
     // protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
     protected static UnitEnum|string|null $navigationGroup = 'Monitoring';
-
     protected static ?string $recordTitleAttribute = 'LogPengajuan';
 
     public static function form(Schema $schema): Schema
@@ -54,41 +48,79 @@ class LogPengajuanBarangResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->headerActions([
+            ->striped()
+            ->defaultSort('created_at', 'desc')
 
-            ])
             ->columns([
+
                 TextColumn::make('index')
-                    ->label('#')
+                    ->label('No')
                     ->rowIndex(),
+
+                TextColumn::make('created_at')
+                    ->label('Waktu')
+                    ->dateTime('d M Y')
+                    ->timezone('Asia/Jakarta')
+                    ->description(
+                        fn($record) => $record->created_at->format('H:i:s')
+                    )
+                    ->sortable(),
 
                 TextColumn::make('pengajuan.kode_pengajuan')
                     ->label('Kode Pengajuan')
-                    ->searchable(),
+                    ->copyable()
+                    ->weight('bold')
+                    ->searchable(
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
+                    ),
+
+                TextColumn::make('pengajuan.user.name')
+                    ->label('Pemohon')
+                    ->placeholder('-')
+                    ->searchable(
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
+                    ),
 
                 TextColumn::make('user.name')
-                    ->label('User'),
+                    ->label('Admin')
+                    ->placeholder('-')
+                    ->searchable(
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
+                    ),
 
-                BadgeColumn::make('kategori_log')
-                    ->label('Kategori Log')
+                TextColumn::make('pengajuan.status')
+                    ->label('Status')
+                    ->badge()
                     ->colors([
-                        'primary' => 'Status',
-                        'success' => 'Perubahan Data',
-                        'warning' => 'Catatan',
+                        'primary' => 'Open',
+                        'warning' => 'In Progress',
+                        'success' => 'Close',
                     ]),
 
-                TextColumn::make('keterangan')
-                    ->label('Keterangan')
+                TextColumn::make('event_name')
+                    ->label('Aktivitas')
+                    ->badge()
+                    ->icon(fn($record) => $record->event_icon)
+                    ->color(fn($record) => $record->event_color)
                     ->searchable(),
 
-                TextColumn::make('created_at')
-                    ->label('Waktu Log')
-                    ->dateTime('d M Y H:i:s')
-                    ->searchable(
-                        query: fn (Builder $query, string $search) => $query->whereDate('created_at', $search)
-                    ),
+                TextColumn::make('event_description')
+                    ->label('Deskripsi')
+                    ->wrap()
+                    ->limit(70)
+                    ->tooltip(fn($record) => $record->event_description)
+                    ->searchable(),
+
             ])
-            ->defaultSort('created_at', 'desc')
 
             ->filters([
                 Filter::make('created_at')
@@ -104,11 +136,11 @@ class LogPengajuanBarangResource extends Resource
                         return $query
                             ->when(
                                 $data['from'],
-                                fn (Builder $query, $date) => $query->whereDate('created_at', '>=', $date)
+                                fn(Builder $query, $date) => $query->whereDate('created_at', '>=', $date)
                             )
                             ->when(
                                 $data['until'],
-                                fn (Builder $query, $date) => $query->whereDate('created_at', '<=', $date)
+                                fn(Builder $query, $date) => $query->whereDate('created_at', '<=', $date)
                             );
                     }),
                 Filter::make('kategori_log')
@@ -125,7 +157,7 @@ class LogPengajuanBarangResource extends Resource
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when(
                             $data['kategori_log'],
-                            fn (Builder $query, $kategori) => $query->where('kategori_log', $kategori)
+                            fn(Builder $query, $kategori) => $query->where('kategori_log', $kategori)
                         );
                     }),
             ]);
@@ -146,5 +178,15 @@ class LogPengajuanBarangResource extends Resource
             'view' => ViewLogPengajuanBarang::route('/{record}'),
             'edit' => EditLogPengajuanBarang::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'user',
+                'pengajuan',
+                'pengajuan.user',
+            ]);
     }
 }

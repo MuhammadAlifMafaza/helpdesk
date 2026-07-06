@@ -6,6 +6,7 @@ use App\Filament\Resources\LogPerbaikans\Pages\ListLogPerbaikans;
 use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
 use BackedEnum;
 use Filament\Forms\Components\DatePicker;
+use Filament\Schemas\Components\Grid;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 // Filament Forms imports
@@ -13,23 +14,17 @@ use Filament\Support\Icons\Heroicon;
 // Filament Tables(Data) imports
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Table;
 use UnitEnum;
 
 class LogPerbaikanResource extends Resource
 {
-    protected static ?string $slug = 'log-perbaikan';
-
-    protected static ?string $model = LogPerbaikan::class;
-
+    protected static ?string $model = LogPerbaikan::class; // Model yang digunakan untuk resource ini
+    protected static ?string $slug = 'log-perbaikan'; // slug atau URL path untuk resource ini
     protected static ?string $pluralLabel = 'Timeline Perbaikan';
-
-    // protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-clock';
     protected static UnitEnum|string|null $navigationGroup = 'Monitoring';
-
     protected static ?string $navigationLabel = 'Timeline Perbaikan';
-
     protected static ?string $recordTitleAttribute = 'LogPerbaikan';
 
     public static function table(Table $table): Table
@@ -37,18 +32,17 @@ class LogPerbaikanResource extends Resource
         return $table
 
             ->defaultSort('created_at', 'desc')
-
             ->striped()
-
             ->columns([
 
                 TextColumn::make('index')
-                    ->label('#')
+                    ->label('No')
                     ->rowIndex(),
 
                 TextColumn::make('created_at')
                     ->label('Waktu')
                     ->dateTime('d M Y')
+                    ->timezone('Asia/Jakarta')
                     ->description(
                         fn($record) => $record->created_at->format('H:i:s')
                     )
@@ -57,23 +51,42 @@ class LogPerbaikanResource extends Resource
                 TextColumn::make('tiket.kode_tiket')
                     ->label('Kode Tiket')
                     ->copyable()
-                    ->searchable()
-                    ->weight('bold'),
+                    ->searchable(
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
+                    )->weight('bold'),
 
                 TextColumn::make('tiket.ruangan.nama_ruangan')
                     ->label('Ruangan')
                     ->placeholder('-')
-                    ->searchable(),
+                    ->searchable(
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
+                    ),
 
                 TextColumn::make('tiket.user.name')
                     ->label('Pemohon')
                     ->placeholder('-')
-                    ->searchable(),
+                    ->searchable(
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
+                    ),
 
                 TextColumn::make('user.name')
-                    ->label('Pelaku')
+                    ->label('Teknisi')
                     ->placeholder('-')
-                    ->searchable(),
+                    ->searchable(
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
+                    ),
 
                 TextColumn::make('tiket.status')
                     ->label('Status Tiket')
@@ -88,25 +101,28 @@ class LogPerbaikanResource extends Resource
                     ->label('Aktivitas')
                     ->badge()
                     ->icon(fn($record) => $record->event_icon)
-                    ->color(fn($record) => $record->event_color),
+                    ->color(fn($record) => $record->event_color)
+                    ->searchable(
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
+                    ),
 
                 TextColumn::make('event_description')
                     ->label('Deskripsi')
                     ->wrap()
                     ->limit(70)
-                    ->tooltip(fn($record) => $record->event_description),
+                    ->searchable(
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
+                    ),
 
             ])
 
             ->filters([
-
-                SelectFilter::make('user_id')
-                    ->relationship(
-                        'user',
-                        'name'
-                    )
-                    ->searchable()
-                    ->preload(),
 
                 SelectFilter::make('ruangan')
                     ->label('Ruangan')
@@ -197,14 +213,16 @@ class LogPerbaikanResource extends Resource
                     }),
 
                 SelectFilter::make('tanggal')
-                    ->form([
-
-                        DatePicker::make('from')
-                            ->label('Mulai'),
-
-                        DatePicker::make('until')
-                            ->label('Sampai'),
-
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
+                                DatePicker::make('from')
+                                    ->label('Dari Tanggal')
+                                    ->native(false),
+                                DatePicker::make('until')
+                                    ->label('Sampai Tanggal')
+                                    ->native(false),
+                            ])
                     ])
                     ->query(function (Builder $query, array $data) {
 

@@ -91,7 +91,8 @@ class PengajuanBarangResource extends Resource
                         // 'Close' => 'Rejected',
                     ])
                     ->default('Open')
-                    ->required(),
+                    ->required()
+                    ->disabled(),
             ]);
     }
 
@@ -239,19 +240,31 @@ class PengajuanBarangResource extends Resource
                     }),
 
                 TextColumn::make('created_at')
-                    ->label('Tanggal Permintaan Dibuat')
-                    ->dateTime('d M Y'),
+                    ->label('Waktu Permintaan Dibuat')
+                    ->dateTime('d M Y')
+                    ->timezone('Asia/Jakarta')
+                    ->description(
+                        fn($record) => $record->created_at->format('H:i:s')
+                    ),
 
                 TextColumn::make('waktu_mulai')
                     ->label('Waktu Permintaan Diterima')
-                    ->dateTime('d M Y h:m:s'),
+                    ->dateTime('d M Y')
+                    ->timezone('Asia/Jakarta')
+                    ->description(
+                        fn($record) => $record->created_at->format('H:i:s')
+                    ),
 
                 TextColumn::make('waktu_selesai')
                     ->label('Waktu Permintaan Selesai')
-                    ->dateTime('d M Y h:m:s'),
+                    ->dateTime('d M Y')
+                    ->timezone('Asia/Jakarta')
+                    ->description(
+                        fn($record) => $record->created_at->format('H:i:s')
+                    ),
 
                 TextColumn::make('durasi_pengerjaan')
-                    ->timezone(''),
+                    ->timezone('Asia/Jakarta'),
 
             ])
 

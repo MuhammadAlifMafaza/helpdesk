@@ -36,8 +36,15 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('branding/logo.svg'))
             ->colors([
                 'primary' => Color::Blue,
-                'yellow' => Color::rgb('224,125,255'),
                 'pending' => Color::Amber,
+                'chat' => Color::Cyan,
+                'update' => Color::Indigo,
+                'delete' => Color::Red,
+                'process' => Color::Orange,
+                'approve' => Color::Green,
+                'reject' => Color::Red,
+                'reopen' => Color::Yellow,
+
             ])
             ->sidebarCollapsibleOnDesktop()
             ->collapsedSidebarWidth('5rem')
@@ -66,7 +73,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make(),
             ])
-            ->homeUrl(fn () => match (auth()->user()?->getRoleNames()->first()) {
+            ->homeUrl(fn() => match (auth()->user()?->getRoleNames()->first()) {
                 'admin' => '/admin/admin-dashboard',
                 'teknisi' => '/admin/teknisi-dashboard',
                 default => '/admin',

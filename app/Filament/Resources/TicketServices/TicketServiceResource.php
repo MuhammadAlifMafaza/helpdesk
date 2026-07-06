@@ -262,13 +262,25 @@ class TicketServiceResource extends Resource
 
                 TextColumn::make('created_at')
                     ->label('Tanggal Dibuat')
-                    ->dateTime('d M Y'),
+                    ->dateTime('d M Y')
+                    ->timezone('Asia/Jakarta')
+                    ->description(
+                        fn($record) => $record->created_at->format('H:i:s')
+                    ),
 
                 TextColumn::make('waktu_mulai')
-                    ->dateTime('d M Y h:m:s'),
+                    ->dateTime('d M Y')
+                    ->timezone('Asia/Jakarta')
+                    ->description(
+                        fn($record) => $record->created_at->format('H:i:s')
+                    ),
 
                 TextColumn::make('waktu_selesai')
-                    ->dateTime('d M Y h:m:s'),
+                    ->dateTime('d M Y')
+                    ->timezone('Asia/Jakarta')
+                    ->description(
+                        fn($record) => $record->waktu_selesai->format('H:i:s')
+                    ),
 
                 TextColumn::make('durasi_pengerjaan')
                     ->timezone(''),
