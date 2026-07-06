@@ -92,6 +92,113 @@ class LogPengajuan extends Model
         return $this->event_type === self::EVENT_DELETE;
     }
 
+    public function scopeCreated(Builder $query): Builder
+    {
+        return $query
+            ->where('kategori_log', 'Status')
+            ->whereNull('data_lama')
+            ->where('data_baru', 'Open');
+    }
+
+    public function scopeProcess(Builder $query): Builder
+    {
+        return $query
+            ->where('kategori_log', 'Status')
+            ->where('data_lama', 'Open')
+            ->where('data_baru', 'In Progress');
+    }
+
+    public function scopeApprove(Builder $query): Builder
+    {
+        return $query
+            ->where('kategori_log', 'Status')
+            ->where('data_lama', 'In Progress')
+            ->where('data_baru', 'Close')
+            ->where('keterangan', 'like', '[SELESAI]%');
+    }
+
+    public function scopeReject(Builder $query): Builder
+    {
+        return $query
+            ->where('kategori_log', 'Status')
+            ->where('data_lama', 'In Progress')
+            ->where('data_baru', 'Close')
+            ->where('keterangan', 'like', '[DITOLAK]%');
+    }
+
+    public function scopeReopen(Builder $query): Builder
+    {
+        return $query
+            ->where('kategori_log', 'Status')
+            ->where('data_lama', 'Close')
+            ->where('data_baru', 'In Progress');
+    }
+
+    public function scopePending(Builder $query): Builder
+    {
+        return $query
+            ->where('kategori_log', 'Pending');
+    }
+
+    public function scopeChat(Builder $query): Builder
+    {
+        return $query
+            ->where('kategori_log', 'Chat');
+    }
+
+    public function scopeUpdateData(Builder $query): Builder
+    {
+        return $query
+            ->where('kategori_log', 'Update Data');
+    }
+
+    public function scopeDeleteData(Builder $query): Builder
+    {
+        return $query
+            ->where('kategori_log', 'Delete Data');
+    }
+
+    public static function searchableEvents(): array
+    {
+        return [
+            [
+                'name' => 'Pengajuan Dibuat',
+                'query' => fn (Builder $query) => $query->created(),
+            ],
+            [
+                'name' => 'Pengajuan Diproses',
+                'query' => fn (Builder $query) => $query->process(),
+            ],
+            [
+                'name' => 'Pengajuan Disetujui',
+                'query' => fn (Builder $query) => $query->approve(),
+            ],
+            [
+                'name' => 'Pengajuan Ditolak',
+                'query' => fn (Builder $query) => $query->reject(),
+            ],
+            [
+                'name' => 'Pengajuan Dibuka Kembali',
+                'query' => fn (Builder $query) => $query->reopen(),
+            ],
+            [
+                'name' => 'Pending',
+                'query' => fn (Builder $query) => $query->pending(),
+            ],
+            [
+                'name' => 'Pesan Baru',
+                'query' => fn (Builder $query) => $query->where('kategori_log', 'Chat'),
+            ],
+            [
+                'name' => 'Perubahan Data',
+                'query' => fn (Builder $query) => $query->where('kategori_log', 'Update Data'),
+            ],
+            [
+                'name' => 'Hapus Data',
+                'query' => fn (Builder $query) => $query->where('kategori_log', 'Delete Data'),
+            ],
+        ];
+    }
 
     /**
      * Global Search Timeline Pengajuan Barang
@@ -138,7 +245,8 @@ class LogPengajuan extends Model
                     ->where('nama_barang', 'like', "%{$search}%")
                     ->orWhere('jumlah', 'like', "%{$search}%")
                     ->orWhere('alasan', 'like', "%{$search}%")
-                    ->orWhere('status', 'like', "%{$search}%");
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhere('kode_pengajuan', 'like', "%{$search}%");
             });
 
             /*

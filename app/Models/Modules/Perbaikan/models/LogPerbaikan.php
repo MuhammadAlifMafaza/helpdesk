@@ -90,7 +90,8 @@ class LogPerbaikan extends Model
                     $q
                         ->where('keluhan', 'like', "%{$search}%")
                         ->orWhere('deskripsi', 'like', "%{$search}%")
-                        ->orWhere('status', 'like', "%{$search}%");
+                        ->orWhere('status', 'like', "%{$search}%")
+                        ->orWhere('kepemilikan', 'like', "%{$search}%");
                 })
 
                 // Search in related tiket's ruangan model

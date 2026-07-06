@@ -20,7 +20,9 @@ use Filament\Tables\Columns\BadgeColumn;
 // Filament Tables(Data) imports
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
@@ -69,13 +71,25 @@ class LogPengajuanBarangResource extends Resource
                 TextColumn::make('pengajuan.kode_pengajuan')
                     ->label('Kode Pengajuan')
                     ->copyable()
-                    ->weight('bold')
                     ->searchable(
                         query: fn(
                         Builder $query,
                         string $search
                     ) => $query->searchTimeline($search)
-                    ),
+                    )
+                    ->weight('bold')
+                ,
+
+                TextColumn::make('pengajuan.nama_barang')
+                    ->label('Nama Barang')
+                    ->placeholder('-')
+                    ->searchable(
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
+                    )
+                ,
 
                 TextColumn::make('pengajuan.user.name')
                     ->label('Pemohon')
@@ -123,44 +137,146 @@ class LogPengajuanBarangResource extends Resource
             ])
 
             ->filters([
-                Filter::make('created_at')
-                    ->label('Filter Tanggal')
+                SelectFilter::make('pemohon')
+                    ->label('Pemohon')
+                    ->relationship(
+                        'pengajuan.user',
+                        'name'
+                    )
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('user_id')
+                    ->label('Admin')
+                    ->relationship(
+                        'user',
+                        'name'
+                    )
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('status')
+                    ->label('Status Pengajuan')
+                    ->options([
+                        'Open' => 'Open',
+                        'In Progress' => 'In Progress',
+                        'Close' => 'Close',
+                    ])
+                    ->query(function (Builder $query, array $data) {
+
+                        return $query->when(
+                            filled($data['value']),
+                            fn($q) => $q->whereHas(
+                                'pengajuan',
+                                fn($q2) => $q2->where(
+                                    'status',
+                                    $data['value']
+                                )
+                            )
+                        );
+
+                    }),
+
+                SelectFilter::make('aktivitas')
+                    ->label('Aktivitas')
+                    ->options([
+
+                        LogPengajuan::EVENT_CREATE => 'Pengajuan Dibuat',
+
+                        LogPengajuan::EVENT_PROCESS => 'Diproses',
+
+                        LogPengajuan::EVENT_APPROVE => 'Disetujui',
+
+                        LogPengajuan::EVENT_REJECT => 'Ditolak',
+
+                        LogPengajuan::EVENT_REOPEN => 'Dibuka Kembali',
+
+                        LogPengajuan::EVENT_PENDING => 'Pending',
+
+                        LogPengajuan::EVENT_CHAT => 'Pesan',
+
+                        LogPengajuan::EVENT_UPDATE => 'Perubahan Data',
+
+                        LogPengajuan::EVENT_DELETE => 'Hapus Data',
+
+                    ])
+
+                    ->query(function (Builder $query, array $data) {
+
+                        if (blank($data['value'])) {
+                            return $query;
+                        }
+
+                        return match ($data['value']) {
+
+                            LogPengajuan::EVENT_CREATE
+                            => $query->created(),
+
+                            LogPengajuan::EVENT_PROCESS
+                            => $query->process(),
+
+                            LogPengajuan::EVENT_APPROVE
+                            => $query->approve(),
+
+                            LogPengajuan::EVENT_REJECT
+                            => $query->reject(),
+
+                            LogPengajuan::EVENT_REOPEN
+                            => $query->reopen(),
+
+                            LogPengajuan::EVENT_PENDING
+                            => $query->pending(),
+
+                            LogPengajuan::EVENT_CHAT
+                            => $query->chat(),
+
+                            LogPengajuan::EVENT_UPDATE
+                            => $query->updateData(),
+
+                            LogPengajuan::EVENT_DELETE
+                            => $query->deleteData(),
+
+                            default => $query,
+                        };
+
+                    }),
+
+                Filter::make('tanggal')
+                    ->label('Tanggal')
                     ->form([
+
                         DatePicker::make('from')
-                            ->label('Dari Tanggal'),
+                            ->label('Mulai'),
 
                         DatePicker::make('until')
-                            ->label('Sampai Tanggal'),
+                            ->label('Sampai'),
+
                     ])
-                    ->query(function (Builder $query, array $data): Builder {
+                    ->query(function (Builder $query, array $data) {
+
                         return $query
                             ->when(
                                 $data['from'],
-                                fn(Builder $query, $date) => $query->whereDate('created_at', '>=', $date)
+                                fn($q, $date)
+                                => $q->whereDate(
+                                    'created_at',
+                                    '>=',
+                                    $date
+                                )
                             )
                             ->when(
                                 $data['until'],
-                                fn(Builder $query, $date) => $query->whereDate('created_at', '<=', $date)
+                                fn($q, $date)
+                                => $q->whereDate(
+                                    'created_at',
+                                    '<=',
+                                    $date
+                                )
                             );
+
                     }),
-                Filter::make('kategori_log')
-                    ->label('Filter Kategori')
-                    ->form([
-                        Select::make('kategori_log')
-                            ->options([
-                                'Status' => 'Status',
-                                'Perubahan Data' => 'Perubahan Data',
-                                'Catatan' => 'Catatan',
-                            ])
-                            ->label('Kategori Log'),
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query->when(
-                            $data['kategori_log'],
-                            fn(Builder $query, $kategori) => $query->where('kategori_log', $kategori)
-                        );
-                    }),
-            ]);
+
+            ], layout: FiltersLayout::AboveContentCollapsible);
     }
 
     public static function getRelations(): array
