@@ -27,15 +27,16 @@ class LaporanPerbaikansTable
                     ->rowIndex()
                     ->alignCenter(),
 
-                TextColumn::make('tiket.kode_tiket')
+                TextColumn::make('kode_tiket')
                     ->label('Kode Tiket')
                     ->copyable()
+                    ->weight('bold')
                     ->searchable(
                         query: fn(
                         Builder $query,
                         string $search
-                    ) => $query->searchTimeline($search)
-                    )->weight('bold'),
+                    ) => $query->searchLaporan($search)
+                    ),
 
                 TextColumn::make('nama_pemohon')
                     ->label('Nama Pemohon')
@@ -48,38 +49,41 @@ class LaporanPerbaikansTable
                     ->sortable()
                     ->wrap(),
 
-                BadgeColumn::make('kepemilikan')
-                    ->label('No Tiket')
+                BadgeColumn::make('ownership_label')
+                    ->label('Kepemilikan')
+                    ->color(fn($record) => $record->ownership_color)->label('Kepemilikan Barang')
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('nama_teknisi')
+                TextColumn::make('nama_teknisi_label')
                     ->label('Nama Teknisi')
-                    ->sortable()
-                    ->placeholder('Belum Ada Teknisi'),
-
-                BadgeColumn::make('tiket.status')
-                    ->color(fn($record) => $record->tiket->status_color),
-
-                TextColumn::make('waktu_mulai')
-                    ->label('Waktu Mulai')
-                    ->dateTime('d M Y')
-                    ->timezone('Asia/Jakarta')
                     ->sortable(),
 
-                TextColumn::make('waktu_selesai')
-                    ->label('Waktu Selesai')
-                    ->dateTime('d M Y')
-                    ->timezone('Asia/Jakarta')
-                    ->placeholder('Masih dalam pengerjaan')
-                    ->sortable(),
+                BadgeColumn::make('status_label')
+                    ->label('Status')
+                    ->color(fn($record) => $record->status_color),
 
-                TextColumn::make('durasi_pengerjaan_menit')
+                BadgeColumn::make('service_category')
+                    ->label('Kategori')
+                    ->color(fn($record) => $record->service_category_color),
+
+                TextColumn::make('tanggal_mulai')
+                    ->label('Mulai')
+                    ->placeholder('Tiket Masih Belum Dikerjakan')
+                    ->description(
+                        fn($record) => $record->Jam_mulai
+                    ),
+
+                TextColumn::make('tanggal_selesai')
+                    ->label('Selesai')
+                    ->placeholder('Masih Dikerjakan')
+                    ->description(
+                        fn($record) => $record->jam_selesai
+                    ),
+
+                TextColumn::make('durasi')
                     ->label('Durasi Pengerjaan')
-                    ->dateTime('H:i:s')
-                    ->timezone('Asia/Jakarta')
-                    ->placeholder('')
-                    ->sortable(),
+                    ->timezone('Asia/Jakarta'),
 
             ])
 

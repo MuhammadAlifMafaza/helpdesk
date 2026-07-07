@@ -56,9 +56,9 @@ class LaporanPermintaanBarangResource extends Resource
     {
         return [
             'index' => ListLaporanPermintaanBarangs::route('/'),
-            'create' => CreateLaporanPermintaanBarang::route('/create'),
-            'view' => ViewLaporanPermintaanBarang::route('/{record}'),
-            'edit' => EditLaporanPermintaanBarang::route('/{record}/edit'),
+            // 'create' => CreateLaporanPermintaanBarang::route('/create'),
+            // 'view' => ViewLaporanPermintaanBarang::route('/{record}'),
+            // 'edit' => EditLaporanPermintaanBarang::route('/{record}/edit'),
         ];
     }
 }

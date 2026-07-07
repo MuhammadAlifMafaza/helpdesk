@@ -56,9 +56,9 @@ class LaporanPerbaikanResource extends Resource
     {
         return [
             'index' => ListLaporanPerbaikans::route('/'),
-            'create' => CreateLaporanPerbaikan::route('/create'),
-            'view' => ViewLaporanPerbaikan::route('/{record}'),
-            'edit' => EditLaporanPerbaikan::route('/{record}/edit'),
+            // 'create' => CreateLaporanPerbaikan::route('/create'),
+            // 'view' => ViewLaporanPerbaikan::route('/{record}'),
+            // 'edit' => EditLaporanPerbaikan::route('/{record}/edit'),
         ];
     }
 }
