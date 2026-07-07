@@ -56,7 +56,6 @@ class User extends Authenticatable implements FilamentUser
             'super_admin',
             'admin',
             'teknisi',
-            // 'pemohon',
         ]);
     }
 }
