@@ -93,6 +93,196 @@ class LaporanPerbaikan extends Model
 
     /*
     |--------------------------------------------------------------------------
+    | Scope Filter Data Laporan Perbaikan
+    |--------------------------------------------------------------------------
+    */
+
+    /* Filter Data Periode perbaikan */
+    public function scopePeriode(
+        Builder $query,
+        ?string $from,
+        ?string $until
+    ): Builder {
+
+        return $query
+            ->when(
+                $from,
+                fn(Builder $query) =>
+                $query->whereDate(
+                    'waktu_mulai',
+                    '>=',
+                    $from
+                )
+            )
+            ->when(
+                $until,
+                fn(Builder $query) =>
+                $query->whereDate(
+                    'waktu_mulai',
+                    '<=',
+                    $until
+                )
+            );
+
+    }
+
+    /* Scope Filter Status */
+
+    public function scopeStatus(
+        Builder $query,
+        ?string $status
+    ): Builder {
+
+        return $query->when(
+
+            filled($status),
+
+            fn(Builder $query) =>
+
+            $query->where(
+                'status',
+                $status
+            )
+
+        );
+
+    }
+
+    /* Scope Filter Teknisi */
+    public function scopeTeknisi(
+        Builder $query,
+        ?string $teknisi
+    ): Builder {
+        return $query->when(
+            filled($teknisi),
+            fn(Builder $query) =>
+            $query->where(
+                'nama_teknisi',
+                $teknisi
+            )
+        );
+    }
+
+    /* Scope Filter Lokasi */
+    public function scopeLokasi(
+        Builder $query,
+        ?string $lokasi
+    ): Builder {
+
+        return $query->when(
+
+            filled($lokasi),
+
+            fn(Builder $query) =>
+
+            $query->where(
+                'lokasi',
+                $lokasi
+            )
+
+        );
+
+    }
+
+    /* Scope Filter Kepemilikan */
+
+    public function scopeKepemilikan(
+        Builder $query,
+        ?string $kepemilikan
+    ): Builder {
+
+        return $query->when(
+
+            filled($kepemilikan),
+
+            fn(Builder $query) =>
+
+            $query->where(
+                'kepemilikan',
+                $kepemilikan
+            )
+
+        );
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scope Filter Kategori Durasi
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeKategoriDurasi(
+        Builder $query,
+        ?string $kategori
+    ): Builder {
+
+        if (blank($kategori)) {
+
+            return $query;
+
+        }
+
+        return match ($kategori) {
+
+            'Cepat'
+            => $query->whereBetween(
+                'durasi_pengerjaan_menit',
+                [1, 60]
+            ),
+
+            'Normal'
+            => $query->whereBetween(
+                'durasi_pengerjaan_menit',
+                [61, 240]
+            ),
+
+            'Lama'
+            => $query->where(
+                'durasi_pengerjaan_menit',
+                '>',
+                240
+            ),
+
+            'Belum Selesai'
+            => $query->whereNull(
+                'durasi_pengerjaan_menit'
+            ),
+
+            default
+            => $query,
+        };
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scope Filter Outcome
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeOutcome(
+        Builder $query,
+        ?string $outcome
+    ): Builder {
+
+        if (blank($outcome)) {
+
+            return $query;
+
+        }
+
+        return $query->whereHas(
+            'tiket',
+            fn(Builder $query) =>
+
+            $query->whereRaw('1 = 1')
+        );
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Scope Status
     |--------------------------------------------------------------------------
     */
@@ -160,7 +350,7 @@ class LaporanPerbaikan extends Model
             $urut
         );
     }
-    
+
     /*
     |--------------------------------------------------------------------------
     | Helper Kepemilikan
@@ -190,7 +380,7 @@ class LaporanPerbaikan extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            'Open' => 'Open',
+            'Open' => 'Belum Dikerjakan',
             'In Progress' => 'Sedang Dikerjakan',
             'Close' => 'Selesai',
             default => '-',
@@ -248,20 +438,24 @@ class LaporanPerbaikan extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Duration
+    | Helper Durasi Waktu Pengerjaan
     |--------------------------------------------------------------------------
     */
 
-    public function getDurasiAttribute(): string
-    {
+    public static function formatDuration(
+        ?int $minutes
+    ): string {
+
         if (
-            empty($this->durasi_pengerjaan_menit) ||
-            $this->durasi_pengerjaan_menit <= 0
+            empty($minutes) ||
+            $minutes <= 0
         ) {
-            return '-';
+
+            return 'Sedang Dikerjakan';
+
         }
 
-        $totalMenit = (int) $this->durasi_pengerjaan_menit;
+        $totalMenit = $minutes;
 
         $bulan = floor($totalMenit / (60 * 24 * 30));
         $totalMenit %= (60 * 24 * 30);
@@ -278,27 +472,99 @@ class LaporanPerbaikan extends Model
 
         $hasil = [];
 
+        /*
+        |--------------------------------------------------------------------------
+        | >= Bulan
+        | tampilkan:
+        | Bulan Minggu Hari
+        |--------------------------------------------------------------------------
+        */
+
         if ($bulan > 0) {
+
             $hasil[] = "{$bulan} Bulan";
+
+            if ($minggu > 0) {
+                $hasil[] = "{$minggu} Minggu";
+            }
+
+            if ($hari > 0) {
+                $hasil[] = "{$hari} Hari";
+            }
+
+            return implode(' ', $hasil);
+
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | >= Minggu
+        | tampilkan:
+        | Minggu Hari
+        |--------------------------------------------------------------------------
+        */
 
         if ($minggu > 0) {
+
             $hasil[] = "{$minggu} Minggu";
+
+            if ($hari > 0) {
+                $hasil[] = "{$hari} Hari";
+            }
+
+            return implode(' ', $hasil);
+
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | >= Hari
+        |--------------------------------------------------------------------------
+        */
 
         if ($hari > 0) {
+
             $hasil[] = "{$hari} Hari";
+
+            // if ($jam > 0) {
+            //     $hasil[] = "{$jam} Jam";
+            // }
+
+            // if ($menit > 0) {
+            //     $hasil[] = "{$menit} Menit";
+            // }
+
+            return implode(' ', $hasil);
+
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | >= Jam
+        |--------------------------------------------------------------------------
+        */
 
         if ($jam > 0) {
+
             $hasil[] = "{$jam} Jam";
+
+            if ($menit > 0) {
+                $hasil[] = "{$menit} Menit";
+            }
+
+            return implode(' ', $hasil);
+
         }
 
-        if ($menit > 0) {
-            $hasil[] = "{$menit} Menit";
-        }
+        return "{$menit} Menit";
 
-        return implode(' ', $hasil);
+    }
+
+    public function getDurasiAttribute(): string
+    {
+        return static::formatDuration(
+            $this->durasi_pengerjaan_menit
+        );
     }
 
     public function getDurasiJamAttribute(): float
@@ -356,11 +622,11 @@ class LaporanPerbaikan extends Model
         }
 
         return match (true) {
-            $this->durasi_pengerjaan_menit < 60 => 'Menit',
-            $this->durasi_pengerjaan_menit < 1440 => 'Jam',
-            $this->durasi_pengerjaan_menit < 10080 => 'Hari',
-            $this->durasi_pengerjaan_menit < 43200 => 'Minggu',
-            default => 'Bulan',
+            $this->durasi_pengerjaan_menit >= 43200 => 'Bulan',
+            $this->durasi_pengerjaan_menit >= 10080 => 'Minggu',
+            $this->durasi_pengerjaan_menit >= 1440 => 'Hari',
+            $this->durasi_pengerjaan_menit >= 60 => 'Jam',
+            default => 'Menit',
         };
     }
 
@@ -400,6 +666,174 @@ class LaporanPerbaikan extends Model
 
     /*
     |--------------------------------------------------------------------------
+    | Statistics
+    |--------------------------------------------------------------------------
+    */
+
+    /* Total Jumlah Tiket */
+    public static function getTotalTiket(
+        ?Builder $query = null
+    ): int {
+
+        $query ??= static::query();
+
+        return (clone $query)->count();
+
+    }
+
+    /* Total Tiket Yang Belum di Kerjakan (Open) */
+    public static function getTotalOpen(
+        ?Builder $query = null
+    ): int {
+
+        $query ??= static::query();
+
+        return (clone $query)
+            ->where(
+                'status',
+                'Open'
+            )
+            ->count();
+    }
+
+    /* Total Tiket Yang Sedang di Kerjakan (In Progress) */
+    public static function getTotalInProgress(
+        ?Builder $query = null
+    ): int {
+
+        $query ??= static::query();
+
+        return (clone $query)
+            ->where(
+                'status',
+                'In Progress'
+            )
+            ->count();
+    }
+
+    /* Total Tiket Yang Telah di Tutup (Close)*/
+    public static function getTotalClose(
+        ?Builder $query = null
+    ): int {
+
+        $query ??= static::query();
+
+        return (clone $query)
+
+            ->where(
+                'status',
+                'Close'
+            )
+
+            ->count();
+
+    }
+
+    /* Jumlah Tiket Yang Belum Selesai */
+    public static function getTotalBelumSelesai(
+        ?Builder $query = null
+    ): int {
+
+        $query ??= static::query();
+
+        return (clone $query)
+            ->whereNull(
+                'waktu_selesai'
+            )
+            ->count();
+    }
+
+    /* Jumlah Teknisi Aktif */
+    public static function getTotalTeknisi(
+        ?Builder $query = null
+    ): int {
+
+        $query ??= static::query();
+
+        return (clone $query)
+
+            ->whereNotNull(
+                'nama_teknisi'
+            )
+            ->distinct()
+            ->count('nama_teknisi');
+    }
+
+    /* Total Lokasi */
+    public static function getTotalLokasi(
+        ?Builder $query = null
+    ): int {
+
+        $query ??= static::query();
+
+        return (clone $query)
+
+            ->distinct()
+
+            ->count('lokasi');
+
+    }
+
+    /* Rata-rata Durasi Pengerjaan (Jam) Tiket */
+    public static function getAverageDuration(
+        ?Builder $query = null
+    ): float {
+
+        $query ??= static::query();
+
+        $minutes = (clone $query)
+            ->whereNotNull('durasi_pengerjaan_menit')
+            ->avg('durasi_pengerjaan_menit');
+
+        if (!$minutes) {
+            return 0;
+        }
+
+        return round($minutes / 60, 2);
+
+    }
+
+    /* Average Duration Human */
+    public static function getAverageDurationHuman(
+        ?Builder $query = null
+    ): string {
+
+        $hours = static::getAverageDuration($query);
+
+        if ($hours <= 0) {
+            return '-';
+        }
+
+        $days = round($hours / 24, 2);
+
+        return number_format($hours, 2)
+            . ' Jam'
+            . " ({$days} Hari)";
+
+    }
+
+    /* Average Duration Description */
+    public static function getAverageDurationDescription(
+        ?Builder $query = null
+    ): string {
+
+        $query ??= static::query();
+
+        $minutes = (clone $query)
+            ->whereNotNull('durasi_pengerjaan_menit')
+            ->avg('durasi_pengerjaan_menit');
+
+        if (!$minutes) {
+            return '-';
+        }
+
+        $days = round($minutes / 1440, 2);
+
+        return "≈ {$days} Hari";
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Service Category
     |--------------------------------------------------------------------------
     */
@@ -407,13 +841,10 @@ class LaporanPerbaikan extends Model
     public function getServiceCategoryAttribute(): string
     {
         if (!$this->durasi_pengerjaan_menit) {
-
             return 'Belum Selesai';
-
         }
 
         return match (true) {
-
             $this->durasi_pengerjaan_menit <= 60
             => 'Cepat',
 
@@ -422,22 +853,16 @@ class LaporanPerbaikan extends Model
 
             default
             => 'Lama',
-
         };
     }
 
     public function getServiceCategoryColorAttribute(): string
     {
         return match ($this->service_category) {
-
             'Cepat' => 'success',
-
             'Normal' => 'warning',
-
             'Lama' => 'danger',
-
             default => 'gray',
-
         };
     }
 

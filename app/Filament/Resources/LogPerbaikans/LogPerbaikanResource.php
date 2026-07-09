@@ -58,6 +58,9 @@ class LogPerbaikanResource extends Resource
                     ) => $query->searchTimeline($search)
                     )->weight('bold'),
 
+                TextColumn::make('tiket.keluhan')
+                    ->label('Keluhan Kerusakan'),
+
                 TextColumn::make('tiket.ruangan.nama_ruangan')
                     ->label('Ruangan')
                     ->placeholder('-')

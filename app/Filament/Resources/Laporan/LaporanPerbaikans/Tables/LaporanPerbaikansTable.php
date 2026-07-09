@@ -12,6 +12,13 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 
+// Filament Filters
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Illuminate\Support\Facades\DB;
+
 class LaporanPerbaikansTable
 {
     public static function configure(Table $table): Table
@@ -42,6 +49,9 @@ class LaporanPerbaikansTable
                     ->label('Nama Pemohon')
                     ->searchable()
                     ->sortable(),
+
+                TextColumn::make('tiket.keluhan')
+                    ->label('Keluhan Kerusakan'),
 
                 TextColumn::make('lokasi')
                     ->label('Lokasi')
@@ -89,6 +99,122 @@ class LaporanPerbaikansTable
 
             ->filters([
                 //
+                Filter::make('periode')
+                    ->label('Periode')
+                    ->form([
+                        DatePicker::make('from')
+                            ->label('Tanggal Awal'),
+
+                        DatePicker::make('until')
+                            ->label('Tanggal Akhir'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->periode(
+                            $data['from'] ?? null,
+                            $data['until'] ?? null
+                        );
+                    }),
+
+                Filter::make('status')
+                    ->form([
+                        Select::make('status')
+                            ->options([
+                                'Open' => 'Open',
+                                'In Progress' => 'Sedang Dikerjakan',
+                                'Close' => 'Selesai',
+                            ])
+                            ->label('Status'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->status(
+                            $data['status'] ?? null
+                        );
+                    }),
+
+                Filter::make('teknisi')
+                    ->form([
+                        Select::make('teknisi')
+                            ->label('Teknisi')
+                            ->searchable()
+                            ->options(
+                                LaporanPerbaikan::query()
+                                    ->whereNotNull('nama_teknisi')
+                                    ->orderBy('nama_teknisi')
+                                    ->pluck(
+                                        'nama_teknisi',
+                                        'nama_teknisi'
+                                    )
+                                    ->toArray()
+                            ),
+
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->teknisi(
+                            $data['teknisi'] ?? null
+                        );
+                    }),
+
+                Filter::make('lokasi')
+                    ->form([
+                        Select::make('lokasi')
+                            ->searchable()
+                            ->options(
+                                LaporanPerbaikan::query()
+                                    ->orderBy('lokasi')
+                                    ->pluck(
+                                        'lokasi',
+                                        'lokasi'
+                                    )
+                                    ->toArray()
+                            ),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->lokasi(
+                            $data['lokasi'] ?? null
+                        );
+                    }),
+
+                Filter::make('kepemilikan')
+                    ->form([
+                        Select::make('kepemilikan')
+                            ->options([
+                                'Inventaris Kantor'
+                                => 'Inventaris Kantor',
+                                'Pribadi'
+                                => 'Pribadi',
+                                'Lainnya'
+                                => 'Lainnya',
+                            ])
+                    ])
+
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->kepemilikan(
+                            $data['kepemilikan'] ?? null
+                        );
+                    }),
+
+                Filter::make('kategori')
+                    ->form([
+                        Select::make('kategori')
+                            ->options([
+                                'Cepat'
+                                => 'Cepat',
+
+                                'Normal'
+                                => 'Normal',
+
+                                'Lama'
+                                => 'Lama',
+
+                                'Belum Selesai'
+                                => 'Belum Selesai',
+                            ])
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->kategoriDurasi(
+                            $data['kategori'] ?? null
+                        );
+                    }),
             ])
 
             ->toolbarActions([
