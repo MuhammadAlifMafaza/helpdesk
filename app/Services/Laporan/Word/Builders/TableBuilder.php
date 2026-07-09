@@ -6,6 +6,25 @@ use PhpOffice\PhpWord\Element\Section;
 
 class TableBuilder
 {
+
+    private const HEADER_STYLE = [
+        'bold' => true,
+        'size' => 10,
+    ];
+
+    private const BODY_STYLE = [
+        'size' => 10,
+    ];
+
+    private const HEADER_CELL = [
+        'bgColor' => 'D9EAD3',
+        'valign' => 'center',
+    ];
+
+    private const BODY_CELL = [
+        'valign' => 'center',
+    ];
+
     /**
      * Build Table
      */
@@ -16,6 +35,12 @@ class TableBuilder
     ): void {
 
         $table = $section->addTable('MainTable');
+        /*
+        |--------------------------------------------------------------------------
+        | Style
+        |--------------------------------------------------------------------------
+        */
+
 
         /*
         |--------------------------------------------------------------------------
@@ -26,21 +51,26 @@ class TableBuilder
         $table->addRow();
 
         foreach ($headers as $header) {
-            $label = is_array($header) ? ($header['label'] ?? '') : (string) $header;
-            $width = is_array($header) ? ($header['width'] ?? 1500) : 1500;
 
             $table
+
                 ->addCell(
-                    $width,
-                    [
-                        'bgColor' => 'D9EAD3',
-                    ]
+                    1200,
+                    self::HEADER_CELL
                 )
+
                 ->addText(
-                    $label,
+
+                    $header,
+
+                    self::HEADER_STYLE,
+
                     [
-                        'bold' => true,
+
+                        'alignment' => 'center',
+
                     ]
+
                 );
 
         }
@@ -50,6 +80,8 @@ class TableBuilder
         | Data
         |--------------------------------------------------------------------------
         */
+
+        
 
         foreach ($rows as $row) {
 

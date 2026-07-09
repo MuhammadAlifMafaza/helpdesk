@@ -69,8 +69,16 @@ class LaporanPerbaikanWord extends BaseWordExporter
     protected function build(): void
     {
         $this->buildHeader(
-            title: 'LAPORAN PERBAIKAN',
-            subtitle: 'Sistem Helpdesk P3SDI',
+            documentCode: '1FM-01.07.16/R0'
+        );
+
+        $this->buildDocumentTitle(
+            title: 'Laporan Perbaikan PC Teknisi',
+            documentNumber: 'No. 003/IWIMA/KTPI-P3SDI/0426'
+        );
+
+        $this->buildDocumentInfo(
+            periode: 'Semester Genap 2025/2026',
             printedBy: auth()->user()?->name
         );
 
@@ -80,16 +88,13 @@ class LaporanPerbaikanWord extends BaseWordExporter
         );
 
         $this->buildSignature(
-            title: 'Ka. Bidang Teknisi & Perawatan Infrastruktur',
-            name: auth()->user()->name
-        );
+            leftTitle: 'Ka. Bidang Teknisi & Perawatan Infrastruktur',
+            leftName: 'Edi Purwanto, S.Kom',
 
-        $this->buildSignature(
-            title: 'Ka. UPT Laboratorium Komputer & Bahasa',
-            name: auth()->user()->name
+            rightTitle: 'Ka. UPT Laboratorium Komputer & Bahasa',
+            rightName: 'Wachid Darmawan, M.Kom',
         );
     }
-
     /**
      * Prepare Data
      */

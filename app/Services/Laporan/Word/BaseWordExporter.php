@@ -10,6 +10,8 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use App\Services\Laporan\Word\Builders\HeaderBuilder;
 use App\Services\Laporan\Word\Builders\TableBuilder;
 use App\Services\Laporan\Word\Builders\SignatureBuilder;
+use App\Services\Laporan\Word\Builders\TitleBuilder;
+use App\Services\Laporan\Word\Builders\DocumentInfoBuilder;
 
 
 abstract class BaseWordExporter
@@ -19,6 +21,8 @@ abstract class BaseWordExporter
     protected HeaderBuilder $headerBuilder;
     protected TableBuilder $tableBuilder;
     protected SignatureBuilder $signatureBuilder;
+    protected TitleBuilder $titleBuilder;
+    protected DocumentInfoBuilder $documentInfoBuilder;
 
     /**
      * Nama file default
@@ -32,6 +36,8 @@ abstract class BaseWordExporter
         $this->headerBuilder = new HeaderBuilder();
         $this->tableBuilder = new TableBuilder();
         $this->signatureBuilder = new SignatureBuilder();
+        $this->titleBuilder = new TitleBuilder();
+        $this->documentInfoBuilder = new DocumentInfoBuilder();
         $this->build();
     }
 
@@ -44,7 +50,7 @@ abstract class BaseWordExporter
         Settings::setZipClass(Settings::PCLZIP);
 
         $this->word = new PhpWord();
-        $this->word->setDefaultFontName('Calibri');
+        $this->word->setDefaultFontName('Arial');
         $this->word->setDefaultFontSize(11);
         $this->section = $this->word->addSection([
             'orientation' => Section::ORIENTATION_LANDSCAPE,
@@ -76,12 +82,17 @@ abstract class BaseWordExporter
         );
 
         $this->word->addTableStyle(
+
             'MainTable',
             [
                 'borderSize' => 6,
-                'borderColor' => '777777',
-                'cellMargin' => 80,
+                'borderColor' => '666666',
+                'cellMarginTop' => 70,
+                'cellMarginBottom' => 70,
+                'cellMarginLeft' => 80,
+                'cellMarginRight' => 80,
             ],
+
             [
                 'bgColor' => 'D9EAD3',
             ]
@@ -89,47 +100,37 @@ abstract class BaseWordExporter
     }
 
     /* Header Dokumen */
-    protected function addHeader(
-        string $title,
-        ?string $subtitle = null
-    ): void {
-
-        $this->section->addTitle(
-            'INSTITUT WIDYA PRATAMA',
-            1
-        );
-
-        $this->section->addText(
-            'P3SDI'
-        );
-
-        $this->section->addTextBreak();
-
-        $this->section->addTitle(
-            strtoupper($title),
-            2
-        );
-
-        if ($subtitle) {
-            $this->section->addText(
-                $subtitle
-            );
-        }
-
-        $this->section->addTextBreak();
-    }
-
     protected function buildHeader(
-        string $title,
-        string $subtitle,
-        ?string $periode = null,
-        ?string $printedBy = null
+        string $documentCode = '1FM-01.07.16/R0',
     ): void {
 
         $this->headerBuilder->build(
             section: $this->section,
+            documentCode: $documentCode,
+        );
+
+    }
+
+    protected function buildDocumentTitle(
+        string $title,
+        ?string $documentNumber = null,
+    ): void {
+
+        $this->titleBuilder->build(
+            section: $this->section,
             title: $title,
-            subtitle: $subtitle,
+            documentNumber: $documentNumber,
+        );
+
+    }
+
+    protected function buildDocumentInfo(
+        ?string $periode = null,
+        ?string $printedBy = null,
+    ): void {
+
+        $this->documentInfoBuilder->build(
+            section: $this->section,
             periode: $periode,
             printedBy: $printedBy,
         );

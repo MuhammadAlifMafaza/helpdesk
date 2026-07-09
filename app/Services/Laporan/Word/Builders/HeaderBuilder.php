@@ -3,83 +3,133 @@
 namespace App\Services\Laporan\Word\Builders;
 
 use PhpOffice\PhpWord\Element\Section;
+use PhpOffice\PhpWord\SimpleType\Jc;
 
 class HeaderBuilder
 {
     public function build(
         Section $section,
-        string $title,
-        string $subtitle,
-        ?string $periode = null,
-        ?string $printedBy = null
+        string $documentCode = '1FM-01.07.16/R0'
     ): void {
 
-        $logoCell->addImage(
+        /*
+        |--------------------------------------------------------------------------
+        | Word Header
+        |--------------------------------------------------------------------------
+        */
+
+        $header = $section->addHeader();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Table Layout
+        |--------------------------------------------------------------------------
+        */
+
+        $table = $header->addTable([
+            'borderSize' => 0,
+            'cellMargin' => 0,
+            'alignment' => Jc::CENTER,
+        ]);
+
+        $table->addRow();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Logo
+        |--------------------------------------------------------------------------
+        */
+
+        $logo = $table->addCell(1800);
+
+        $logo->addImage(
             public_path('images/logo-iwima.png'),
             [
                 'width' => 58,
                 'height' => 58,
+                'alignment' => Jc::CENTER,
             ]
         );
+
         /*
         |--------------------------------------------------------------------------
-        | Nama Kampus
+        | Identity
         |--------------------------------------------------------------------------
         */
 
-        $section->addText(
-            'INSTITUT WIDYA PRATAMA',
+        $identity = $table->addCell(9800);
+
+        $identity->addText(
+            'INSTITUT WIDYA PRATAMA PEKALONGAN',
             [
                 'bold' => true,
-                'size' => 16,
+                'size' => 15,
             ],
             [
-                'alignment' => 'center',
+                'alignment' => Jc::CENTER,
             ]
         );
 
-        $section->addText(
-            'Pusat Pengembangan Sistem dan Data Informasi (P3SDI)',
+        $identity->addText(
+            'KABID TEKNIS DAN PERAWATAN INFRASTRUKTUR',
             [
+                'bold' => true,
                 'size' => 11,
             ],
             [
-                'alignment' => 'center',
+                'alignment' => Jc::CENTER,
             ]
         );
 
-        $section->addTextBreak();
+        $identity->addText(
+            'Jl. Patriot No.25 Pekalongan • (0285) 427817 • Fax (0285) 427815',
+            [
+                'size' => 9,
+            ],
+            [
+                'alignment' => Jc::CENTER,
+            ]
+        );
 
         /*
         |--------------------------------------------------------------------------
-        | Judul
+        | Document Code
         |--------------------------------------------------------------------------
         */
 
-        $section->addText(
-            strtoupper($title),
+        $code = $table->addCell(2200);
+
+        $code->addText(
+            $documentCode,
             [
                 'bold' => true,
-                'size' => 15,
+                'size' => 9,
             ],
             [
-                'alignment' => 'center',
+                'alignment' => Jc::END,
             ]
         );
 
-        $section->addText(
-            strtoupper($subtitle),
-            [
-                'bold' => true,
-                'size' => 15,
-            ],
-            [
-                'alignment' => 'center',
-            ]
-        );
+        /*
+        |--------------------------------------------------------------------------
+        | Line
+        |--------------------------------------------------------------------------
+        */
+
+        $header->addLine([
+            'weight' => 1.5,
+            'width' => 1000,
+            'height' => 0,
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Space
+        |--------------------------------------------------------------------------
+        */
 
         $section->addTextBreak();
-
+        
         /*
         |--------------------------------------------------------------------------
         | Informasi Dokumen
