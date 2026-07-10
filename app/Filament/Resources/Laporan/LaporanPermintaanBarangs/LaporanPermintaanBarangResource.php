@@ -18,22 +18,14 @@ use UnitEnum;
 class LaporanPermintaanBarangResource extends Resource
 {
     protected static ?string $model = LaporanPermintaanBarang::class;
-
     protected static ?string $slug = 'Laporan-Permintaan-Barang';
 
     // navigation
     protected static UnitEnum|string|null $navigationGroup = 'Laporan'; // Navigation Group
-
     protected static ?string $navigationLabel = 'Laporan Permintaan Barang'; // Navigation Label
-
     protected static ?string $pluralLabel = 'Laporan Permintaan Barang';
-
     protected static ?string $recordTitleAttribute = 'LaporanPermintaanBarang';
 
-    public static function form(Schema $schema): Schema
-    {
-        return LaporanPermintaanBarangForm::configure($schema);
-    }
 
     public static function infolist(Schema $schema): Schema
     {
@@ -56,9 +48,6 @@ class LaporanPermintaanBarangResource extends Resource
     {
         return [
             'index' => ListLaporanPermintaanBarangs::route('/'),
-            // 'create' => CreateLaporanPermintaanBarang::route('/create'),
-            // 'view' => ViewLaporanPermintaanBarang::route('/{record}'),
-            // 'edit' => EditLaporanPermintaanBarang::route('/{record}/edit'),
         ];
     }
 }

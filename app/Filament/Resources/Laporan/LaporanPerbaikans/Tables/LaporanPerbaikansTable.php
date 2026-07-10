@@ -217,10 +217,8 @@ class LaporanPerbaikansTable
                     }),
             ])
 
-            ->toolbarActions([
-                // BulkActionGroup::make([
-                //     DeleteBulkAction::make(),
-                // ]),
-            ]);
+            ->bulkActions([]);
+
+
     }
 }

@@ -3,82 +3,64 @@
 namespace App\Services\Laporan\Word;
 
 use Illuminate\Database\Eloquent\Builder;
-use App\Models\Modules\Laporan\Models\LaporanPerbaikan;
 use App\Services\Laporan\Word\BaseWordExporter;
-use App\Services\Laporan\LaporanExportService;
 
 class LaporanPerbaikanWord extends BaseWordExporter
 {
-    /**
-     * Query dari Filament Filter
-     */
+    /* Query dari Filament Filter */
     protected Builder $query;
+    /* Periode Laporan */
+    protected string $periode = '-';
 
-    /**
-     * Header Table
-     */
-    protected const TABLE_HEADERS = [
+    // Document Code (Kode Dokumen)
+    private const DOCUMENT_CODE = '1FM-01.07.16/R0';
+    // Title Document (Judul Dokumen)
+    private const DOCUMENT_TITLE = 'Laporan Perbaikan PC Teknisi';
+    // Document Number (Nomer Dokumen)
+    private const DOCUMENT_NUMBER = 'No. 003/IWIMA/KTPI-P3SDI/0426';
 
-        'No',
+    // Data Signature (Tanda Tangan)
+    private const SIGNATURES = [
+        [
+            'title' =>
+                'Ka. Bidang Teknisi Perawatan dan Infrastruktur',
+            'name' =>
+                'Edi Purwanto, S.Kom',
+        ],
 
-        'Kode Tiket',
-
-        'Pemohon',
-
-        'Lokasi',
-
-        'Kepemilikan',
-
-        'Teknisi',
-
-        'Status',
-
-        'Kategori',
-
-        'Mulai',
-
-        'Selesai',
-
-        'Durasi',
-
+        [
+            'title' =>
+                'Ka. UPT Laboratorium Komputer dan Bahasa',
+            'name' =>
+                'Wachid Darmawan, M.Kom',
+        ],
     ];
 
-    /**
-     * Constructor
-     */
+    /* Constructor */
     public function __construct(
-        Builder $query
+        Builder $query,
+        string $periode = '-'
     ) {
         $this->query = clone $query;
+        $this->periode = $periode;
+
         parent::__construct();
     }
 
-    /**
-     * Generate Document
-     */
-    public function generate(): string
-    {
-        return $this->save(
-            'laporan-perbaikan.docx'
-        );
-    }
-
-    /**
-     * Build document content
-     */
+    /* Build document content */
     protected function build(): void
     {
         $this->buildHeader(
-            documentCode: '1FM-01.07.16/R0'
+            documentCode: self::DOCUMENT_CODE
         );
 
         $this->buildDocumentTitle(
-            title: 'Laporan Perbaikan PC Teknisi',
-            documentNumber: 'No. 003/IWIMA/KTPI-P3SDI/0426'
+            title: self::DOCUMENT_TITLE,
+            documentNumber: self::DOCUMENT_NUMBER
         );
 
         $this->buildDocumentInfo(
-            periode: 'Semester Genap 2025/2026',
+            periode: $this->periode,
             printedBy: auth()->user()?->name
         );
 
@@ -87,58 +69,58 @@ class LaporanPerbaikanWord extends BaseWordExporter
             rows: $this->prepareRows()
         );
 
-        $this->buildSignature(
-            leftTitle: 'Ka. Bidang Teknisi & Perawatan Infrastruktur',
-            leftName: 'Edi Purwanto, S.Kom',
+        $this->buildSignature(self::SIGNATURES);
 
-            rightTitle: 'Ka. UPT Laboratorium Komputer & Bahasa',
-            rightName: 'Wachid Darmawan, M.Kom',
-        );
+        $this->buildFooter();
     }
-    /**
-     * Prepare Data
-     */
+
+    /* Header Table */
+    protected const TABLE_HEADERS = [
+        'No',
+        'Kode Tiket',
+        'Pemohon',
+        'Lokasi',
+        'Kepemilikan',
+        'Teknisi',
+        'Status',
+        'Kategori',
+        'Waktu Mulai',
+        'Waktu Selesai',
+        'Durasi Pengerjaan',
+    ];
+
+    /* Prepare Data Tabel */
     protected function prepareRows(): array
     {
-        $rows = [];
+        return $this->query
+            ->get()
+            ->map(
+                fn($item, $index) => [
 
-        $data = $this->query->get();
+                    $index + 1,
 
-        foreach ($data as $index => $item) {
-            $rows[] = [
+                    $item->kode_tiket,
 
-                $index + 1,
+                    $item->nama_pemohon,
 
-                $item->kode_tiket,
+                    $item->lokasi,
 
-                $item->nama_pemohon,
+                    $item->kepemilikan,
 
-                $item->lokasi,
+                    $item->nama_teknisi ?: '-',
 
-                $item->kepemilikan,
+                    $item->status_label,
 
-                $item->nama_teknisi ?: '-',
+                    $item->service_category,
 
-                $item->status_label,
+                    $item->waktu_mulai,
 
-                $item->service_category,
+                    $item->waktu_selesai,
 
-                optional(
-                    $item->waktu_mulai
-                )?->format(
-                        'd/m/Y H:i'
-                    ) ?: '-',
+                    $item->durasi,
 
-                optional(
-                    $item->waktu_selesai
-                )?->format(
-                        'd/m/Y H:i'
-                    ) ?: '-',
-
-                $item->durasi,
-
-            ];
-        }
-        return $rows;
+                ]
+            )
+            ->toArray();
     }
 }

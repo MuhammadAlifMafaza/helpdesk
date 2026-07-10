@@ -3,8 +3,8 @@
 namespace App\Services\Laporan;
 
 use Illuminate\Database\Eloquent\Builder;
-use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LaporanExportService
 {
@@ -27,29 +27,29 @@ class LaporanExportService
         string $wordExporter,
     ): BinaryFileResponse {
 
-        $export = new $wordExporter($query);
+        /** @var \App\Services\Laporan\Word\BaseWordExporter $export */
+        $export = new $wordExporter(
+            $query
+        );
 
-        $path = $export->generate();
-
-        return response()->download(
-            $path
-        )->deleteFileAfterSend();
-
+        return $export->download();
     }
-    /* Export PDF */
+
+    /* Export PDF (Download File) */
     public function exportPDF(
         Builder $query,
         string $exportClass
-    ): BinaryFileResponse {
+    ): BinaryFileResponse {  // <- Pastikan ini BinaryFileResponse
         $exporter = new $exportClass($query);
-
         return $exporter->download();
     }
 
-    /* Print Preview */
+    /* Print Preview (Tampilkan di Browser) */
     public function print(
         Builder $query,
-    ) {
-
+        string $exportClass
+    ): string { // <- Ubah ini menjadi 'string' karena mengembalikan URL
+        $exporter = new $exportClass($query);
+        return $exporter->stream();
     }
 }

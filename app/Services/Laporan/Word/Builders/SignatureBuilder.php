@@ -4,17 +4,20 @@ namespace App\Services\Laporan\Word\Builders;
 
 use Carbon\Carbon;
 use PhpOffice\PhpWord\Element\Section;
+use PhpOffice\PhpWord\SimpleType\Jc;
 
 class SignatureBuilder
 {
     public function build(
         Section $section,
-        string $title,
-        string $name,
+        array $signatures,
         string $city = 'Pekalongan',
         Carbon|string|null $date = null,
-        string $alignment = 'right',
     ): void {
+        // [PENTING] 1. Cegah error jika array signatures kosong
+        if (empty($signatures)) {
+            return;
+        }
 
         $date = $date instanceof Carbon
             ? $date
@@ -22,40 +25,109 @@ class SignatureBuilder
 
         $section->addTextBreak(2);
 
-        $section->addText(
-            "{$city}, {$date->translatedFormat('d F Y')}",
-            [],
-            [
-                'alignment' => $alignment,
-            ]
-        );
+        /*
+        |--------------------------------------------------------------------------
+        | Tanggal
+        |--------------------------------------------------------------------------
+        */
 
         $section->addText(
-            $title,
+            "{$city}, " . $date->locale('id')->translatedFormat('d F Y'),
             [
-                'bold' => true,
+                'size' => 11,
             ],
             [
-                'alignment' => $alignment,
+                'alignment' => Jc::END,
+                'spaceAfter' => 300,
             ]
         );
 
         /*
         |--------------------------------------------------------------------------
-        | Space tanda tangan
+        | Format 1 Tanda Tangan
+        |--------------------------------------------------------------------------
+        */
+        if (count($signatures) === 1) {
+            $signature = $signatures[0];
+
+            // Menggunakan operator ?? untuk mencegah error jika key tidak ada
+            $section->addText(
+                $signature['title'] ?? 'Jabatan Tidak Diketahui',
+                [
+                    'bold' => true,
+                    'size' => 11,
+                ],
+                [
+                    'alignment' => Jc::CENTER,
+                ]
+            );
+
+            $section->addTextBreak(5);
+
+            $section->addText(
+                $signature['name'] ?? 'Nama Tidak Diketahui',
+                [
+                    'bold' => true,
+                    'underline' => 'single',
+                    'size' => 11,
+                ],
+                [
+                    'alignment' => Jc::CENTER,
+                ]
+            );
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Format 2 Tanda Tangan (atau lebih, kita ambil 2 pertama)
         |--------------------------------------------------------------------------
         */
 
-        $section->addTextBreak(4);
+        $textRun = $section->addTextRun();
 
-        $section->addText(
-            $name,
+        // Jabatan
+        $textRun->addText(
+            $signatures[0]['title'] ?? 'Jabatan Kiri',
+            [
+                'bold' => true,
+                'size' => 11,
+            ]
+        );
+
+        $textRun->addText(str_repeat(' ', 40));
+
+        $textRun->addText(
+            $signatures[1]['title'] ?? 'Jabatan Kanan',
+            [
+                'bold' => true,
+                'size' => 11,
+            ]
+        );
+
+        $section->addTextBreak(5);
+
+        // Nama
+        $textRun = $section->addTextRun();
+
+        $textRun->addText(
+            $signatures[0]['name'] ?? 'Nama Kiri',
             [
                 'bold' => true,
                 'underline' => 'single',
-            ],
+                'size' => 11,
+            ]
+        );
+
+        $textRun->addText(str_repeat(' ', 45));
+
+        $textRun->addText(
+            $signatures[1]['name'] ?? 'Nama Kanan',
             [
-                'alignment' => $alignment,
+                'bold' => true,
+                'underline' => 'single',
+                'size' => 11,
             ]
         );
     }

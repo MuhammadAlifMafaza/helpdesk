@@ -12,20 +12,10 @@ class HeaderBuilder
         string $documentCode = '1FM-01.07.16/R0'
     ): void {
 
-        /*
-        |--------------------------------------------------------------------------
-        | Word Header
-        |--------------------------------------------------------------------------
-        */
-
+        /* Word Header */
         $header = $section->addHeader();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Table Layout
-        |--------------------------------------------------------------------------
-        */
-
+        /* Table Layout */
         $table = $header->addTable([
             'borderSize' => 0,
             'cellMargin' => 0,
@@ -34,12 +24,7 @@ class HeaderBuilder
 
         $table->addRow();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Logo
-        |--------------------------------------------------------------------------
-        */
-
+        /* Logo */
         $logo = $table->addCell(1800);
 
         $logo->addImage(
@@ -51,12 +36,7 @@ class HeaderBuilder
             ]
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Identity
-        |--------------------------------------------------------------------------
-        */
-
+        /* Identity */
         $identity = $table->addCell(9800);
 
         $identity->addText(
@@ -91,12 +71,7 @@ class HeaderBuilder
             ]
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Document Code
-        |--------------------------------------------------------------------------
-        */
-
+        /* Document Code */
         $code = $table->addCell(2200);
 
         $code->addText(
@@ -110,64 +85,18 @@ class HeaderBuilder
             ]
         );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Line
-        |--------------------------------------------------------------------------
-        */
-
-        $header->addLine([
-            'weight' => 1.5,
-            'width' => 1000,
-            'height' => 0,
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Space
-        |--------------------------------------------------------------------------
-        */
-
-        $section->addTextBreak();
-        
-        /*
-        |--------------------------------------------------------------------------
-        | Informasi Dokumen
-        |--------------------------------------------------------------------------
-        */
-
-        $table = $section->addTable();
-
-        $table->addRow();
-
-        $table->addCell(2200)->addText('Periode');
-
-        $table->addCell(300)->addText(':');
-
-        $table->addCell(6000)->addText(
-            $periode ?? '-'
+        /* Line */
+        $header->addText(
+            '',
+            [],
+            [
+                'borderBottomSize' => 12,
+                'borderBottomColor' => '000000',
+                'spaceAfter' => 120,
+            ]
         );
 
-        $table->addRow();
-
-        $table->addCell()->addText('Tanggal Cetak');
-
-        $table->addCell()->addText(':');
-
-        $table->addCell()->addText(
-            now()->format('d F Y H:i')
-        );
-
-        $table->addRow();
-
-        $table->addCell()->addText('Dicetak Oleh');
-
-        $table->addCell()->addText(':');
-
-        $table->addCell()->addText(
-            $printedBy ?? '-'
-        );
-
+        /* Space */
         $section->addTextBreak();
     }
 }

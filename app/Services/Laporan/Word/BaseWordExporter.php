@@ -12,6 +12,8 @@ use App\Services\Laporan\Word\Builders\TableBuilder;
 use App\Services\Laporan\Word\Builders\SignatureBuilder;
 use App\Services\Laporan\Word\Builders\TitleBuilder;
 use App\Services\Laporan\Word\Builders\DocumentInfoBuilder;
+use App\Services\Laporan\Word\Builders\LayoutBuilder;
+use App\Services\Laporan\Word\Builders\FooterBuilder;
 
 
 abstract class BaseWordExporter
@@ -23,6 +25,8 @@ abstract class BaseWordExporter
     protected SignatureBuilder $signatureBuilder;
     protected TitleBuilder $titleBuilder;
     protected DocumentInfoBuilder $documentInfoBuilder;
+    protected LayoutBuilder $layoutBuilder;
+    protected FooterBuilder $footerBuilder;
 
     /**
      * Nama file default
@@ -38,6 +42,8 @@ abstract class BaseWordExporter
         $this->signatureBuilder = new SignatureBuilder();
         $this->titleBuilder = new TitleBuilder();
         $this->documentInfoBuilder = new DocumentInfoBuilder();
+        $this->layoutBuilder = new LayoutBuilder();
+        $this->footerBuilder = new FooterBuilder();
         $this->build();
     }
 
@@ -47,7 +53,7 @@ abstract class BaseWordExporter
     /* Inisialisasi PHPWord */
     protected function initialize(): void
     {
-        Settings::setZipClass(Settings::PCLZIP);
+        Settings::setZipClass(Settings::ZIPARCHIVE);
 
         $this->word = new PhpWord();
         $this->word->setDefaultFontName('Arial');
@@ -153,61 +159,80 @@ abstract class BaseWordExporter
 
     /* Signature (TTD) */
     protected function buildSignature(
-        string $title,
-        string $name,
-        string $city = 'Pekalongan',
+        array $signatures,
+        string $city = 'Pekalongan'
     ): void {
-
         $this->signatureBuilder->build(
             section: $this->section,
-            title: $title,
-            name: $name,
+            signatures: $signatures,
             city: $city,
+        );
+    }
+
+    /* Layout Document */
+    protected function line(): void
+    {
+        $this->layoutBuilder->line(
+            $this->section
+        );
+    }
+
+    protected function space(
+        int $count = 1
+    ): void {
+
+        $this->layoutBuilder->space(
+            $this->section,
+            $count
         );
 
     }
-
     /**
      * Footer
      */
-    protected function addFooter(): void
+    protected function buildFooter(): void
     {
         $footer = $this->section->addFooter();
 
-        $footer->addPreserveText(
-            'Halaman {PAGE}'
+        $this->footerBuilder->build(
+            $footer
         );
     }
 
     /* Save or Download File Word Document */
-    protected function save(string $filename): string
+    protected function save(): string
     {
         $tempFile = sys_get_temp_dir()
             . DIRECTORY_SEPARATOR
-            . uniqid('laporan_')
+            . uniqid('laporan_', true)
             . '.docx';
 
-        $writer = IOFactory::createWriter(
+        IOFactory::createWriter(
             $this->word,
             'Word2007'
-        );
-
-        $writer->save($tempFile);
+        )->save($tempFile);
 
         return $tempFile;
     }
 
-    /**
-     * Download File
-     */
+    /* Generate Download Filename */
+    protected function generateFilename(): string
+    {
+        $timestamp = now()->format('(d-m-Y)');
+
+        $filename = str($this->filename)
+            ->beforeLast('.')
+            ->slug('-');
+
+        return "{$filename}_{$timestamp}.docx";
+    }
+
+    /* Download File */
     public function download(): BinaryFileResponse
     {
         return response()->download(
-            $this->save($this->filename),
-            $this->filename,
-            [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            ]
+            $this->save(),
+            $this->generateFilename(),
         )->deleteFileAfterSend(true);
     }
 }

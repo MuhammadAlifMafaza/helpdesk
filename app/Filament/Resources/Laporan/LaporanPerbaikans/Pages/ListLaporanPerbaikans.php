@@ -11,6 +11,7 @@ use Filament\Resources\Pages\ListRecords;
 use App\Exports\LaporanPerbaikanExport;
 use App\Services\Laporan\LaporanExportService;
 use App\Services\Laporan\Word\LaporanPerbaikanWord;
+use App\Services\Laporan\Pdf\LaporanPerbaikanPdf;
 
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -45,8 +46,7 @@ class ListLaporanPerbaikans extends ListRecords
                     ->action(function () {
                         return app(
                             LaporanExportService::class
-                        )
-                            ->exportWord(
+                        )->exportWord(
                                 query: $this->getFilteredTableQuery(),
                                 wordExporter: LaporanPerbaikanWord::class,
                             );
@@ -55,8 +55,29 @@ class ListLaporanPerbaikans extends ListRecords
                 Action::make('pdf')
                     ->label('Export PDF')
                     ->icon('heroicon-o-document-arrow-down')
-                    ->color('danger'),
+                    ->color('danger')
+                    ->action(function () {
+                        return app(LaporanExportService::class)->exportPDF(
+                            query: $this->getFilteredTableQuery(),
+                            exportClass: LaporanPerbaikanPdf::class,
+                        );
+                    }),
 
+                // Tombol Print Preview
+                Action::make('print')
+                    ->label('Print Preview')
+                    ->icon('heroicon-o-printer')
+                    ->color('warning')
+                    ->action(function () {
+                        // 1. Dapatkan link URL PDF-nya
+                        $url = app(LaporanExportService::class)->print(
+                            query: $this->getFilteredTableQuery(),
+                            exportClass: LaporanPerbaikanPdf::class,
+                        );
+
+                        // 2. Alihkan pengguna ke link tersebut untuk melihat preview
+                        return redirect($url);
+                    }),
             ])
                 ->label('Export Dokumen')
                 ->icon('heroicon-o-arrow-down-tray')
