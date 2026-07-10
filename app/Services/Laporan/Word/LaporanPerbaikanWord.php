@@ -11,6 +11,8 @@ class LaporanPerbaikanWord extends BaseWordExporter
     protected Builder $query;
     /* Periode Laporan */
     protected string $periode = '-';
+    protected string $filename = 'laporan_perbaikan.docx';
+
 
     // Document Code (Kode Dokumen)
     private const DOCUMENT_CODE = '1FM-01.07.16/R0';

@@ -62,17 +62,20 @@ abstract class BasePdfExporter
     */
     public function stream(): string
     {
-        // Bersihkan memori buffer
         if (ob_get_level() > 0) {
             ob_end_clean();
         }
 
         $filename = 'preview_' . $this->generateFilename();
-
-        // Simpan ke storage/app/public/pdf (File akan tertimpa setiap preview)
+        
+        // [PERBAIKAN] Pastikan folder 'pdf' benar-benar dibuat sebelum menyimpan file
+        if (!Storage::disk('public')->exists('pdf')) {
+            Storage::disk('public')->makeDirectory('pdf');
+        }
+        
+        // Simpan ke storage/app/public/pdf
         Storage::disk('public')->put('pdf/' . $filename, $this->generatePdf()->output());
-
-        // Kembalikan URL/Link publik dari file tersebut
+        
         return Storage::url('pdf/' . $filename);
     }
 }

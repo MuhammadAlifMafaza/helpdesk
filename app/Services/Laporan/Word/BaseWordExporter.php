@@ -49,26 +49,7 @@ abstract class BaseWordExporter
 
     /* Generate seluruh isi dokumen */
     abstract protected function build(): void;
-
-    /* Inisialisasi PHPWord */
-    protected function initialize(): void
-    {
-        Settings::setZipClass(Settings::ZIPARCHIVE);
-
-        $this->word = new PhpWord();
-        $this->word->setDefaultFontName('Arial');
-        $this->word->setDefaultFontSize(11);
-        $this->section = $this->word->addSection([
-            'orientation' => Section::ORIENTATION_LANDSCAPE,
-
-            'marginTop' => 600,
-            'marginBottom' => 600,
-            'marginLeft' => 700,
-            'marginRight' => 700,
-        ]);
-    }
-
-    /* Register seluruh style */
+    
     protected function registerStyles(): void
     {
         $this->word->addTitleStyle(
@@ -199,6 +180,26 @@ abstract class BaseWordExporter
         );
     }
 
+    /* Inisialisasi PHPWord */
+    protected function initialize(): void
+    {
+        Settings::setZipClass(Settings::ZIPARCHIVE);
+
+        // [PENTING] Aktifkan kembali ini agar karakter khusus tidak merusak Word
+        Settings::setOutputEscapingEnabled(true);
+
+        $this->word = new PhpWord();
+        $this->word->setDefaultFontName('Arial');
+        $this->word->setDefaultFontSize(11);
+        $this->section = $this->word->addSection([
+            'orientation' => Section::ORIENTATION_LANDSCAPE,
+            'marginTop' => 600,
+            'marginBottom' => 600,
+            'marginLeft' => 700,
+            'marginRight' => 700,
+        ]);
+    }
+
     /* Save or Download File Word Document */
     protected function save(): string
     {
@@ -230,6 +231,11 @@ abstract class BaseWordExporter
     /* Download File */
     public function download(): BinaryFileResponse
     {
+        // [PENTING] Bersihkan output buffer dari spasi/karakter tersembunyi
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
         return response()->download(
             $this->save(),
             $this->generateFilename(),
