@@ -2,19 +2,16 @@
 
 namespace App\Filament\Resources\Laporan\LaporanPerbaikans\Pages;
 
+use App\Exports\LaporanPerbaikanExport;
 use App\Filament\Resources\Laporan\LaporanPerbaikans\LaporanPerbaikanResource;
 use App\Filament\Resources\Laporan\LaporanPerbaikans\Widgets\LaporanPerbaikanStats;
-use Filament\Actions\CreateAction;
-use Filament\Resources\Pages\ListRecords;
-
 // Import Export Dokument Service
-use App\Exports\LaporanPerbaikanExport;
 use App\Services\Laporan\LaporanExportService;
-use App\Services\Laporan\Word\LaporanPerbaikanWord;
 use App\Services\Laporan\Pdf\LaporanPerbaikanPdf;
-
+use App\Services\Laporan\Word\LaporanPerbaikanWord;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Resources\Pages\ListRecords;
 
 class ListLaporanPerbaikans extends ListRecords
 {
@@ -35,7 +32,7 @@ class ListLaporanPerbaikans extends ListRecords
                             ->exportExcel(
                                 $this->getFilteredTableQuery(),
                                 LaporanPerbaikanExport::class,
-                                'Laporan-Perbaikan-' . now()->format('(d-m-Y)') . '.xlsx'
+                                'Laporan-Perbaikan-'.now()->format('(d-m-Y)').'.xlsx'
                             );
                     }),
 
@@ -47,9 +44,9 @@ class ListLaporanPerbaikans extends ListRecords
                         return app(
                             LaporanExportService::class
                         )->exportWord(
-                                query: $this->getFilteredTableQuery(),
-                                wordExporter: LaporanPerbaikanWord::class,
-                            );
+                            query: $this->getFilteredTableQuery(),
+                            wordExporter: LaporanPerbaikanWord::class,
+                        );
                     }),
 
                 Action::make('pdf')

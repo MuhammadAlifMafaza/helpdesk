@@ -6,54 +6,49 @@ use App\Filament\Resources\PengajuanBarangs\Pages\CreatePengajuanBarang;
 use App\Filament\Resources\PengajuanBarangs\Pages\EditPengajuanBarang;
 use App\Filament\Resources\PengajuanBarangs\Pages\ListPengajuanBarangs;
 use App\Filament\Resources\PengajuanBarangs\Pages\ViewPengajuanBarang;
-use App\Filament\Resources\PengajuanBarangs\Schemas\PengajuanBarangForm;
-use App\Filament\Resources\PengajuanBarangs\Schemas\PengajuanBarangInfolist;
-use App\Filament\Resources\PengajuanBarangs\Tables\PengajuanBarangsTable;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-
 use BackedEnum;
-use UnitEnum;
-
-use Filament\Support\Icons\Heroicon;
-use Filament\Resources\Resource;
-
-/* FILAMENT IMPORT */
-
-use Filament\Support\Colors\Color;
-// Filament Actions imports
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-use Filament\Actions\RestoreAction;
 use Filament\Actions\ForceDeleteAction;
+/* FILAMENT IMPORT */
 
-// Filament Forms imports
+// Filament Actions imports
+use Filament\Actions\RestoreAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
-
-// Filament Resources imports
+// Filament Forms imports
 use Filament\Infolists\Components\ViewEntry;
+use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
-
-// Filament Table imports
 use Filament\Schemas\Schema;
-use Filament\Tables\Table;
+// Filament Resources imports
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
+// Filament Table imports
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use UnitEnum;
 
 class PengajuanBarangResource extends Resource
 {
     protected static ?string $model = PengajuanBarang::class;
+
     protected static ?string $slug = 'pengajuan-barang';
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cube';
+
     protected static UnitEnum|string|null $navigationGroup = 'Service Desk';
+
     protected static ?string $pluralLabel = 'Pengajuan Barang';
+
     protected static ?string $navigationLabel = 'Pengajuan Barang';
+
     protected static ?string $recordTitleAttribute = 'PengajuanBarang';
 
     public static function form(Schema $schema): Schema
@@ -115,13 +110,13 @@ class PengajuanBarangResource extends Resource
 
                         TextEntry::make('status')
                             ->badge()
-                            ->icon(fn(string $state) => match ($state) {
+                            ->icon(fn (string $state) => match ($state) {
                                 'Open' => 'heroicon-o-folder-open',
                                 'In Progress' => 'heroicon-o-arrow-path',
                                 'Close' => 'heroicon-o-check-circle',
                                 default => 'heroicon-o-question-mark-circle',
                             })
-                            ->color(fn(string $state) => match ($state) {
+                            ->color(fn (string $state) => match ($state) {
                                 'Open' => 'info',
                                 'In Progress' => 'warning',
                                 'Close' => 'success',
@@ -132,13 +127,13 @@ class PengajuanBarangResource extends Resource
 
                         TextEntry::make('status_outcome')
                             ->badge()
-                            ->icon(fn(?string $state) => match ($state) {
+                            ->icon(fn (?string $state) => match ($state) {
                                 'Completed' => 'heroicon-o-check-circle',
                                 'Rejected' => 'heroicon-o-x-circle',
                                 'Reopen' => 'heroicon-o-arrow-path',
                                 default => 'heroicon-o-question-mark-circle',
                             })
-                            ->color(fn(?string $state): string => match ($state) {
+                            ->color(fn (?string $state): string => match ($state) {
                                 'Completed' => 'success',
                                 'Rejected' => 'danger',
                                 'Reopen' => 'warning',
@@ -151,18 +146,18 @@ class PengajuanBarangResource extends Resource
                         TextEntry::make('created_at')
                             ->dateTime(),
 
-                        TextEntry::make('alasan'),
+                        // TextEntry::make('alasan'),
 
                         TextEntry::make('updated_at')
                             ->dateTime(),
 
                     ]),
 
-                Section::make('Deskripsi Kerusakan')
+                Section::make('Alasan Permintaan')
                     ->columnSpanFull()
                     ->schema([
 
-                        TextEntry::make('deskripsi')
+                        TextEntry::make('alasan')
                             ->hiddenLabel()
                             ->columnSpanFull(),
 
@@ -190,7 +185,6 @@ class PengajuanBarangResource extends Resource
             ]);
     }
 
-
     public static function table(Table $table): Table
     {
         return $table
@@ -211,13 +205,13 @@ class PengajuanBarangResource extends Resource
 
                 TextColumn::make('status')
                     ->badge()
-                    ->icon(fn(string $state) => match ($state) {
+                    ->icon(fn (string $state) => match ($state) {
                         'Open' => 'heroicon-o-folder-open',
                         'In Progress' => 'heroicon-o-arrow-path',
                         'Close' => 'heroicon-o-check-circle',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn(string $state) => match ($state) {
+                    ->color(fn (string $state) => match ($state) {
                         'Open' => 'info',
                         'In Progress' => 'warning',
                         'Close' => 'success',
@@ -226,13 +220,13 @@ class PengajuanBarangResource extends Resource
 
                 TextColumn::make('status_outcome')
                     ->badge()
-                    ->icon(fn(?string $state) => match ($state) {
+                    ->icon(fn (?string $state) => match ($state) {
                         'Completed' => 'heroicon-o-check-circle',
                         'Rejected' => 'heroicon-o-x-circle',
                         'Reopen' => 'heroicon-o-arrow-path',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn(?string $state): string => match ($state) {
+                    ->color(fn (?string $state): string => match ($state) {
                         'Completed' => 'success',
                         'Rejected' => 'danger',
                         'Reopen' => 'warning',
@@ -244,7 +238,7 @@ class PengajuanBarangResource extends Resource
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
+                        fn ($record) => $record->created_at->format('H:i:s')
                     ),
 
                 TextColumn::make('waktu_mulai')
@@ -252,7 +246,7 @@ class PengajuanBarangResource extends Resource
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
+                        fn ($record) => $record->created_at->format('H:i:s')
                     ),
 
                 TextColumn::make('waktu_selesai')
@@ -260,7 +254,7 @@ class PengajuanBarangResource extends Resource
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
+                        fn ($record) => $record->created_at->format('H:i:s')
                     ),
 
                 TextColumn::make('durasi_pengerjaan')
@@ -276,33 +270,34 @@ class PengajuanBarangResource extends Resource
             ->actions([
 
                 Action::make('ambil_tiket')
-                    ->toolbar('Ambil Tiket')
+                    ->tooltip('Ambil Tiket')
+                    ->label('')
                     ->icon('heroicon-o-wrench-screwdriver')
                     ->visible(
-                        fn($record) => $record->status === 'Open'
+                        fn ($record) => $record->status === 'Open'
                     )
                     ->action(function ($record) {
 
                         $record->updateStatus(
                             'In Progress',
                             'Tiket mulai dikerjakan oleh '
-                            . auth()->user()->name
+                            .auth()->user()->name
                         );
 
                         $record->sendMessage(
                             'Teknisi '
-                            . auth()->user()->name
-                            . ' mengambil tiket ini.'
+                            .auth()->user()->name
+                            .' mengambil tiket ini.'
                         );
-                    })
-                ,
+                    }),
 
                 Action::make('selesai')
-                    ->label('Selesai')
+                    ->tooltip('Selesai')
+                    ->label('')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(
-                        fn($record) => $record->status === 'In Progress'
+                        fn ($record) => $record->status === 'In Progress'
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -319,15 +314,15 @@ class PengajuanBarangResource extends Resource
                     ->modalHeading('Konfirmasi Penyelesaian')
                     ->modalDescription(
                         'Tindakan ini akan menutup tiket.'
-                    )
-                ,
+                    ),
 
                 Action::make('tolak')
-                    ->label('Tolak')
+                    ->tooltip('Tolak')
+                    ->label('')
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
                     ->visible(
-                        fn($record) => $record->status === 'In Progress'
+                        fn ($record) => $record->status === 'In Progress'
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -344,16 +339,15 @@ class PengajuanBarangResource extends Resource
                     ->modalHeading('Konfirmasi Penyelesaian')
                     ->modalDescription(
                         'Tindakan ini akan menutup tiket.'
-                    )
-                ,
+                    ),
 
                 Action::make('reopen')
-                    ->label('Reopen Ticket')
+                    ->label('')
+                    ->tooltip('Reopen Ticket')
                     ->color('primary')
                     ->icon('heroicon-o-arrow-path')
                     ->visible(
-                        fn($record) =>
-                        $record->isClosed()
+                        fn ($record) => $record->isClosed()
                         &&
                         (
                             auth()->user()->hasRole('admin')
@@ -373,24 +367,27 @@ class PengajuanBarangResource extends Resource
                             $data['catatan']
                         );
 
-                    })
-                ,
+                    }),
 
-                ViewAction::make(),
+                ViewAction::make()
+                    ->label('')
+                    ->tooltip('View Detail'),
 
                 RestoreAction::make()
-                    ->visible(fn($record) => $record->trashed()),
+                    ->label('')
+                    ->visible(fn ($record) => $record->trashed()),
 
                 EditAction::make()
+                    ->label('')
                     ->visible(
-                        fn($record) =>
-                        $record->canEdit()
+                        fn ($record) => $record->canEdit()
                     ),
 
                 DeleteAction::make()
+                    ->label('')
+                    ->tooltip('Soft Delete')
                     ->visible(
-                        fn($record) =>
-                        $record->isClosed()
+                        fn ($record) => $record->isClosed()
                         &&
                         (
                             auth()->user()->hasRole('admin')
@@ -398,13 +395,13 @@ class PengajuanBarangResource extends Resource
                             auth()->user()->hasRole('super_admin')
                         )
                     )
-                    ->requiresConfirmation()
-                ,
+                    ->requiresConfirmation(),
 
                 ForceDeleteAction::make()
+                    ->label('')
+                    ->tooltip('Force Delete')
                     ->visible(
-                        fn() =>
-                        auth()->user()->hasRole('super_admin')
+                        fn () => auth()->user()->hasRole('super_admin')
                     ),
 
             ])
@@ -435,7 +432,6 @@ class PengajuanBarangResource extends Resource
             'edit' => EditPengajuanBarang::route('/{record}/edit'),
         ];
     }
-
 
     public static function canViewAny(): bool
     {
