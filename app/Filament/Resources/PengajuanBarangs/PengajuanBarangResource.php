@@ -276,7 +276,7 @@ class PengajuanBarangResource extends Resource
             ->actions([
 
                 Action::make('ambil_tiket')
-                    ->label('Ambil Tiket')
+                    ->toolbar('Ambil Tiket')
                     ->icon('heroicon-o-wrench-screwdriver')
                     ->visible(
                         fn($record) => $record->status === 'Open'
