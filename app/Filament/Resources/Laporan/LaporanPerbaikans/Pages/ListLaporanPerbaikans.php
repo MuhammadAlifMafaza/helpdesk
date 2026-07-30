@@ -86,7 +86,7 @@ class ListLaporanPerbaikans extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            LaporanPerbaikanStats::class,
+            // LaporanPerbaikanStats::class,
         ];
     }
 }

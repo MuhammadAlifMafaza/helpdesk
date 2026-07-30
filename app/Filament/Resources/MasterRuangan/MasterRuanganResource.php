@@ -88,8 +88,12 @@ class MasterRuanganResource extends Resource
                     ->dateTime('d M Y H:i'),
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()
+                ->label('')
+                ->tooltip('Edit'),
+                DeleteAction::make()
+                ->label('')
+                ->tooltip('Delete'),
             ])
             ->bulkActions([
                 DeleteBulkAction::make(),

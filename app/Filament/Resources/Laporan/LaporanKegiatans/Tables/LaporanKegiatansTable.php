@@ -55,7 +55,7 @@ class LaporanKegiatansTable
                     }),
             ])
             ->actions([
-                ViewAction::make(),
+                // ViewAction::make(),
             ])
             ->bulkActions([]);
     }

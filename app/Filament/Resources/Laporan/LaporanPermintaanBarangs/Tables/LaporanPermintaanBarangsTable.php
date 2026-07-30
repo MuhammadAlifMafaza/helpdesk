@@ -108,7 +108,7 @@ class LaporanPermintaanBarangsTable
                     ->query(fn(Builder $query, array $data) => $query->status($data['value'])),
             ])
             ->actions([
-                ViewAction::make(),
+                // ViewAction::make(),
             ])
             ->bulkActions([]);
     }
