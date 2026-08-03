@@ -24,33 +24,37 @@ class ListLaporanPerbaikans extends ListRecords
             ActionGroup::make([
 
                 Action::make('excel')
-                    ->label('Export Excel')
+                    ->disabled()
+                    ->label('Excel (coming soon)')
                     ->icon('heroicon-o-document-chart-bar')
-                    ->color('success')
+                    // ->color('success')
+                    ->color('gray')
                     ->action(function () {
                         return app(LaporanExportService::class)
                             ->exportExcel(
                                 $this->getFilteredTableQuery(),
                                 LaporanPerbaikanExport::class,
-                                'Laporan-Perbaikan-'.now()->format('(d-m-Y)').'.xlsx'
+                                'Laporan-Perbaikan-' . now()->format('(d-m-Y)') . '.xlsx'
                             );
                     }),
 
                 Action::make('word')
-                    ->label('Export Word')
+                    ->disabled()
+                    ->label('Word (coming soon)')
                     ->icon('heroicon-o-document')
-                    ->color('info')
+                    // ->color('info')
+                    ->color('gray')
                     ->action(function () {
                         return app(
                             LaporanExportService::class
                         )->exportWord(
-                            query: $this->getFilteredTableQuery(),
-                            wordExporter: LaporanPerbaikanWord::class,
-                        );
+                                query: $this->getFilteredTableQuery(),
+                                wordExporter: LaporanPerbaikanWord::class,
+                            );
                     }),
 
                 Action::make('pdf')
-                    ->label('Export PDF')
+                    ->label('PDF')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('danger')
                     ->action(function () {

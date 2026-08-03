@@ -23,9 +23,11 @@ class ListLaporanPermintaanBarangs extends ListRecords
             ActionGroup::make([
                 // Tombol Export Excel
                 Action::make('excel')
-                    ->label('Export Excel')
+                    ->disabled()
+                    ->label('Excel (coming soon)')
                     ->icon('heroicon-o-document-chart-bar')
-                    ->color('success')
+                    // ->color('success')
+                    ->color('gray')
                     ->action(function () {
                         return app(LaporanExportService::class)->exportExcel(
                             $this->getFilteredTableQuery(),
@@ -36,9 +38,11 @@ class ListLaporanPermintaanBarangs extends ListRecords
 
                 // Tombol Export Word
                 Action::make('word')
-                    ->label('Export Word')
+                    ->disabled()
+                    ->label('Word (coming soon)')
                     ->icon('heroicon-o-document')
-                    ->color('info')
+                    // ->color('info')
+                    ->color('gray')
                     ->action(function () {
                         return app(LaporanExportService::class)->exportWord(
                             query: $this->getFilteredTableQuery(),
@@ -48,7 +52,7 @@ class ListLaporanPermintaanBarangs extends ListRecords
 
                 // Tombol Export PDF
                 Action::make('pdf')
-                    ->label('Export PDF')
+                    ->label('PDF')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('danger')
                     ->action(function () {
