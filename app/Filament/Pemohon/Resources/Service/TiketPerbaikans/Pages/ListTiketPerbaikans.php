@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Pemohon\Resources\TiketPerbaikans\Pages;
+namespace App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Pages;
 
-use App\Filament\Pemohon\Resources\TiketPerbaikans\TiketPerbaikanResource;
+use App\Filament\Pemohon\Resources\Service\TiketPerbaikans\TiketPerbaikanResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 

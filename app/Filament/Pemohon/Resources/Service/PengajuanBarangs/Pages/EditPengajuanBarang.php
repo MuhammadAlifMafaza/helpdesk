@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Filament\Pemohon\Resources\TiketPerbaikans\Pages;
+namespace App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Pages;
 
-use App\Filament\Pemohon\Resources\TiketPerbaikans\TiketPerbaikanResource;
+use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\PengajuanBarangResource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
-class EditTiketPerbaikan extends EditRecord
+class EditPengajuanBarang extends EditRecord
 {
-    protected static string $resource = TiketPerbaikanResource::class;
+    protected static string $resource = PengajuanBarangResource::class;
 
     protected function getHeaderActions(): array
     {

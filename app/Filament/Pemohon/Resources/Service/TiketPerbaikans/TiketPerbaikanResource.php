@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Filament\Pemohon\Resources\TiketPerbaikans;
+namespace App\Filament\Pemohon\Resources\Service\TiketPerbaikans;
 
-use App\Filament\Pemohon\Resources\TiketPerbaikans\Pages\CreateTiketPerbaikan;
-use App\Filament\Pemohon\Resources\TiketPerbaikans\Pages\EditTiketPerbaikan;
-use App\Filament\Pemohon\Resources\TiketPerbaikans\Pages\ListTiketPerbaikans;
-use App\Filament\Pemohon\Resources\TiketPerbaikans\Pages\ViewTiketPerbaikan;
-use App\Filament\Pemohon\Resources\TiketPerbaikans\Schemas\TiketPerbaikanForm;
-use App\Filament\Pemohon\Resources\TiketPerbaikans\Schemas\TiketPerbaikanInfolist;
-use App\Filament\Pemohon\Resources\TiketPerbaikans\Tables\TiketPerbaikansTable;
+use App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Pages\CreateTiketPerbaikan;
+use App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Pages\EditTiketPerbaikan;
+use App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Pages\ListTiketPerbaikans;
+use App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Pages\ViewTiketPerbaikan;
+use App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Schemas\TiketPerbaikanForm;
+use App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Schemas\TiketPerbaikanInfolist;
+use App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Tables\TiketPerbaikansTable;
+use App\Models\Service\TiketPerbaikan;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use TiketPerbaikan;
 
 class TiketPerbaikanResource extends Resource
 {
@@ -22,7 +22,7 @@ class TiketPerbaikanResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $recordTitleAttribute = 'TiketPerbakan';
+    protected static ?string $recordTitleAttribute = 'TiketPerbaikan';
 
     public static function form(Schema $schema): Schema
     {

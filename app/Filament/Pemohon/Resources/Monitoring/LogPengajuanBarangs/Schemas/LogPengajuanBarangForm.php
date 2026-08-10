@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Pemohon\Resources\TiketPerbaikans\Schemas;
+namespace App\Filament\Pemohon\Resources\Monitoring\LogPengajuanBarangs\Schemas;
 
 use Filament\Schemas\Schema;
 
-class TiketPerbaikanInfolist
+class LogPengajuanBarangForm
 {
     public static function configure(Schema $schema): Schema
     {

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Pemohon\Resources\TiketPerbaikans\Schemas;
+namespace App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Schemas;
 
 use Filament\Schemas\Schema;
 
-class TiketPerbaikanForm
+class PengajuanBarangInfolist
 {
     public static function configure(Schema $schema): Schema
     {
