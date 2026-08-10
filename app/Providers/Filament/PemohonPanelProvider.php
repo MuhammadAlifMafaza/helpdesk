@@ -18,6 +18,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Http\Middleware\IsPemohon;
 
 class PemohonPanelProvider extends PanelProvider
 {
@@ -32,14 +33,23 @@ class PemohonPanelProvider extends PanelProvider
             ->brandLogoHeight('4rem')
             ->favicon(asset('branding/logo.svg'))
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Blue,
             ])
-            ->discoverResources(in: app_path('Filament/Pemohon/Resources'), for: 'App\Filament\Pemohon\Resources')
-            ->discoverPages(in: app_path('Filament/Pemohon/Pages'), for: 'App\Filament\Pemohon\Pages')
+            ->discoverResources(
+                in: app_path('Filament/Pemohon/Resources'),
+                for: 'App\\Filament\\Pemohon\\Resources'
+            )
+            ->discoverPages(
+                in: app_path('Filament/Pemohon/Pages'),
+                for: 'App\\Filament\\Pemohon\\Pages'
+            )
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Pemohon/Widgets'), for: 'App\Filament\Pemohon\Widgets')
+            ->discoverWidgets(
+                in: app_path('Filament/Pemohon/Widgets'),
+                for: 'App\\Filament\\Pemohon\\Widgets'
+            )
             ->widgets([
                 AccountWidget::class,
                 FilamentInfoWidget::class,
@@ -57,6 +67,7 @@ class PemohonPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                IsPemohon::class,
             ]);
     }
 }

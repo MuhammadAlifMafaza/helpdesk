@@ -7,14 +7,14 @@ use Illuminate\Http\Request;
 
 class IsPemohon
 {
-    public function handle(Request $request, Closure $next)
+    public function handle($request, Closure $next)
     {
-        if (!$request->user()) {
-            return redirect('/login');
+        if (!auth()->check()) {
+            abort(403);
         }
 
-        if (!$request->user()->hasRole('pemohon')) {
-            abort(403, 'Unauthorized');
+        if (!auth()->user()->hasRole('pemohon')) {
+            abort(403);
         }
 
         return $next($request);
