@@ -35,6 +35,9 @@ class PemohonPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Blue,
             ])
+            ->sidebarCollapsibleOnDesktop()
+            ->collapsedSidebarWidth('5rem')
+            ->maxContentWidth('full')
             ->discoverResources(
                 in: app_path('Filament/Pemohon/Resources'),
                 for: 'App\\Filament\\Pemohon\\Resources'

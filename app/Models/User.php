@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 #[Fillable(['name', 'email', 'password', 'unit_bidang'])]
@@ -50,12 +51,24 @@ class User extends Authenticatable implements FilamentUser
         return $this->attributes['email'] ?? '';
     }
 
-    public function canAccessPanel(\Filament\Panel $panel): bool
+    public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasAnyRole([
-            'super_admin',
-            'admin',
-            'teknisi',
-        ]);
+        return match ($panel->getId()) {
+
+            'admin' =>
+            $this->hasAnyRole([
+                'admin',
+                'teknisi',
+                'super_admin',
+            ]),
+
+            'pemohon' =>
+            $this->hasRole('pemohon'),
+
+            'teknisi' =>
+            $this->hasRole('teknisi'),
+
+            default => false,
+        };
     }
 }

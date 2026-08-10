@@ -9,8 +9,10 @@ use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Pages\ViewPengajuanB
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Schemas\PengajuanBarangForm;
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Schemas\PengajuanBarangInfolist;
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Tables\PengajuanBarangsTable;
-use App\Models\Service\PengajuanBarang;
+use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use BackedEnum;
+use UnitEnum;
+
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -19,9 +21,11 @@ use Filament\Tables\Table;
 class PengajuanBarangResource extends Resource
 {
     protected static ?string $model = PengajuanBarang::class;
-
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
+    protected static ?string $slug = 'pengajuan-barang';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cube';
+    protected static UnitEnum|string|null $navigationGroup = 'Pelayanan';
+    protected static ?string $pluralLabel = 'Pengajuan Barang';
+    protected static ?string $navigationLabel = 'Pengajuan Barang';
     protected static ?string $recordTitleAttribute = 'PengajuanBarang';
 
     public static function form(Schema $schema): Schema

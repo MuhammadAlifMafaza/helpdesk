@@ -43,8 +43,7 @@ class AdminPanelProvider extends PanelProvider
                 'process' => Color::Orange,
                 'approve' => Color::Green,
                 'reject' => Color::Red,
-                'reopen' => Color::Yellow,
-
+                'reopen' => Color::Yellow, 
             ])
             ->sidebarCollapsibleOnDesktop()
             ->collapsedSidebarWidth('5rem')
