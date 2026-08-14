@@ -7,6 +7,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages\Dashboard;
+use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -34,6 +35,7 @@ class PemohonPanelProvider extends PanelProvider
             ->favicon(asset('branding/logo.svg'))
             ->colors([
                 'primary' => Color::Blue,
+                'edit' => Color::Yellow,
             ])
             ->sidebarCollapsibleOnDesktop()
             ->collapsedSidebarWidth('5rem')
@@ -71,6 +73,15 @@ class PemohonPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 IsPemohon::class,
-            ]);
+            ])
+            ->navigationGroups([
+                NavigationGroup::make('Pelayanan')
+                    ->collapsed(true)
+                    ->icon('heroicon-o-wrench-screwdriver'),
+                NavigationGroup::make('Monitoring')
+                    ->collapsed(false)
+                    ->icon('heroicon-o-clock'),
+            ])
+        ;
     }
 }

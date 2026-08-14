@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PengajuanBarangs\Pages;
 
 use App\Filament\Resources\PengajuanBarangs\PengajuanBarangResource;
+use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Notifications\Notification;
@@ -113,7 +114,7 @@ class ViewPengajuanBarang extends ViewRecord
                         ->required()
 
                 ])
-                ->action(function (TicketService $record, array $data) {
+                ->action(function (TiketPerbaikan $record, array $data) {
 
                     $record->sendMessage(
                         $data['message']

@@ -10,6 +10,11 @@ use App\Models\Modules\Pengajuan\Models\LogPengajuan;
 class PengajuanBarang extends Model
 {
     use softDeletes;
+    /*
+    |--------------------------------------------------------------------------
+    | Model Configuration
+    |--------------------------------------------------------------------------
+    */
     protected $table = 'pengajuan_barang';
 
     protected $fillable = [
@@ -28,6 +33,11 @@ class PengajuanBarang extends Model
         'durasi_pengerjaan',
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
     public function user()
     {
         return $this->belongsTo(
@@ -36,10 +46,11 @@ class PengajuanBarang extends Model
         );
     }
 
-    /**
-     * Ringkasan Data LogsPerbaikan
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<LogPengajuan, PengajuanBarang>
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Log Configuration
+    |--------------------------------------------------------------------------
+    */
     public function logs()
     {
         return $this->hasMany(
@@ -48,12 +59,19 @@ class PengajuanBarang extends Model
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Ticket Identity (Kodes Tiket) Generation
+    |--------------------------------------------------------------------------
+    */
     public function getKodePengajuanAttribute(): string
     {
-        $firstIdToday = self::whereDate(
-            'created_at',
-            $this->created_at->toDateString()
-        )->min('id');
+        $firstIdToday = self::query()
+            ->whereDate(
+                'created_at',
+                $this->created_at->toDateString()
+            )
+            ->min('id');
 
         $nomorUrut = ($this->id - $firstIdToday) + 1;
 

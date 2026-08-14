@@ -16,12 +16,77 @@ class ViewTicketService extends ViewRecord
 {
     protected static string $resource = TicketServiceResource::class;
 
+    public string $chatMessage = '';
+
+    public function sendChatMessage(): void
+    {
+        $this->validate([
+            'chatMessage' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+        ]);
+
+        $record = $this->record;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Authorization
+        |--------------------------------------------------------------------------
+        */
+
+        abort_unless(
+            $record->canBeAccessedBy(auth()->user()),
+            403,
+            'Anda tidak memiliki akses ke tiket ini.'
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ticket Status
+        |--------------------------------------------------------------------------
+        */
+
+        abort_if(
+            $record->isClosed(),
+            403,
+            'Tiket telah ditutup.'
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Save Message
+        |--------------------------------------------------------------------------
+        */
+
+        $record->sendMessage(
+            trim($this->chatMessage)
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reset
+        |--------------------------------------------------------------------------
+        */
+
+        $this->chatMessage = '';
+
+        /*
+        |--------------------------------------------------------------------------
+        | Refresh
+        |--------------------------------------------------------------------------
+        */
+
+        $this->record->refresh();
+    }
+    
     protected function getHeaderActions(): array
     {
         return [
             EditAction::make('edit')
-            ->label('Edit Tiket')
-            ->icon('heroicon-o-pencil'),
+                ->label('Edit Tiket')
+                ->icon('heroicon-o-pencil'),
 
 
             Action::make('ambil_tiket')

@@ -41,11 +41,11 @@ class TiketPerbaikanResource extends Resource
 {
     protected static ?string $model = TiketPerbaikan::class;
     // url slug
-    protected static ?string $slug = 'ticket-services';
+    protected static ?string $slug = 'ticket-perbaikan';
 
     // navigation
     protected static UnitEnum|string|null $navigationGroup = 'Pelayanan'; // Navigation Group
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver'; // Navigation Icon
+    // protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';
     protected static ?string $navigationLabel = 'Tiket Perbaikan'; // Navigation Label
     protected static ?string $pluralLabel = 'Tiket Perbaikan';
     protected static ?int $navigationSort = 1;
@@ -81,5 +81,16 @@ class TiketPerbaikanResource extends Resource
             'view' => ViewTiketPerbaikan::route('/{record}'),
             'edit' => EditTiketPerbaikan::route('/{record}/edit'),
         ];
+    }
+
+    public static function canEdit($record): bool
+    {
+        return $record->canPemohonEdit();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('user_id', auth()->id());
     }
 }

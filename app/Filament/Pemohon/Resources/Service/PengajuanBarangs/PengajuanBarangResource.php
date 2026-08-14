@@ -13,6 +13,8 @@ use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use BackedEnum;
 use UnitEnum;
 
+use Illuminate\Database\Eloquent\Builder;
+
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -22,7 +24,7 @@ class PengajuanBarangResource extends Resource
 {
     protected static ?string $model = PengajuanBarang::class;
     protected static ?string $slug = 'pengajuan-barang';
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cube';
+    // protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cube';
     protected static UnitEnum|string|null $navigationGroup = 'Pelayanan';
     protected static ?string $pluralLabel = 'Pengajuan Barang';
     protected static ?string $navigationLabel = 'Pengajuan Barang';
@@ -58,5 +60,11 @@ class PengajuanBarangResource extends Resource
             'view' => ViewPengajuanBarang::route('/{record}'),
             'edit' => EditPengajuanBarang::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('user_id', auth()->id());
     }
 }

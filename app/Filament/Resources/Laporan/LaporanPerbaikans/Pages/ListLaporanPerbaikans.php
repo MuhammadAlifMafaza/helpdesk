@@ -41,7 +41,7 @@ class ListLaporanPerbaikans extends ListRecords
                 Action::make('word')
                     ->disabled()
                     ->label('Word (coming soon)')
-                    ->icon('heroicon-o-document')
+                    ->icon('heroicon-o-document-text')
                     // ->color('info')
                     ->color('gray')
                     ->action(function () {

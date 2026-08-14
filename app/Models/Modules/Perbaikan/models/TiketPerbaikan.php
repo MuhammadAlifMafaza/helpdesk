@@ -4,6 +4,9 @@ namespace App\Models\Modules\Perbaikan\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Modules\Master\Models\MasterRuangan;
 use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
@@ -11,6 +14,12 @@ use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
 class TiketPerbaikan extends Model
 {
     use SoftDeletes;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Model Configuration
+    |--------------------------------------------------------------------------
+    */
     protected $table = 'tiket_perbaikan';
     protected $appends = [
         'kode_tiket',
@@ -19,12 +28,19 @@ class TiketPerbaikan extends Model
         'waktu_selesai',
         'durasi_pengerjaan',
     ];
-    protected array $allowedUpdateFields = [
-        'keluhan',
-        'deskripsi',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Model Fillable Fields
+    |--------------------------------------------------------------------------
+    */
+    private const ALLOWED_UPDATE_FIELDS = [
         'kepemilikan',
         'ruangan_id',
+        'deskripsi',
+        'keluhan',
     ];
+
     protected $fillable = [
         'user_id',
         'ruangan_id',
@@ -34,7 +50,13 @@ class TiketPerbaikan extends Model
         'status',
     ];
 
-    public function user()
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(
             User::class,
@@ -42,7 +64,7 @@ class TiketPerbaikan extends Model
         );
     }
 
-    public function ruangan()
+    public function ruangan(): BelongsTo
     {
         return $this->belongsTo(
             MasterRuangan::class,
@@ -50,16 +72,19 @@ class TiketPerbaikan extends Model
         );
     }
 
-    /**
-     * Summary of getKodeTiketAttribute
-     * @return string
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Ticket Identity (Kodes Tiket) Generation
+    |--------------------------------------------------------------------------
+    */
     public function getKodeTiketAttribute(): string
     {
-        $firstIdToday = self::whereDate(
-            'created_at',
-            $this->created_at->toDateString()
-        )->min('id');
+        $firstIdToday = self::query()
+            ->whereDate(
+                'created_at',
+                $this->created_at->toDateString()
+            )
+            ->min('id');
 
         $nomorUrut = ($this->id - $firstIdToday) + 1;
 
@@ -68,50 +93,82 @@ class TiketPerbaikan extends Model
             $this->created_at->format('dmY'),
             $nomorUrut
         );
-
     }
 
-    /**
-     * Summary of booted
-     * @return void
-     */
-    protected static function booted()
+    /*
+    |--------------------------------------------------------------------------
+    | Model Lifecycle
+    |--------------------------------------------------------------------------
+    */
+    protected static function booted(): void
     {
-        static::created(function ($tiket) {
+        static::created(function (self $tiket): void {
 
-            LogPerbaikan::create([
-                'tiket_id' => $tiket->id,
-                'user_id' => auth()->id() ?? $tiket->user_id,
-                'kategori_log' => 'Status',
-                'data_lama' => null,
-                'data_baru' => 'Open',
-                'keterangan' => 'Tiket dibuat',
-            ]);
+            $tiket->tambahLog(
+                kategori: 'Status',
+                lama: null,
+                baru: 'Open',
+                keterangan: 'Tiket dibuat'
+            );
 
         });
 
-        static::deleting(function ($tiket) {
+        static::deleting(function (self $tiket): void {
 
             if ($tiket->isForceDeleting()) {
                 return;
             }
 
+            $namaUser = auth()->user()?->name ?? 'System';
+
             $tiket->tambahLog(
-                'Delete Data',
-                null,
-                null,
-                'Tiket telah dihapus oleh'
-                . auth()->user()->name
+                kategori: 'Delete Data',
+                lama: $tiket->status,
+                baru: 'Deleted',
+                keterangan: "Tiket telah dihapus oleh {$namaUser}"
             );
 
         });
     }
 
-    /**
-     * Summary of canEdit
-     * @return bool
-     */
-    public function canEdit(): bool
+    /*
+    |--------------------------------------------------------------------------
+    | Permission / Access Control
+    |--------------------------------------------------------------------------
+    */
+    public function canBeAccessedBy(?User $user = null): bool
+    {
+        $user ??= auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        /*
+         * Staff Helpdesk
+         */
+        if (
+            $user->hasAnyRole([
+                'admin',
+                'teknisi',
+                'admin_super',
+                'super_admin',
+            ])
+        ) {
+            return true;
+        }
+
+        /*
+         * Pemohon hanya dapat mengakses tiket miliknya.
+         */
+        if ($user->hasRole('pemohon')) {
+            return (int) $this->user_id === (int) $user->id;
+        }
+
+        return false;
+    }
+
+    public function canStaffEdit(): bool
     {
         if (
             auth()->user()->hasRole('admin')
@@ -123,11 +180,59 @@ class TiketPerbaikan extends Model
         return !$this->isClosed();
     }
 
+    public function canPemohonEdit(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (!$user->hasRole('pemohon')) {
+            return false;
+        }
+
+        /* Pemohon hanya boleh mengubah tiket miliknya sendiri */
+
+        if ((int) $this->user_id !== (int) $user->id) {
+            return false;
+        }
+
+        /* Hanya tiket dengan status Open yang dapat diedit */
+
+        return $this->isOpen();
+    }
+
     /**
-     * Ringkasan Data LogsPerbaikan
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<LogPerbaikan, TiketPerbaikan>
+     * Apakah tiket dapat dibatalkan oleh Pemohon?
      */
-    public function logs()
+    public function canPemohonDelete(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (!$user->hasRole('pemohon')) {
+            return false;
+        }
+
+        /* Hanya pemilik tiket */
+        if ((int) $this->user_id !== (int) $user->id) {
+            return false;
+        }
+
+        /* Tiket hanya dapat dibatalkan apabila status tiket masih Open */
+        return $this->isOpen();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Log Configuration
+    |--------------------------------------------------------------------------
+    */
+    public function logs(): HasMany
     {
         return $this->hasMany(
             LogPerbaikan::class,
@@ -135,14 +240,19 @@ class TiketPerbaikan extends Model
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Audit Logs
+    |--------------------------------------------------------------------------
+    */
     public function tambahLog(
         string $kategori,
-        ?string $lama,
-        ?string $baru,
-        ?string $keterangan
-    ) {
-        return LogPerbaikan::create([
-            'tiket_id' => $this->id,
+        ?string $lama = null,
+        ?string $baru = null,
+        ?string $keterangan = null
+    ): LogPerbaikan {
+
+        return $this->logs()->create([
             'user_id' => auth()->id() ?? $this->user_id,
             'kategori_log' => $kategori,
             'data_lama' => $lama,
@@ -152,27 +262,39 @@ class TiketPerbaikan extends Model
         ]);
     }
 
-    public function updateStatus(
-        string $statusBaru,
-        ?string $catatan = null
-    ) {
-        $statusLama = $this->status;
-
-        $this->update([
-            'status' => $statusBaru
-        ]);
-
-        $this->tambahLog(
-            'Status',
-            $statusLama,
-            $statusBaru,
-            $catatan
-        );
-    }
-
+    /*
+    |--------------------------------------------------------------------------
+    | Status Management
+    |--------------------------------------------------------------------------
+    */
     public function isLocked(): bool
     {
         return $this->status === 'Close';
+    }
+
+    public function updateStatus(
+        string $statusBaru,
+        ?string $catatan = null
+    ): bool {
+
+        $statusLama = $this->status;
+
+        if ($statusLama === $statusBaru) {
+            return false;
+        }
+
+        $this->update([
+            'status' => $statusBaru,
+        ]);
+
+        $this->tambahLog(
+            kategori: 'Status',
+            lama: $statusLama,
+            baru: $statusBaru,
+            keterangan: $catatan
+        );
+
+        return true;
     }
 
     public function reopen(
@@ -194,7 +316,7 @@ class TiketPerbaikan extends Model
             "[PENDING] {$catatan}"
         );
     }
-    
+
     public function closeAsCompleted(
         ?string $catatan = null
     ) {
@@ -213,50 +335,82 @@ class TiketPerbaikan extends Model
         );
     }
 
-    /* Chats Logs Data */
-    // Kirim Pesan
+    /*
+    |--------------------------------------------------------------------------
+    | Chat
+    |--------------------------------------------------------------------------
+    */
     public function sendMessage(
         string $pesan
-    ) {
+    ): LogPerbaikan {
+
         return $this->tambahLog(
-            'Chat',
-            null,
-            null,
-            $pesan
+            kategori: 'Chat',
+            lama: null,
+            baru: null,
+            keterangan: $pesan
         );
     }
 
-    public function chatLogs()
+    public function chatLogs(): HasMany
     {
         return $this->logs()
-            ->where(
-                'kategori_log',
-                'Chat'
-            );
+            ->where('kategori_log', 'Chat');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Data Management
+    |--------------------------------------------------------------------------
+    */
+    public function updateDataPemohon(array $data): bool
+    {
+        if (!$this->canPemohonEdit()) {
+            return false;
+        }
+
+        $updated = false;
+
+        foreach (
+            self::ALLOWED_UPDATE_FIELDS
+            as $field
+        ) {
+
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+
+            $updated = $this->updateField(
+                field: $field,
+                valueBaru: $data[$field],
+                catatan: 'Data diperbarui oleh pemohon'
+            ) || $updated;
+        }
+
+        return $updated;
     }
 
     public function updateField(
         string $field,
         mixed $valueBaru,
         ?string $catatan = null
-    ) {
+    ): bool {
+
         if (
             !in_array(
                 $field,
-                $this->allowedUpdateFields
+                self::ALLOWED_UPDATE_FIELDS,
+                true
             )
         ) {
-            throw new \Exception(
+            throw new \InvalidArgumentException(
                 "Field {$field} tidak boleh diubah."
             );
         }
 
         $valueLama = $this->{$field};
 
-        if (
-            (string) $valueLama ===
-            (string) $valueBaru
-        ) {
+        if ((string) $valueLama === (string) $valueBaru) {
             return false;
         }
 
@@ -265,9 +419,10 @@ class TiketPerbaikan extends Model
         ]);
 
         $this->tambahLog(
-            'Update Data',
-            (string) $valueLama,
-            (string) $valueBaru,
+            kategori: 'Update Data',
+            lama: (string) $valueLama,
+            baru: (string) $valueBaru,
+            keterangan:
             $catatan
             ?? "Field {$field} diperbarui"
         );
@@ -275,42 +430,74 @@ class TiketPerbaikan extends Model
         return true;
     }
 
-    /**
-     * Summary of updateRuangan
-     * @param int $ruanganIdBaru
-     * @return void
-     */
+    public function cancelByPemohon(
+        ?string $catatan = null
+    ): bool {
+
+        if (!$this->canPemohonDelete()) {
+            return false;
+        }
+
+        $this->tambahLog(
+            kategori: 'Delete Data',
+            lama: $this->status,
+            baru: 'Cancelled',
+            keterangan:
+            $catatan
+            ?? 'Tiket dibatalkan oleh pemohon'
+        );
+
+        return $this->delete();
+    }
+
     public function updateRuangan(
         int $ruanganIdBaru
-    ) {
-        $lama = $this->ruangan?->nama_ruangan;
+    ): bool {
 
-        $baru = MasterRuangan::find(
+        $ruanganLama = $this->ruangan?->nama_ruangan;
+
+        $ruanganBaru = MasterRuangan::find(
             $ruanganIdBaru
-        )?->nama_ruangan;
+        );
+
+        if (!$ruanganBaru) {
+            throw new \InvalidArgumentException(
+                'Ruangan tidak ditemukan.'
+            );
+        }
 
         $this->update([
             'ruangan_id' => $ruanganIdBaru,
         ]);
 
         $this->tambahLog(
-            'Update Data',
-            $lama,
-            $baru,
-            'Ruangan dipindahkan'
+            kategori: 'Update Data',
+            lama: $ruanganLama,
+            baru: $ruanganBaru->nama_ruangan,
+            keterangan: 'Ruangan dipindahkan'
         );
+
+        return true;
     }
 
-    // Timeline
-    public function timeline()
+    /*
+    |--------------------------------------------------------------------------
+    | Timeline
+    |--------------------------------------------------------------------------
+    */
+    public function timeline(): HasMany
     {
         return $this->logs()
             ->with('user')
             ->latest('created_at');
     }
 
-    /* Summary of getWaktuMulaiAttribute */
-    public function getWaktuMulaiAttribute()
+    /*
+    |--------------------------------------------------------------------------
+    | Reporting / Time Attributes
+    |--------------------------------------------------------------------------
+    */
+    public function getWaktuMulaiAttribute(): ?Carbon
     {
         return $this->logs()
             ->where('kategori_log', 'Status')
@@ -319,8 +506,16 @@ class TiketPerbaikan extends Model
             ->value('created_at');
     }
 
-    /* Summary of getDurasiPengerjaanAttribute */
-    public function getDurasiPengerjaanAttribute()
+    public function getWaktuSelesaiAttribute(): ?Carbon
+    {
+        return $this->logs()
+            ->where('kategori_log', 'Status')
+            ->where('data_baru', 'Close')
+            ->latest('created_at')
+            ->value('created_at');
+    }
+
+    public function getDurasiPengerjaanAttribute(): ?string
     {
         if (
             !$this->waktu_mulai ||
@@ -329,24 +524,17 @@ class TiketPerbaikan extends Model
             return null;
         }
 
-        return $this->waktu_mulai
-            ->diffForHumans(
-                $this->waktu_selesai,
-                true
-            );
+        return $this->waktu_mulai->diffForHumans(
+            $this->waktu_selesai,
+            true
+        );
     }
 
-    /* Summary of getWaktuSelesaiAttribute */
-    public function getWaktuSelesaiAttribute()
-    {
-        return $this->logs()
-            ->where('kategori_log', 'Status')
-            ->where('data_baru', 'Close')
-            ->latest()
-            ->value('created_at');
-    }
-
-    /* HELPER Filament Button */
+    /*
+    |--------------------------------------------------------------------------
+    | Status Helpers
+    |--------------------------------------------------------------------------
+    */
     public function isOpen(): bool
     {
         return $this->status === 'Open';
@@ -364,41 +552,54 @@ class TiketPerbaikan extends Model
 
     public function isCompleted(): bool
     {
-        return $this->outcome === 'Completed';
+        return $this->status_outcome === 'Completed';
     }
 
     public function isRejected(): bool
     {
-        return $this->outcome === 'Rejected';
+        return $this->status_outcome === 'Rejected';
     }
 
-    /* HELPER Outcome */
-    public function getStatusOutcomeAttribute()
+    /*
+    |--------------------------------------------------------------------------
+    | Outcome Helpers
+    |--------------------------------------------------------------------------
+    */
+    public function getStatusOutcomeAttribute(): ?string
     {
-        if ($this->status !== 'Close') {
+        if (!$this->isClosed()) {
             return null;
         }
 
         $closeLog = $this->logs()
             ->where('kategori_log', 'Status')
             ->where('data_baru', 'Close')
-            ->latest()
+            ->latest('created_at')
             ->first();
 
         if (!$closeLog) {
             return null;
         }
 
-        if (str_contains($closeLog->keterangan, '[SELESAI]')) {
+        if (
+            str_contains(
+                $closeLog->keterangan ?? '',
+                '[SELESAI]'
+            )
+        ) {
             return 'Completed';
         }
 
-        if (str_contains($closeLog->keterangan, '[DITOLAK]')) {
+        if (
+            str_contains(
+                $closeLog->keterangan ?? '',
+                '[DITOLAK]'
+            )
+        ) {
             return 'Rejected';
         }
 
         return null;
     }
-
 
 }

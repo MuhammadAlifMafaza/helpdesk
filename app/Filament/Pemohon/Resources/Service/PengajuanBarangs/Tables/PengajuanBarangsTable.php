@@ -16,8 +16,15 @@ class PengajuanBarangsTable
         return $table
             ->columns([
                 TextColumn::make('index')
-                    ->label('#')
+                    ->label('No')
                     ->rowIndex(),
+
+                TextColumn::make('kode_pengajuan')
+                    ->label('Kode Pengajuan')
+                    ->searchable()
+                    ->copyable()
+                    ->weight('bold'),
+
 
                 TextColumn::make('user.name')
                     ->label('Pemohon')

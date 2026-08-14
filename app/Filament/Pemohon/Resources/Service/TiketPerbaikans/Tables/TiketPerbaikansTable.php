@@ -2,21 +2,22 @@
 
 namespace App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Actions\DeleteAction;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
-
 
 class TiketPerbaikansTable
 {
     public static function configure(Table $table): Table
     {
         return $table
-            ->defaultSort('Created_at', 'desc')
+            ->defaultSort('created_at', 'desc')
+
             ->columns([
+
                 TextColumn::make('index')
                     ->label('No')
                     ->rowIndex(),
@@ -28,10 +29,12 @@ class TiketPerbaikansTable
                     ->weight('bold'),
 
                 TextColumn::make('user.name')
-                    ->label('Pemohon'),
+                    ->label('Pemohon')
+                    ->searchable(),
 
                 TextColumn::make('ruangan.nama_ruangan')
-                    ->label('Ruangan'),
+                    ->label('Ruangan')
+                    ->searchable(),
 
                 TextColumn::make('keluhan')
                     ->label('Keluhan')
@@ -39,18 +42,15 @@ class TiketPerbaikansTable
                     ->searchable(),
 
                 TextColumn::make('status')
+                    ->label('Status')
                     ->badge()
-                    ->icon(fn(string $state) => match ($state) {
-
+                    ->icon(fn(string $state): string => match ($state) {
                         'Open' => 'heroicon-o-exclamation-circle',
-
                         'In Progress' => 'heroicon-o-wrench-screwdriver',
-
                         'Close' => 'heroicon-o-check-badge',
-
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn(string $state) => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Open' => 'info',
                         'In Progress' => 'warning',
                         'Close' => 'success',
@@ -58,60 +58,130 @@ class TiketPerbaikansTable
                     }),
 
                 TextColumn::make('status_outcome')
+                    ->label('Hasil')
                     ->badge()
-                    ->icon(fn(?string $state) => match ($state) {
-                        'Completed' => 'heroicon-o-check-circle',
-                        'Rejected' => 'heroicon-o-x-circle',
-                        'Reopen' => 'heroicon-o-arrow-path',
-                        default => 'heroicon-o-question-mark-circle',
-                    })
-                    ->color(fn(?string $state): string => match ($state) {
-                        'Completed' => 'success',
-                        'Rejected' => 'danger',
-                        'Reopen' => 'warning',
-                        default => 'gray',
-                    }),
+                    ->placeholder('-')
+                    ->icon(
+                        fn(?string $state): string => match ($state) {
+                            'Completed' => 'heroicon-o-check-circle',
+                            'Rejected' => 'heroicon-o-x-circle',
+                            'Reopen' => 'heroicon-o-arrow-path',
+                            default => 'heroicon-o-question-mark-circle',
+                        }
+                    )
+                    ->color(
+                        fn(?string $state): string => match ($state) {
+                            'Completed' => 'success',
+                            'Rejected' => 'danger',
+                            'Reopen' => 'warning',
+                            default => 'gray',
+                        }
+                    ),
 
                 TextColumn::make('created_at')
                     ->label('Tanggal Dibuat')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
+                        fn(TiketPerbaikan $record): string =>
+                        $record->created_at?->timezone('Asia/Jakarta')->format('H:i:s')
+                        ?? '-'
                     ),
 
                 TextColumn::make('waktu_mulai')
+                    ->label('Mulai')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
+                    ->placeholder('-')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
+                        fn(TiketPerbaikan $record): string =>
+                        $record->waktu_mulai
+                        ? $record->waktu_mulai
+                            ->timezone('Asia/Jakarta')
+                            ->format('H:i:s')
+                        : '-'
                     ),
 
                 TextColumn::make('waktu_selesai')
+                    ->label('Selesai')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
+                    ->placeholder('-')
                     ->description(
-                        fn($record) => $record->waktu_selesai->format('H:i:s')
+                        fn(TiketPerbaikan $record): string =>
+                        $record->waktu_selesai
+                        ? $record->waktu_selesai
+                            ->timezone('Asia/Jakarta')
+                            ->format('H:i:s')
+                        : '-'
                     ),
 
                 TextColumn::make('durasi_pengerjaan')
-                    ->timezone(''),
+                    ->label('Durasi')
+                    ->placeholder('-'),
 
             ])
 
             ->filters([
-                    //
-                ])
-
-            ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
+                //
             ])
 
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+            ->recordActions([
+
+                /*
+                |--------------------------------------------------------------------------
+                | View
+                |--------------------------------------------------------------------------
+                */
+
+                ViewAction::make(),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Edit
+                |--------------------------------------------------------------------------
+                */
+
+                EditAction::make()
+                    ->visible(
+                        fn(TiketPerbaikan $record): bool =>
+                        $record->canPemohonEdit()
+                    ),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Batalkan Tiket
+                |--------------------------------------------------------------------------
+                */
+
+                DeleteAction::make()
+                    ->label('Batalkan')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(
+                        fn(TiketPerbaikan $record): bool =>
+                        $record->canPemohonDelete()
+                    )
+                    ->modalHeading('Batalkan Tiket')
+                    ->modalDescription(
+                        'Tiket yang dibatalkan tidak akan ditampilkan lagi pada daftar tiket aktif.'
+                    )
+                    ->modalSubmitActionLabel('Ya, Batalkan')
+                    ->successNotificationTitle(
+                        'Tiket berhasil dibatalkan'
+                    )
+                    ->before(
+                        function (TiketPerbaikan $record): void {
+
+                            if (!$record->canPemohonDelete()) {
+                                abort(
+                                    403,
+                                    'Tiket tidak dapat dibatalkan pada status saat ini.'
+                                );
+                            }
+                        }
+                    ),
             ]);
     }
 }
