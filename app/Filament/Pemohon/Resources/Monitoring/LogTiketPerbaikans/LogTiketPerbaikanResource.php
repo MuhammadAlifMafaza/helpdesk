@@ -20,8 +20,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class LogTiketPerbaikanResource extends Resource
 {
-    protected static ?string $model = LogPerbaikan::class; // Model yang digunakan untuk resource ini
-    protected static ?string $slug = 'log-perbaikan'; // slug atau URL path untuk resource ini
+    protected static ?string $model = LogPerbaikan::class;
+    protected static ?string $slug = 'log-perbaikan';
     protected static ?string $pluralLabel = 'Timeline Perbaikan';
     protected static UnitEnum|string|null $navigationGroup = 'Monitoring';
     protected static ?string $navigationLabel = 'Timeline Perbaikan';

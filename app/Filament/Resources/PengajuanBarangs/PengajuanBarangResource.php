@@ -198,7 +198,7 @@ class PengajuanBarangResource extends Resource
                     ->searchable()
                     ->copyable()
                     ->weight('bold'),
-                    
+
                 TextColumn::make('user.name')
                     ->label('Pemohon')
                     ->searchable(),
@@ -386,7 +386,7 @@ class PengajuanBarangResource extends Resource
                 EditAction::make()
                     ->label('')
                     ->visible(
-                        fn ($record) => $record->canEdit()
+                        fn ($record) => $record->canStaffEdit()
                     ),
 
                 DeleteAction::make()

@@ -62,6 +62,11 @@ class PengajuanBarangResource extends Resource
         ];
     }
 
+    public static function canEdit($record): bool
+    {
+        return $record->canPemohonEdit();
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()

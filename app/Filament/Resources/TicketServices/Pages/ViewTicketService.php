@@ -8,8 +8,6 @@ use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Actions\Action;
 
 class ViewTicketService extends ViewRecord
@@ -80,7 +78,7 @@ class ViewTicketService extends ViewRecord
 
         $this->record->refresh();
     }
-    
+
     protected function getHeaderActions(): array
     {
         return [
