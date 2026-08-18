@@ -259,7 +259,7 @@
 
         align-items: flex-end;
 
-        /* gap: 8px; */
+        gap: 8px;
     }
 
 

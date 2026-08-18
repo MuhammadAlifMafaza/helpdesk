@@ -2,6 +2,11 @@
 
 namespace App\Filament\Pemohon\Resources\Service\PengajuanBarangs;
 
+/*
+|---------------------------------------------------------------------------
+| Import Pages (Tampilan) & Files import (models, form, table)
+|--------------------------------------------------------------------------- 
+ */
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Pages\CreatePengajuanBarang;
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Pages\EditPengajuanBarang;
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Pages\ListPengajuanBarangs;
@@ -10,21 +15,23 @@ use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Schemas\PengajuanBar
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Schemas\PengajuanBarangInfolist;
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Tables\PengajuanBarangsTable;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
+
+/*
+|---------------------------------------------------------------------------
+| Import Schemas (Formulir) & Tables (Tabel)
+|---------------------------------------------------------------------------
+*/
 use BackedEnum;
 use UnitEnum;
-
 use Illuminate\Database\Eloquent\Builder;
-
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 class PengajuanBarangResource extends Resource
 {
     protected static ?string $model = PengajuanBarang::class;
     protected static ?string $slug = 'pengajuan-barang';
-    // protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cube';
     protected static UnitEnum|string|null $navigationGroup = 'Pelayanan';
     protected static ?string $pluralLabel = 'Pengajuan Barang';
     protected static ?string $navigationLabel = 'Pengajuan Barang';

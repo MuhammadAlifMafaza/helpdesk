@@ -3,11 +3,10 @@
 namespace App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Tables;
 
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class PengajuanBarangsTable
 {
@@ -16,35 +15,40 @@ class PengajuanBarangsTable
         return $table
             ->columns([
                 TextColumn::make('index')
-                    ->label('No')
+                    ->label('No.')
                     ->rowIndex(),
 
                 TextColumn::make('kode_pengajuan')
                     ->label('Kode Pengajuan')
                     ->searchable()
                     ->copyable()
+                    ->copyMessage('Kode pengajuan disalin')
+                    ->copyMessageDuration(1500)
                     ->weight('bold'),
-
 
                 TextColumn::make('user.name')
                     ->label('Pemohon')
                     ->searchable(),
 
                 TextColumn::make('nama_barang')
-                    ->searchable(),
+                    ->label('Nama Barang')
+                    ->searchable()
+                    ->wrap(),
 
                 TextColumn::make('jumlah')
+                    ->label('Jumlah')
                     ->sortable(),
 
                 TextColumn::make('status')
+                    ->label('Status')
                     ->badge()
-                    ->icon(fn(string $state) => match ($state) {
+                    ->icon(fn(string $state): string => match ($state) {
                         'Open' => 'heroicon-o-folder-open',
                         'In Progress' => 'heroicon-o-arrow-path',
                         'Close' => 'heroicon-o-check-circle',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn(string $state) => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Open' => 'info',
                         'In Progress' => 'warning',
                         'Close' => 'success',
@@ -52,58 +56,69 @@ class PengajuanBarangsTable
                     }),
 
                 TextColumn::make('status_outcome')
+                    ->label('Hasil')
                     ->badge()
-                    ->icon(fn(?string $state) => match ($state) {
+                    ->icon(fn(?string $state): string => match ($state) {
                         'Completed' => 'heroicon-o-check-circle',
                         'Rejected' => 'heroicon-o-x-circle',
-                        'Reopen' => 'heroicon-o-arrow-path',
                         default => 'heroicon-o-question-mark-circle',
                     })
                     ->color(fn(?string $state): string => match ($state) {
                         'Completed' => 'success',
                         'Rejected' => 'danger',
-                        'Reopen' => 'warning',
                         default => 'gray',
-                    }),
+                    })
+                    ->placeholder('-'),
 
                 TextColumn::make('created_at')
-                    ->label('Waktu Permintaan Dibuat')
+                    ->label('Waktu Pengajuan')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
-                    ),
+                        fn($record): ?string =>
+                        $record->created_at?->timezone('Asia/Jakarta')->format('H:i:s')
+                    )
+                    ->sortable(),
 
                 TextColumn::make('waktu_mulai')
-                    ->label('Waktu Permintaan Diterima')
+                    ->label('Waktu Diterima')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
-                    ),
+                        fn($record): ?string =>
+                        $record->waktu_mulai?->timezone('Asia/Jakarta')->format('H:i:s')
+                    )
+                    ->placeholder('-')
+                    ->sortable(),
 
                 TextColumn::make('waktu_selesai')
-                    ->label('Waktu Permintaan Selesai')
+                    ->label('Waktu Selesai')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
-                    ),
+                        fn($record): ?string =>
+                        $record->waktu_selesai?->timezone('Asia/Jakarta')->format('H:i:s')
+                    )
+                    ->placeholder('-')
+                    ->sortable(),
 
                 TextColumn::make('durasi_pengerjaan')
-                    ->timezone('Asia/Jakarta'),
-
+                    ->label('Durasi')
+                    ->placeholder('-'),
             ])
+
             ->filters([
                 //
             ])
+
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
             ])
+
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    //
                 ]),
             ]);
     }

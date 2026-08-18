@@ -9,5 +9,11 @@ class CreatePengajuanBarang extends CreateRecord
 {
     protected static string $resource = PengajuanBarangResource::class;
 
-    
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $data['user_id'] = auth()->id();
+        $data['status'] = 'Open';
+
+        return $data;
+    }
 }
