@@ -2,14 +2,18 @@
 
 namespace App\Models\Modules\Perbaikan\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+// Imports necesery Files(Models)
 use App\Models\User;
 use App\Models\Modules\Master\Models\MasterRuangan;
-use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
+use App\Models\Modules\Perbaikan\Enums\TicketStatus;
+use App\Services\HelpdeskNotificationService;
 
 class TiketPerbaikan extends Model
 {
@@ -21,6 +25,7 @@ class TiketPerbaikan extends Model
     |--------------------------------------------------------------------------
     */
     protected $table = 'tiket_perbaikan';
+
     protected $appends = [
         'kode_tiket',
         'status_outcome',
@@ -95,6 +100,20 @@ class TiketPerbaikan extends Model
         );
     }
 
+    public function notifyNewTiket(): void
+    {
+        // Implementation for notifying about new ticket
+        HelpdeskNotificationService::sendNotification(
+            recipient: $this->user,
+            type: 'tiket_baru',
+            title: 'Tiket Baru Dibuat',
+            message: "Tiket dengan kode {$this->kode_tiket} telah dibuat oleh {$this->user->name} dari {$this->ruangan->nama}.",
+            kode: $this->kode_tiket,
+            url: $this->getNotificationUrl(),
+            referenceId: $this->id,
+        );
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Model Lifecycle
@@ -110,6 +129,8 @@ class TiketPerbaikan extends Model
                 baru: 'Open',
                 keterangan: 'Tiket dibuat'
             );
+
+            $tiket->notifyNewTiket();
 
         });
 
@@ -267,6 +288,21 @@ class TiketPerbaikan extends Model
     | Status Management
     |--------------------------------------------------------------------------
     */
+    public function scopeOpen(Builder $query): void
+    {
+        $query->where('status', TicketStatus::OPEN->value);
+    }
+
+    public function scopeProgress(Builder $query): void
+    {
+        $query->where('status', TicketStatus::IN_PROGRESS->value);
+    }
+
+    public function scopeClosed(Builder $query): void
+    {
+        $query->where('status', TicketStatus::CLOSE->value);
+    }
+
     public function isLocked(): bool
     {
         return $this->status === 'Close';
@@ -350,12 +386,54 @@ class TiketPerbaikan extends Model
             baru: null,
             keterangan: $pesan
         );
+
+        $this->notifyChatRecipients(
+            $pesan
+        );
+
+        return $log;
     }
 
     public function chatLogs(): HasMany
     {
         return $this->logs()
             ->where('kategori_log', 'Chat');
+    }
+
+    protected function notifyChatRecipients(
+        string $pesan
+    ): void {
+
+        $senderId = auth()->id();
+
+        $recipients = User::query()
+            ->whereKeyNot($senderId)
+            ->where(function ($query) {
+                $query
+                    ->whereHas('roles', function ($q) {
+                        $q->whereIn('name', [
+                            'admin',
+                            'teknisi',
+                            'admin_super',
+                            'super_admin',
+                        ]);
+                    })
+                    ->orWhereKey($this->user_id);
+            })
+            ->get();
+
+        foreach ($recipients as $recipient) {
+
+            HelpdeskNotificationService::sendNotification(
+                recipient: $recipient,
+                type: 'perbaikan_chat',
+                title: 'Pesan Baru',
+                message: $pesan,
+                kode: $this->kode_tiket,
+                url: $this->getNotificationUrl(),
+                referenceId: $this->id,
+            );
+        }
     }
 
     /*
@@ -372,8 +450,7 @@ class TiketPerbaikan extends Model
         $updated = false;
 
         foreach (
-            self::ALLOWED_UPDATE_FIELDS
-            as $field
+            self::ALLOWED_UPDATE_FIELDS as $field
         ) {
 
             if (!array_key_exists($field, $data)) {
@@ -422,8 +499,7 @@ class TiketPerbaikan extends Model
             kategori: 'Update Data',
             lama: (string) $valueLama,
             baru: (string) $valueBaru,
-            keterangan:
-            $catatan
+            keterangan: $catatan
             ?? "Field {$field} diperbarui"
         );
 
@@ -442,8 +518,7 @@ class TiketPerbaikan extends Model
             kategori: 'Delete Data',
             lama: $this->status,
             baru: 'Cancelled',
-            keterangan:
-            $catatan
+            keterangan: $catatan
             ?? 'Tiket dibatalkan oleh pemohon'
         );
 
@@ -601,5 +676,159 @@ class TiketPerbaikan extends Model
 
         return null;
     }
+    /*
+    |--------------------------------------------------------------------------
+    | Statistics
+    |--------------------------------------------------------------------------
+    */
 
+    /**
+     * Total jumlah tiket.
+     */
+    public static function getTotalTiket(
+        ?Builder $query = null
+    ): int {
+        $query ??= static::query();
+
+        return (clone $query)->count();
+    }
+
+    /**
+     * Total tiket yang belum dikerjakan.
+     */
+    public static function getTotalOpen(
+        ?Builder $query = null
+    ): int {
+        $query ??= static::query();
+
+        return (clone $query)
+            ->where('status', 'Open')
+            ->count();
+    }
+
+    /**
+     * Total tiket yang sedang dikerjakan.
+     */
+    public static function getTotalInProgress(
+        ?Builder $query = null
+    ): int {
+        $query ??= static::query();
+
+        return (clone $query)
+            ->where('status', 'In Progress')
+            ->count();
+    }
+
+    /**
+     * Total tiket yang telah ditutup.
+     */
+    public static function getTotalClose(
+        ?Builder $query = null
+    ): int {
+        $query ??= static::query();
+
+        return (clone $query)
+            ->where('status', 'Close')
+            ->count();
+    }
+
+    /**
+     * Jumlah tiket yang belum selesai.
+     */
+    public static function getTotalBelumSelesai(
+        ?Builder $query = null
+    ): int {
+        $query ??= static::query();
+
+        return (clone $query)
+            ->whereNull('waktu_selesai')
+            ->count();
+    }
+
+    /**
+     * Rata-rata durasi pengerjaan dalam jam.
+     */
+    public static function getAverageDuration(
+        ?Builder $query = null
+    ): float {
+        $minutes = static::getAverageDurationMinutes($query);
+
+        if ($minutes === null) {
+            return 0;
+        }
+
+        return round($minutes / 60, 2);
+    }
+
+    /**
+     * Rata-rata durasi pengerjaan dalam format human readable.
+     */
+    public static function getAverageDurationHuman(
+        ?Builder $query = null
+    ): string {
+        $hours = static::getAverageDuration($query);
+
+        if ($hours <= 0) {
+            return '-';
+        }
+
+        $days = round($hours / 24, 2);
+
+        return number_format($hours, 2)
+            . ' Jam'
+            . " ({$days} Hari)";
+    }
+
+    /**
+     * Deskripsi rata-rata durasi pengerjaan.
+     */
+    public static function getAverageDurationDescription(
+        ?Builder $query = null
+    ): string {
+        $minutes = static::getAverageDurationMinutes($query);
+
+        if ($minutes === null) {
+            return '-';
+        }
+
+        $days = round($minutes / 1440, 2);
+
+        return "≈ {$days} Hari";
+    }
+
+    private static function getAverageDurationMinutes(
+        ?Builder $query = null
+    ): ?float {
+        $query ??= static::query();
+
+        $durations = (clone $query)
+            ->with([
+                'logs' => function (HasMany $query): void {
+                    $query
+                        ->where('kategori_log', 'Status')
+                        ->orderBy('created_at');
+                },
+            ])
+            ->get()
+            ->map(function (self $tiket): ?float {
+                $waktuMulai = $tiket->logs
+                    ->firstWhere('data_baru', 'In Progress')
+                        ?->created_at;
+                $waktuSelesai = $tiket->logs
+                    ->where('data_baru', 'Close')
+                    ->last()
+                        ?->created_at;
+
+                if (!$waktuMulai || !$waktuSelesai) {
+                    return null;
+                }
+
+                return abs($waktuMulai->diffInMinutes($waktuSelesai));
+            })
+            ->filter();
+
+        return $durations->isEmpty()
+            ? null
+            : (float) $durations->average();
+    }
 }

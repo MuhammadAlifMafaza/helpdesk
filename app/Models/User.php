@@ -3,20 +3,20 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 #[Fillable(['name', 'email', 'password', 'unit_bidang'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
-    use HasRoles, HasFactory, Notifiable;
+    use HasFactory, HasRoles, Notifiable;
 
     protected $guard_name = 'web';
 
@@ -26,7 +26,7 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
-        'unit_bidang'
+        'unit_bidang',
     ];
 
     protected function casts(): array
@@ -55,20 +55,22 @@ class User extends Authenticatable implements FilamentUser
     {
         return match ($panel->getId()) {
 
-            'admin' =>
-            $this->hasAnyRole([
+            'admin' => $this->hasAnyRole([
                 'admin',
                 'teknisi',
                 'super_admin',
             ]),
 
-            'pemohon' =>
-            $this->hasRole('pemohon'),
+            'pemohon' => $this->hasRole('pemohon'),
 
-            'teknisi' =>
-            $this->hasRole('teknisi'),
+            'teknisi' => $this->hasRole('teknisi'),
 
             default => false,
         };
+    }
+
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'users.'.$this->id;
     }
 }

@@ -3,8 +3,10 @@
 namespace App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Pages;
 
 use App\Filament\Pemohon\Resources\Service\TiketPerbaikans\TiketPerbaikanResource;
-use Filament\Resources\Pages\ViewRecord;
+use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Resources\Pages\ViewRecord;
 
 class ViewTiketPerbaikan extends ViewRecord
 {
@@ -78,7 +80,51 @@ class ViewTiketPerbaikan extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make(),
+            /*
+                            |--------------------------------------------------------------------------
+                            | Edit
+                            |--------------------------------------------------------------------------
+                            */
+            EditAction::make()
+                ->label('Edit Tiket')
+                ->icon('heroicon-o-pencil')
+                ->color('edit')
+                ->visible(
+                    fn (TiketPerbaikan $record): bool => $record->canPemohonEdit()
+                ),
+
+            /*
+            |--------------------------------------------------------------------------
+            | Batalkan Tiket
+            |--------------------------------------------------------------------------
+            */
+            DeleteAction::make()
+                ->label('Batalkan')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->visible(
+                    fn (TiketPerbaikan $record): bool => $record->canPemohonDelete()
+                )
+                ->modalHeading('Batalkan Tiket')
+                ->modalDescription(
+                    'Tiket yang dibatalkan tidak akan ditampilkan lagi pada daftar tiket aktif.'
+                )
+                ->modalSubmitActionLabel('Ya, Batalkan')
+                ->successNotificationTitle(
+                    'Tiket berhasil dibatalkan'
+                )
+                ->before(
+                    function (TiketPerbaikan $record): void {
+
+                        if (! $record->canPemohonDelete()) {
+                            abort(
+                                403,
+                                'Tiket tidak dapat dibatalkan pada status saat ini.'
+                            );
+                        }
+                    }
+                ),
         ];
     }
 }

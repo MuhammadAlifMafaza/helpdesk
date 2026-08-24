@@ -12,6 +12,7 @@
     "skills": [
         "infer-conventions",
         "laravel-best-practices",
+        "echo-development",
         "tailwindcss-development"
     ]
 }

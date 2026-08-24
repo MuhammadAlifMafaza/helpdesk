@@ -2,7 +2,8 @@
 
 namespace App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Tables;
 
-use Filament\Actions\BulkActionGroup;
+use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -13,6 +14,7 @@ class PengajuanBarangsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('index')
                     ->label('No.')
@@ -42,13 +44,13 @@ class PengajuanBarangsTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->icon(fn(string $state): string => match ($state) {
+                    ->icon(fn (string $state): string => match ($state) {
                         'Open' => 'heroicon-o-folder-open',
                         'In Progress' => 'heroicon-o-arrow-path',
                         'Close' => 'heroicon-o-check-circle',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'Open' => 'info',
                         'In Progress' => 'warning',
                         'Close' => 'success',
@@ -58,12 +60,12 @@ class PengajuanBarangsTable
                 TextColumn::make('status_outcome')
                     ->label('Hasil')
                     ->badge()
-                    ->icon(fn(?string $state): string => match ($state) {
+                    ->icon(fn (?string $state): string => match ($state) {
                         'Completed' => 'heroicon-o-check-circle',
                         'Rejected' => 'heroicon-o-x-circle',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn(?string $state): string => match ($state) {
+                    ->color(fn (?string $state): string => match ($state) {
                         'Completed' => 'success',
                         'Rejected' => 'danger',
                         default => 'gray',
@@ -75,8 +77,7 @@ class PengajuanBarangsTable
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record): ?string =>
-                        $record->created_at?->timezone('Asia/Jakarta')->format('H:i:s')
+                        fn ($record): ?string => $record->created_at?->timezone('Asia/Jakarta')->format('H:i:s')
                     )
                     ->sortable(),
 
@@ -85,8 +86,7 @@ class PengajuanBarangsTable
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record): ?string =>
-                        $record->waktu_mulai?->timezone('Asia/Jakarta')->format('H:i:s')
+                        fn ($record): ?string => $record->waktu_mulai?->timezone('Asia/Jakarta')->format('H:i:s')
                     )
                     ->placeholder('-')
                     ->sortable(),
@@ -96,8 +96,7 @@ class PengajuanBarangsTable
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record): ?string =>
-                        $record->waktu_selesai?->timezone('Asia/Jakarta')->format('H:i:s')
+                        fn ($record): ?string => $record->waktu_selesai?->timezone('Asia/Jakarta')->format('H:i:s')
                     )
                     ->placeholder('-')
                     ->sortable(),
@@ -112,14 +111,60 @@ class PengajuanBarangsTable
             ])
 
             ->recordActions([
-                ViewAction::make(),
-                EditAction::make(),
-            ])
 
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    //
-                ]),
+                /*
+                |--------------------------------------------------------------------------
+                | View
+                |--------------------------------------------------------------------------
+                */
+
+                ViewAction::make(),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Edit
+                |--------------------------------------------------------------------------
+                */
+
+                EditAction::make()
+                    ->visible(
+                        fn (PengajuanBarang $record): bool => $record->canPemohonEdit()
+                    ),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Batalkan Tiket
+                |--------------------------------------------------------------------------
+                */
+
+                DeleteAction::make()
+                    ->label('')
+                    ->tooltip('Batalkan Tiket')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(
+                        fn (PengajuanBarang $record): bool => $record->canPemohonDelete()
+                    )
+                    ->modalHeading('Batalkan Tiket')
+                    ->modalDescription(
+                        'Tiket yang dibatalkan tidak akan ditampilkan lagi pada daftar tiket aktif.'
+                    )
+                    ->modalSubmitActionLabel('Ya, Batalkan')
+                    ->successNotificationTitle(
+                        'Tiket berhasil dibatalkan'
+                    )
+                    ->before(
+                        function (PengajuanBarang $record): void {
+
+                            if (! $record->canPemohonDelete()) {
+                                abort(
+                                    403,
+                                    'Tiket tidak dapat dibatalkan pada status saat ini.'
+                                );
+                            }
+                        }
+                    ),
             ]);
     }
 }

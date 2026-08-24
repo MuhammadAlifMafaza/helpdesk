@@ -387,7 +387,7 @@ class LogPerbaikan extends Model
             => 'Tiket Diambil',
 
             self::EVENT_PENDING
-            => 'Pending',
+            => 'Tiket Ditunda',
 
             self::EVENT_CHAT
             => 'Pesan Baru',

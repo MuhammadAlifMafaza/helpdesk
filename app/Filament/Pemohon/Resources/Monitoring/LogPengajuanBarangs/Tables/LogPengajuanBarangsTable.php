@@ -2,15 +2,15 @@
 
 namespace App\Filament\Pemohon\Resources\Monitoring\LogPengajuanBarangs\Tables;
 
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\Grid;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+
 class LogPengajuanBarangsTable
 {
-
     public static function configure(Table $table): Table
     {
         return $table
@@ -28,7 +28,7 @@ class LogPengajuanBarangsTable
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
+                        fn ($record) => $record->created_at->format('H:i:s')
                     )
                     ->sortable(),
 
@@ -36,33 +36,38 @@ class LogPengajuanBarangsTable
                     ->label('Kode Pengajuan')
                     ->copyable()
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchTimeline($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchTimeline($search)
                     )->weight('bold'),
 
-                TextColumn::make('pengajuan.keluhan')
-                    ->label('Keluhan Kerusakan'),
+                TextColumn::make('pengajuan.nama_barang')
+                    ->label('Nama Barang')
+                    ->searchable(),
+
+                TextColumn::make('pengajuan.jumlah')
+                    ->label('Jumlah')
+                    ->sortable(),
 
                 TextColumn::make('pengajuan.user.name')
                     ->label('Pemohon')
                     ->placeholder('-')
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchTimeline($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchTimeline($search)
                     ),
 
                 TextColumn::make('user.name')
-                    ->label('Teknisi')
+                    ->label('Dilakukan Oleh')
                     ->placeholder('-')
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchTimeline($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchTimeline($search)
                     ),
 
                 TextColumn::make('pengajuan.status')
@@ -77,13 +82,13 @@ class LogPengajuanBarangsTable
                 TextColumn::make('event_name')
                     ->label('Aktivitas')
                     ->badge()
-                    ->icon(fn($record) => $record->event_icon)
-                    ->color(fn($record) => $record->event_color)
+                    ->icon(fn ($record) => $record->event_icon)
+                    ->color(fn ($record) => $record->event_color)
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchTimeline($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchTimeline($search)
                     ),
 
                 TextColumn::make('event_description')
@@ -91,10 +96,10 @@ class LogPengajuanBarangsTable
                     ->wrap()
                     ->limit(70)
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchTimeline($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchTimeline($search)
                     ),
 
             ])
@@ -131,6 +136,15 @@ class LogPengajuanBarangsTable
                                 ->where('data_lama', 'Open')
                                 ->where('data_baru', 'In Progress'),
 
+                            'PENDING' => $query
+                                ->where('kategori_log', 'Pending'),
+
+                            'CHAT' => $query
+                                ->where('kategori_log', 'Chat'),
+
+                            'UPDATE' => $query
+                                ->where('kategori_log', 'Update Data'),
+
                             'COMPLETE' => $query
                                 ->where('kategori_log', 'Status')
                                 ->where('data_lama', 'In Progress')
@@ -143,18 +157,17 @@ class LogPengajuanBarangsTable
                                 ->where('data_baru', 'Close')
                                 ->where('keterangan', 'like', '[DITOLAK]%'),
 
-                            'CHAT' => $query
-                                ->where('kategori_log', 'Chat'),
-
-                            'UPDATE' => $query
-                                ->where('kategori_log', 'Update Data'),
+                            'REOPEN' => $query
+                                ->where('kategori_log', 'Status')
+                                ->where('data_lama', 'Close')
+                                ->where('data_baru', 'In Progress')
+                                ->where('keterangan', 'like', '[REOPEN]%'),
 
                             'DELETE' => $query
                                 ->where('kategori_log', 'Delete Data'),
 
                             default => $query,
                         };
-
                     }),
 
                 SelectFilter::make('status')
@@ -169,9 +182,9 @@ class LogPengajuanBarangsTable
 
                         return $query->when(
                             filled($data['value']),
-                            fn($q) => $q->whereHas(
+                            fn ($q) => $q->whereHas(
                                 'pengajuan',
-                                fn($q2) => $q2->where(
+                                fn ($q2) => $q2->where(
                                     'status',
                                     $data['value']
                                 )
@@ -190,14 +203,14 @@ class LogPengajuanBarangsTable
                                 DatePicker::make('until')
                                     ->label('Sampai Tanggal')
                                     ->native(false),
-                            ])
+                            ]),
                     ])
                     ->query(function (Builder $query, array $data) {
 
                         return $query
                             ->when(
                                 $data['from'],
-                                fn($q, $date) => $q->whereDate(
+                                fn ($q, $date) => $q->whereDate(
                                     'created_at',
                                     '>=',
                                     $date
@@ -205,7 +218,7 @@ class LogPengajuanBarangsTable
                             )
                             ->when(
                                 $data['until'],
-                                fn($q, $date) => $q->whereDate(
+                                fn ($q, $date) => $q->whereDate(
                                     'created_at',
                                     '<=',
                                     $date

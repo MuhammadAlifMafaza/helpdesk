@@ -12,8 +12,6 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -43,7 +41,7 @@ class AdminPanelProvider extends PanelProvider
                 'process' => Color::Orange,
                 'approve' => Color::Green,
                 'reject' => Color::Red,
-                'reopen' => Color::Yellow, 
+                'reopen' => Color::Yellow,
             ])
             ->sidebarCollapsibleOnDesktop()
             ->collapsedSidebarWidth('5rem')
@@ -55,8 +53,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-                AccountWidget::class,
-                FilamentInfoWidget::class,
+
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -72,7 +69,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make(),
             ])
-            ->homeUrl(fn() => match (auth()->user()?->getRoleNames()->first()) {
+            ->homeUrl(fn () => match (auth()->user()?->getRoleNames()->first()) {
                 'admin' => '/admin/admin-dashboard',
                 'teknisi' => '/admin/teknisi-dashboard',
                 default => '/admin',

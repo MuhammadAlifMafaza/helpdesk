@@ -2,17 +2,18 @@
 
 namespace App\Models\Modules\Pengajuan\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Carbon\Carbon;
 use App\Models\User;
-use App\Models\Modules\Pengajuan\Models\LogPengajuan;
+use App\Services\HelpdeskNotificationService;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PengajuanBarang extends Model
 {
-    use softDeletes;
+    use SoftDeletes;
 
     /*
     |--------------------------------------------------------------------------
@@ -20,6 +21,7 @@ class PengajuanBarang extends Model
     |--------------------------------------------------------------------------
     */
     protected $table = 'pengajuan_barang';
+
     protected $appends = [
         'kode_pengajuan',
         'status_outcome',
@@ -33,10 +35,10 @@ class PengajuanBarang extends Model
     | Model Fillable Fields
     |--------------------------------------------------------------------------
     */
-    private const ALLOWED_UPDATE_FIELDS = [
-        'nama_barang',
-        'jumlah',
-        'alasan',
+    public const ALLOWED_UPDATE_FIELDS = [
+        'nama_barang' => 'Nama Barang',
+        'jumlah' => 'Jumlah',
+        'alasan' => 'Alasan',
     ];
 
     protected $fillable = [
@@ -83,6 +85,20 @@ class PengajuanBarang extends Model
         );
     }
 
+    public function notifyNewPengajuan(): void
+    {
+        // Implementation for notifying about new pengajuan
+        HelpdeskNotificationService::sendNotification(
+            recipient: $this->user,
+            type: 'pengajuan_baru',
+            title: 'Pengajuan Barang Baru Telah Dibuat',
+            message: "Pengajuan dengan kode {$this->kode_pengajuan} telah dibuat oleh {$this->user->name}.",
+            kode: $this->kode_pengajuan,
+            url: $this->getNotificationUrl(),
+            referenceId: $this->id,
+        );
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Model Lifecycle
@@ -99,6 +115,7 @@ class PengajuanBarang extends Model
                 keterangan: 'Pengajuan dibuat'
             );
 
+            $pengajuan->notifyNewPengajuan();
         });
 
         static::deleting(function (self $pengajuan): void {
@@ -128,7 +145,7 @@ class PengajuanBarang extends Model
     {
         $user ??= auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -165,18 +182,18 @@ class PengajuanBarang extends Model
             return true;
         }
 
-        return !$this->isClosed();
+        return ! $this->isClosed();
     }
 
     public function canPemohonEdit(): bool
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
-        if (!$user->hasRole('pemohon')) {
+        if (! $user->hasRole('pemohon')) {
             return false;
         }
 
@@ -198,11 +215,11 @@ class PengajuanBarang extends Model
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
-        if (!$user->hasRole('pemohon')) {
+        if (! $user->hasRole('pemohon')) {
             return false;
         }
 
@@ -214,7 +231,6 @@ class PengajuanBarang extends Model
         /* Pengajuan barang hanya dapat dibatalkan apabila status pengajuan barang masih Open */
         return $this->isOpen();
     }
-
 
     /*
     |--------------------------------------------------------------------------
@@ -291,7 +307,7 @@ class PengajuanBarang extends Model
     ) {
         return $this->updateStatus(
             'In Progress',
-            '[REOPEN] ' .
+            '[REOPEN] '.
             ($catatan ?? 'Pengajuan dibuka kembali')
         );
     }
@@ -311,7 +327,7 @@ class PengajuanBarang extends Model
     ) {
         return $this->updateStatus(
             'Close',
-            '[SELESAI] ' . ($catatan ?? '')
+            '[SELESAI] '.($catatan ?? '')
         );
     }
 
@@ -320,7 +336,7 @@ class PengajuanBarang extends Model
     ) {
         return $this->updateStatus(
             'Close',
-            '[DITOLAK] ' . ($catatan ?? '')
+            '[DITOLAK] '.($catatan ?? '')
         );
     }
 
@@ -339,12 +355,52 @@ class PengajuanBarang extends Model
             baru: null,
             keterangan: $pesan
         );
+
+        $this->notifyChatRecipients($pesan);
+
+        return $log;
     }
 
     public function chatLogs(): HasMany
     {
         return $this->logs()
             ->where('kategori_log', 'Chat');
+    }
+
+    protected function notifyChatRecipients(
+        string $pesan
+    ): void {
+
+        $senderId = auth()->id();
+
+        $recipients = User::query()
+            ->whereKeyNot($senderId)
+            ->where(function ($query) {
+                $query
+                    ->whereHas('roles', function ($q) {
+                        $q->whereIn('name', [
+                            'admin',
+                            'teknisi',
+                            'admin_super',
+                            'super_admin',
+                        ]);
+                    })
+                    ->orWhereKey($this->user_id);
+            })
+            ->get();
+
+        foreach ($recipients as $recipient) {
+
+            HelpdeskNotificationService::sendNotification(
+                recipient: $recipient,
+                type: 'pengajuan_chat',
+                title: 'Pesan Baru',
+                message: $pesan,
+                kode: $this->kode_pengajuan,
+                url: $this->getNotificationUrl(),
+                referenceId: $this->id,
+            );
+        }
     }
 
     /*
@@ -354,25 +410,21 @@ class PengajuanBarang extends Model
     */
     public function updateDataPemohon(array $data): bool
     {
-        if (!$this->canPemohonEdit()) {
+        if (! $this->canPemohonEdit()) {
             return false;
         }
 
         $updated = false;
 
-        foreach (
-            self::ALLOWED_UPDATE_FIELDS
-            as $field
-        ) {
+        foreach (self::ALLOWED_UPDATE_FIELDS as $field => $label) {
 
-            if (!array_key_exists($field, $data)) {
+            if (! array_key_exists($field, $data)) {
                 continue;
             }
 
             $updated = $this->updateField(
                 field: $field,
-                valueBaru: $data[$field],
-                catatan: 'Data telah diperbarui oleh pemohon'
+                valueBaru: $data[$field]
             ) || $updated;
         }
 
@@ -386,10 +438,9 @@ class PengajuanBarang extends Model
     ): bool {
 
         if (
-            !in_array(
+            ! array_key_exists(
                 $field,
-                self::ALLOWED_UPDATE_FIELDS,
-                true
+                self::ALLOWED_UPDATE_FIELDS
             )
         ) {
             throw new \InvalidArgumentException(
@@ -407,13 +458,14 @@ class PengajuanBarang extends Model
             $field => $valueBaru,
         ]);
 
+        $namaField = self::ALLOWED_UPDATE_FIELDS[$field];
+
         $this->tambahLog(
             kategori: 'Update Data',
             lama: (string) $valueLama,
             baru: (string) $valueBaru,
-            keterangan:
-            $catatan
-            ?? "Field {$field} diperbarui"
+            keterangan: $catatan
+            ?? "{$namaField} diperbarui oleh pemohon"
         );
 
         return true;
@@ -423,7 +475,7 @@ class PengajuanBarang extends Model
         ?string $catatan = null
     ): bool {
 
-        if (!$this->canPemohonDelete()) {
+        if (! $this->canPemohonDelete()) {
             return false;
         }
 
@@ -431,9 +483,7 @@ class PengajuanBarang extends Model
             kategori: 'Delete Data',
             lama: $this->status,
             baru: 'Cancelled',
-            keterangan:
-            $catatan
-            ?? 'Pengajuan barang dibatalkan oleh pemohon'
+            keterangan: $catatan ?? 'Pengajuan barang dibatalkan oleh pemohon'
         );
 
         return $this->delete();
@@ -477,8 +527,8 @@ class PengajuanBarang extends Model
     public function getDurasiPengerjaanAttribute(): ?string
     {
         if (
-            !$this->waktu_mulai ||
-            !$this->waktu_selesai
+            ! $this->waktu_mulai ||
+            ! $this->waktu_selesai
         ) {
             return null;
         }
@@ -526,7 +576,7 @@ class PengajuanBarang extends Model
     */
     public function getStatusOutcomeAttribute(): ?string
     {
-        if (!$this->isClosed()) {
+        if (! $this->isClosed()) {
             return null;
         }
 
@@ -536,7 +586,7 @@ class PengajuanBarang extends Model
             ->latest('created_at')
             ->first();
 
-        if (!$closeLog) {
+        if (! $closeLog) {
             return null;
         }
 
@@ -559,5 +609,133 @@ class PengajuanBarang extends Model
         }
 
         return null;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Statistics
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Total jumlah pengajuan barang.
+     */
+    public static function getTotalPengajuan(
+        ?Builder $query = null
+    ): int {
+        $query ??= static::query();
+
+        return (clone $query)->count();
+    }
+
+    /**
+     * Total pengajuan yang belum diproses.
+     */
+    public static function getTotalOpen(
+        ?Builder $query = null
+    ): int {
+        $query ??= static::query();
+
+        return (clone $query)
+            ->where('status', 'Open')
+            ->count();
+    }
+
+    /**
+     * Total pengajuan yang sedang diproses.
+     */
+    public static function getTotalInProgress(
+        ?Builder $query = null
+    ): int {
+        $query ??= static::query();
+
+        return (clone $query)
+            ->where('status', 'In Progress')
+            ->count();
+    }
+
+    /**
+     * Total pengajuan yang telah ditutup.
+     */
+    public static function getTotalClose(
+        ?Builder $query = null
+    ): int {
+        $query ??= static::query();
+
+        return (clone $query)
+            ->where('status', 'Close')
+            ->count();
+    }
+
+    /**
+     * Jumlah pengajuan yang belum selesai.
+     */
+    public static function getTotalBelumSelesai(
+        ?Builder $query = null
+    ): int {
+        $query ??= static::query();
+
+        return (clone $query)
+            ->whereNull('waktu_selesai')
+            ->count();
+    }
+
+    /**
+     * Rata-rata durasi pengerjaan dalam jam.
+     */
+    public static function getAverageDuration(
+        ?Builder $query = null
+    ): float {
+        $query ??= static::query();
+
+        $minutes = (clone $query)
+            ->whereNotNull('durasi_pengerjaan_menit')
+            ->avg('durasi_pengerjaan_menit');
+
+        if (! $minutes) {
+            return 0;
+        }
+
+        return round($minutes / 60, 2);
+    }
+
+    /**
+     * Rata-rata durasi pengerjaan human readable.
+     */
+    public static function getAverageDurationHuman(
+        ?Builder $query = null
+    ): string {
+        $hours = static::getAverageDuration($query);
+
+        if ($hours <= 0) {
+            return '-';
+        }
+
+        $days = round($hours / 24, 2);
+
+        return number_format($hours, 2)
+            .' Jam'
+            ." ({$days} Hari)";
+    }
+
+    /**
+     * Deskripsi rata-rata durasi pengerjaan.
+     */
+    public static function getAverageDurationDescription(
+        ?Builder $query = null
+    ): string {
+        $query ??= static::query();
+
+        $minutes = (clone $query)
+            ->whereNotNull('durasi_pengerjaan_menit')
+            ->avg('durasi_pengerjaan_menit');
+
+        if (! $minutes) {
+            return '-';
+        }
+
+        $days = round($minutes / 1440, 2);
+
+        return "≈ {$days} Hari";
     }
 }

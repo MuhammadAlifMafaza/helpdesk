@@ -1,4 +1,5 @@
 {{-- Page content | Filament pages timeline --}}
+
 @php
     $logs = $getRecord()
         ->timeline()
@@ -6,109 +7,642 @@
         ->get();
 @endphp
 
-<div class="space-y-0">
+<style>
+    /* =========================================================
+       TICKET TIMELINE
+       CSS dibuat khusus agar tidak bergantung pada Tailwind
+       ========================================================= */
 
-    @forelse ($logs as $log)
+    .ticket-timeline {
+        width: 100%;
+        padding: 28px 24px 32px;
+        box-sizing: border-box;
+    }
 
-        <div class="relative flex gap-4">
+    .ticket-timeline-list {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
 
-            {{-- Timeline line --}}
-            <div class="flex flex-col items-center">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-4 ring-gray-50 dark:bg-gray-900 dark:ring-gray-950
-                        {{ match ($log->kategori_log) {
-            'Status' => 'text-info-500',
-            'Update' => 'text-warning-500',
-            'Create' => 'text-success-500',
-            'Delete' => 'text-danger-500',
-            default => 'text-gray-400',
-        } }}">
-                    <x-filament::icon :icon="$log->timeline_icon" class="h-5 w-5" />
-                </div>
+    /* ---------------------------------------------------------
+       ITEM
+       --------------------------------------------------------- */
 
-                @if (!$loop->last)
-                    <div class="w-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
-                @endif
-            </div>
+    .ticket-timeline-item {
+        position: relative;
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr);
+        column-gap: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
 
-            {{-- Content --}}
-            <div class="flex-1 pb-8">
+    /* ---------------------------------------------------------
+       TIMELINE LEFT COLUMN
+       --------------------------------------------------------- */
 
-                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+    .ticket-timeline-marker {
+        position: relative;
+        width: 28px;
+        min-height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
 
-                    {{-- Header --}}
-                    <div class="flex flex-wrap items-start justify-between gap-2">
+    /* garis vertikal */
 
-                        <div class="min-w-0">
-                            <p class="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                                {{ $log->user?->name ?? 'System' }}
-                            </p>
+    .ticket-timeline-line {
+        position: absolute;
+        top: 13px;
+        bottom: -10px;
+        left: 50%;
+        width: 2px;
+        transform: translateX(-50%);
+        background: #d1d5db;
+        z-index: 1;
+    }
 
-                            <p class="text-xs text-gray-400 dark:text-gray-500">
-                                {{ $log->created_at->format('d M Y, H:i') }}
-                                <span class="mx-1">·</span>
-                                {{ $log->created_at->diffForHumans() }}
-                            </p>
-                        </div>
+    /* titik */
 
-                        <x-filament::badge :color="match ($log->kategori_log) {
-                'Status' => 'info',
-                'Update' => 'warning',
-                'Create' => 'success',
-                'Delete' => 'danger',
-                default => 'gray',
-            }">
-                            {{ $log->kategori_log }}
-                        </x-filament::badge>
+    .ticket-timeline-dot {
+        position: relative;
+        z-index: 3;
+        width: 13px;
+        height: 13px;
+        margin-top: 3px;
+        border-radius: 50%;
+        background: #6b7280;
+        border: 3px solid #ffffff;
+        box-sizing: content-box;
+        box-shadow: 0 0 0 1px #d1d5db;
+    }
+
+    /* ---------------------------------------------------------
+       CONTENT
+       --------------------------------------------------------- */
+
+    .ticket-timeline-content {
+        min-width: 0;
+        padding: 0 0 34px;
+    }
+
+    .ticket-timeline-date {
+        margin: 0;
+        padding: 0;
+        font-size: 13px;
+        line-height: 20px;
+        font-weight: 500;
+        color: #6b7280;
+    }
+
+    .ticket-timeline-user {
+        margin-top: 2px;
+        font-size: 14px;
+        line-height: 21px;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .ticket-timeline-category {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        margin-top: 5px;
+        padding: 2px 8px;
+        border-radius: 5px;
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        color: #4b5563;
+        font-size: 11px;
+        line-height: 16px;
+        font-weight: 500;
+    }
+
+    /* ---------------------------------------------------------
+       TITLE / CHAT MESSAGE
+       --------------------------------------------------------- */
+
+    .ticket-timeline-message {
+        width: min(100%, 600px);
+        margin-top: 9px;
+        padding: 10px 13px;
+        box-sizing: border-box;
+
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+
+        background: #f9fafb;
+
+        color: #374151;
+        font-size: 13px;
+        line-height: 20px;
+
+        word-break: break-word;
+        white-space: pre-wrap;
+    }
+
+    /* ---------------------------------------------------------
+       STATUS
+       --------------------------------------------------------- */
+
+    .ticket-timeline-status {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 8px;
+        padding: 3px 9px;
+
+        border-radius: 999px;
+
+        font-size: 11px;
+        line-height: 16px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .02em;
+    }
+
+    .ticket-timeline-status-open {
+        background: #ecfdf3;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+    }
+
+    .ticket-timeline-status-deleted {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+    }
+
+    .ticket-timeline-status-default {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+    }
+
+    /* ---------------------------------------------------------
+       DATA CHANGE
+       --------------------------------------------------------- */
+
+    .ticket-timeline-change {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+
+        width: min(100%, 600px);
+        margin-top: 9px;
+        padding: 10px 13px;
+        box-sizing: border-box;
+
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+
+        background: #f9fafb;
+
+        font-size: 13px;
+    }
+
+    .ticket-timeline-old {
+        padding: 3px 7px;
+        border-radius: 5px;
+
+        background: #fef2f2;
+        color: #dc2626;
+
+        text-decoration: line-through;
+        text-decoration-color: #fca5a5;
+    }
+
+    .ticket-timeline-new {
+        padding: 3px 7px;
+        border-radius: 5px;
+
+        background: #ecfdf5;
+        color: #047857;
+
+        font-weight: 600;
+    }
+
+    .ticket-timeline-arrow {
+        color: #9ca3af;
+        font-size: 16px;
+        line-height: 16px;
+    }
+
+    /* ---------------------------------------------------------
+       DESCRIPTION
+       --------------------------------------------------------- */
+
+    .ticket-timeline-description {
+        margin-top: 8px;
+
+        color: #6b7280;
+        font-size: 13px;
+        line-height: 20px;
+
+        max-width: 600px;
+    }
+
+    /* ---------------------------------------------------------
+       CREATE EVENT
+       --------------------------------------------------------- */
+
+    .ticket-timeline-create .ticket-timeline-dot {
+        background: #10b981;
+        box-shadow: 0 0 0 1px #6ee7b7;
+    }
+
+    /* ---------------------------------------------------------
+       DELETE EVENT
+       --------------------------------------------------------- */
+
+    .ticket-timeline-delete .ticket-timeline-dot {
+        background: #ef4444;
+        box-shadow: 0 0 0 1px #fca5a5;
+    }
+
+    /* ---------------------------------------------------------
+       STATUS EVENT
+       --------------------------------------------------------- */
+
+    .ticket-timeline-status-event .ticket-timeline-dot {
+        background: #3b82f6;
+        box-shadow: 0 0 0 1px #93c5fd;
+    }
+
+    /* ---------------------------------------------------------
+       CHAT EVENT
+       --------------------------------------------------------- */
+
+    .ticket-timeline-chat .ticket-timeline-dot {
+        background: #6b7280;
+        box-shadow: 0 0 0 1px #d1d5db;
+    }
+
+    /* ---------------------------------------------------------
+       DARK MODE
+       --------------------------------------------------------- */
+
+    .dark .ticket-timeline-line {
+        background: #374151;
+    }
+
+    .dark .ticket-timeline-dot {
+        border-color: #111827;
+        box-shadow: 0 0 0 1px #4b5563;
+    }
+
+    .dark .ticket-timeline-date {
+        color: #9ca3af;
+    }
+
+    .dark .ticket-timeline-user {
+        color: #f9fafb;
+    }
+
+    .dark .ticket-timeline-category {
+        background: #1f2937;
+        border-color: #374151;
+        color: #d1d5db;
+    }
+
+    .dark .ticket-timeline-message,
+    .dark .ticket-timeline-change {
+        background: #1f2937;
+        border-color: #374151;
+        color: #d1d5db;
+    }
+
+    .dark .ticket-timeline-description {
+        color: #9ca3af;
+    }
+
+    .dark .ticket-timeline-dot {
+        background-color: #9ca3af;
+    }
+
+    .dark .ticket-timeline-create .ticket-timeline-dot {
+        background: #34d399;
+    }
+
+    .dark .ticket-timeline-delete .ticket-timeline-dot {
+        background: #f87171;
+    }
+
+    .dark .ticket-timeline-status-event .ticket-timeline-dot {
+        background: #60a5fa;
+    }
+
+    /* ---------------------------------------------------------
+       EMPTY
+       --------------------------------------------------------- */
+
+    .ticket-timeline-empty {
+        padding: 40px 20px;
+        text-align: center;
+        color: #6b7280;
+        font-size: 14px;
+    }
+</style>
+
+
+<div class="ticket-timeline">
+
+    @if ($logs->count())
+
+        <div class="ticket-timeline-list">
+
+            @foreach ($logs as $log)
+
+                @php
+                    $category = strtolower(trim($log->kategori_log ?? ''));
+
+                    /*
+                     * Tentukan tipe visual berdasarkan kategori.
+                     */
+                    $eventClass = match ($category) {
+                        'create' => 'ticket-timeline-create',
+                        'delete' => 'ticket-timeline-delete',
+                        'status' => 'ticket-timeline-status-event',
+                        'chat' => 'ticket-timeline-chat',
+                        default => '',
+                    };
+
+                    /*
+                     * Bersihkan value status.
+                     */
+                    $oldValue = $log->data_lama
+                        ? trim(str_replace('_', ' ', $log->data_lama))
+                        : null;
+
+                    $newValue = $log->data_baru
+                        ? trim(str_replace('_', ' ', $log->data_baru))
+                        : null;
+
+                    /*
+                     * Tentukan class status.
+                     */
+                    $statusClass = match (strtolower($newValue ?? '')) {
+                        'open' => 'ticket-timeline-status-open',
+                        'deleted', 'delete', 'cancelled', 'canceled' => 'ticket-timeline-status-deleted',
+                        default => 'ticket-timeline-status-default',
+                    };
+                @endphp
+
+
+                <div class="ticket-timeline-item {{ $eventClass }}">
+
+
+                    {{-- =========================================
+                         MARKER
+                    ========================================== --}}
+                    <div class="ticket-timeline-marker">
+
+                        <div class="ticket-timeline-dot"></div>
+
+                        @if (!$loop->last)
+                            <div class="ticket-timeline-line"></div>
+                        @endif
 
                     </div>
 
-                    {{-- Title --}}
-                    <p class="mt-3 text-sm font-medium text-gray-800 dark:text-gray-200">
-                        {{ $log->timeline_title }}
-                    </p>
 
-                    {{-- Change data --}}
-                    @if ($log->data_lama || $log->data_baru)
-                        <div
-                            class="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs dark:bg-gray-800/60">
+                    {{-- =========================================
+                         CONTENT
+                    ========================================== --}}
+                    <div class="ticket-timeline-content">
 
-                            <span
-                                class="rounded-md bg-danger-50 px-2 py-1 font-medium text-danger-600 line-through decoration-danger-300 dark:bg-danger-500/10 dark:text-danger-400">
-                                {{ $log->data_lama ?? '-' }}
-                            </span>
 
-                            <x-filament::icon icon="heroicon-m-arrow-long-right" class="h-4 w-4 shrink-0 text-gray-400" />
-
-                            <span
-                                class="rounded-md bg-success-50 px-2 py-1 font-medium text-success-700 dark:bg-success-500/10 dark:text-success-400">
-                                {{ $log->data_baru ?? '-' }}
-                            </span>
-
+                        {{-- DATE --}}
+                        <div class="ticket-timeline-date">
+                            {{ $log->created_at->format('d M Y, H:i') }}
                         </div>
-                    @endif
 
-                    {{-- Description --}}
-                    @if ($log->keterangan)
-                        <p class="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                            {{ $log->keterangan }}
-                        </p>
-                    @endif
+
+                        {{-- USER --}}
+                        <div class="ticket-timeline-user">
+                            {{ $log->user?->name ?? 'System' }}
+                        </div>
+
+
+                        {{-- CATEGORY --}}
+                        @if ($log->kategori_log)
+
+                            <div class="ticket-timeline-category">
+                                {{ $log->kategori_log }}
+                            </div>
+
+                        @endif
+
+
+                        {{-- =====================================
+                             CHAT / NORMAL ACTIVITY
+                        ====================================== --}}
+                        @if (
+                            $log->timeline_title &&
+                            $category !== 'status' &&
+                            $category !== 'delete'
+                        )
+
+                            <div class="ticket-timeline-message">
+                                {{ $log->timeline_title }}
+                            </div>
+
+                        @endif
+
+
+                        {{-- =====================================
+                             STATUS
+                        ====================================== --}}
+                        @if ($category === 'status')
+
+                            @if ($newValue)
+
+                                <div class="ticket-timeline-status {{ $statusClass }}">
+                                    {{ strtoupper($newValue) }}
+                                </div>
+
+                            @endif
+
+                            @if ($oldValue && $newValue)
+
+                                <div class="ticket-timeline-change">
+
+                                    <span class="ticket-timeline-old">
+                                        {{ $oldValue }}
+                                    </span>
+
+                                    <span class="ticket-timeline-arrow">
+                                        →
+                                    </span>
+
+                                    <span class="ticket-timeline-new">
+                                        {{ $newValue }}
+                                    </span>
+
+                                </div>
+
+                            @endif
+
+
+                            @if ($log->timeline_title)
+
+                                <div class="ticket-timeline-description">
+                                    {{ $log->timeline_title }}
+                                </div>
+
+                            @endif
+
+                        @endif
+
+
+                        {{-- =====================================
+                             DELETE
+                        ====================================== --}}
+                        @if ($category === 'delete')
+
+                            @if ($oldValue || $newValue)
+
+                                <div class="ticket-timeline-change">
+
+                                    @if ($oldValue)
+
+                                        <span class="ticket-timeline-old">
+                                            {{ $oldValue }}
+                                        </span>
+
+                                    @endif
+
+                                    @if ($oldValue && $newValue)
+
+                                        <span class="ticket-timeline-arrow">
+                                            →
+                                        </span>
+
+                                    @endif
+
+                                    @if ($newValue)
+
+                                        <span class="ticket-timeline-new">
+                                            {{ $newValue }}
+                                        </span>
+
+                                    @endif
+
+                                </div>
+
+                            @endif
+
+
+                            @if ($log->timeline_title)
+
+                                <div class="ticket-timeline-description">
+                                    {{ $log->timeline_title }}
+                                </div>
+
+                            @endif
+
+
+                            @if ($log->keterangan)
+
+                                <div class="ticket-timeline-description">
+                                    {{ $log->keterangan }}
+                                </div>
+
+                            @endif
+
+                        @endif
+
+
+                        {{-- =====================================
+                             UPDATE
+                        ====================================== --}}
+                        @if ($category === 'update')
+
+                            @if ($oldValue || $newValue)
+
+                                <div class="ticket-timeline-change">
+
+                                    @if ($oldValue)
+
+                                        <span class="ticket-timeline-old">
+                                            {{ $oldValue }}
+                                        </span>
+
+                                    @endif
+
+                                    @if ($oldValue && $newValue)
+
+                                        <span class="ticket-timeline-arrow">
+                                            →
+                                        </span>
+
+                                    @endif
+
+                                    @if ($newValue)
+
+                                        <span class="ticket-timeline-new">
+                                            {{ $newValue }}
+                                        </span>
+
+                                    @endif
+
+                                </div>
+
+                            @endif
+
+
+                            @if ($log->timeline_title)
+
+                                <div class="ticket-timeline-message">
+                                    {{ $log->timeline_title }}
+                                </div>
+
+                            @endif
+
+
+                            @if ($log->keterangan)
+
+                                <div class="ticket-timeline-description">
+                                    {{ $log->keterangan }}
+                                </div>
+
+                            @endif
+
+                        @endif
+
+
+                        {{-- =====================================
+                             KETERANGAN UMUM
+                        ====================================== --}}
+                        @if (
+                            $log->keterangan &&
+                            $category !== 'delete' &&
+                            $category !== 'update'
+                        )
+
+                            <div class="ticket-timeline-message">
+                                {{ $log->keterangan }}
+                            </div>
+
+                        @endif
+
+
+                    </div>
 
                 </div>
 
-            </div>
+            @endforeach
 
         </div>
 
-    @empty
+    @else
 
-        <div class="rounded-xl border border-dashed border-gray-300 p-8 text-center dark:border-gray-700">
-            <x-filament::icon icon="heroicon-o-clock" class="mx-auto h-8 w-8 text-gray-300 dark:text-gray-600" />
-            <p class="mt-2 text-sm text-gray-500">
-                Belum ada aktivitas.
-            </p>
+        <div class="ticket-timeline-empty">
+            Belum ada aktivitas.
         </div>
 
-    @endforelse
+    @endif
 
 </div>

@@ -3,11 +3,11 @@
 namespace App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Tables;
 
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Actions\DeleteAction;
-use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class TiketPerbaikansTable
 {
@@ -44,13 +44,13 @@ class TiketPerbaikansTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->icon(fn(string $state): string => match ($state) {
+                    ->icon(fn (string $state): string => match ($state) {
                         'Open' => 'heroicon-o-exclamation-circle',
                         'In Progress' => 'heroicon-o-wrench-screwdriver',
                         'Close' => 'heroicon-o-check-badge',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'Open' => 'info',
                         'In Progress' => 'warning',
                         'Close' => 'success',
@@ -62,7 +62,7 @@ class TiketPerbaikansTable
                     ->badge()
                     ->placeholder('-')
                     ->icon(
-                        fn(?string $state): string => match ($state) {
+                        fn (?string $state): string => match ($state) {
                             'Completed' => 'heroicon-o-check-circle',
                             'Rejected' => 'heroicon-o-x-circle',
                             'Reopen' => 'heroicon-o-arrow-path',
@@ -70,7 +70,7 @@ class TiketPerbaikansTable
                         }
                     )
                     ->color(
-                        fn(?string $state): string => match ($state) {
+                        fn (?string $state): string => match ($state) {
                             'Completed' => 'success',
                             'Rejected' => 'danger',
                             'Reopen' => 'warning',
@@ -83,8 +83,7 @@ class TiketPerbaikansTable
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn(TiketPerbaikan $record): string =>
-                        $record->created_at?->timezone('Asia/Jakarta')->format('H:i:s')
+                        fn (TiketPerbaikan $record): string => $record->created_at?->timezone('Asia/Jakarta')->format('H:i:s')
                         ?? '-'
                     ),
 
@@ -94,8 +93,7 @@ class TiketPerbaikansTable
                     ->timezone('Asia/Jakarta')
                     ->placeholder('-')
                     ->description(
-                        fn(TiketPerbaikan $record): string =>
-                        $record->waktu_mulai
+                        fn (TiketPerbaikan $record): string => $record->waktu_mulai
                         ? $record->waktu_mulai
                             ->timezone('Asia/Jakarta')
                             ->format('H:i:s')
@@ -108,8 +106,7 @@ class TiketPerbaikansTable
                     ->timezone('Asia/Jakarta')
                     ->placeholder('-')
                     ->description(
-                        fn(TiketPerbaikan $record): string =>
-                        $record->waktu_selesai
+                        fn (TiketPerbaikan $record): string => $record->waktu_selesai
                         ? $record->waktu_selesai
                             ->timezone('Asia/Jakarta')
                             ->format('H:i:s')
@@ -133,7 +130,6 @@ class TiketPerbaikansTable
                 | View
                 |--------------------------------------------------------------------------
                 */
-
                 ViewAction::make(),
 
                 /*
@@ -141,11 +137,12 @@ class TiketPerbaikansTable
                 | Edit
                 |--------------------------------------------------------------------------
                 */
-
                 EditAction::make()
+                    ->label('Edit')
+                    ->icon('heroicon-o-pencil')
+                    ->color('primary')
                     ->visible(
-                        fn(TiketPerbaikan $record): bool =>
-                        $record->canPemohonEdit()
+                        fn (TiketPerbaikan $record): bool => $record->canPemohonEdit()
                     ),
 
                 /*
@@ -153,15 +150,13 @@ class TiketPerbaikansTable
                 | Batalkan Tiket
                 |--------------------------------------------------------------------------
                 */
-
                 DeleteAction::make()
                     ->label('Batalkan')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
                     ->visible(
-                        fn(TiketPerbaikan $record): bool =>
-                        $record->canPemohonDelete()
+                        fn (TiketPerbaikan $record): bool => $record->canPemohonDelete()
                     )
                     ->modalHeading('Batalkan Tiket')
                     ->modalDescription(
@@ -174,7 +169,7 @@ class TiketPerbaikansTable
                     ->before(
                         function (TiketPerbaikan $record): void {
 
-                            if (!$record->canPemohonDelete()) {
+                            if (! $record->canPemohonDelete()) {
                                 abort(
                                     403,
                                     'Tiket tidak dapat dibatalkan pada status saat ini.'

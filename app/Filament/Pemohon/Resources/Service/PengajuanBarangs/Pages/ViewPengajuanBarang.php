@@ -3,17 +3,12 @@
 namespace App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Pages;
 
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\PengajuanBarangResource;
-use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Notifications\Notification;
-use Filament\Forms\Components\Textarea;
-
 
 class ViewPengajuanBarang extends ViewRecord
 {
     protected static string $resource = PengajuanBarangResource::class;
-
 
     public string $chatMessage = '';
 
@@ -86,8 +81,10 @@ class ViewPengajuanBarang extends ViewRecord
             EditAction::make('edit')
                 ->label('Edit Tiket')
                 ->icon('heroicon-o-pencil')
-                ->color('edit'),
+                ->color('edit')
+                ->visible(
+                    fn ($record): bool => $record->canPemohonEdit()
+                ),
         ];
     }
-
 }
