@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pemohon;
+namespace App\Filament\Pemohon\Widgets;
 
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;

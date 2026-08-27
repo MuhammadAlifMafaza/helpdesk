@@ -2,12 +2,12 @@
 
 namespace App\Filament\Pemohon\Pages;
 
-use App\Filament\Pemohon\AktivitasLayananChart;
-use App\Filament\Pemohon\PengajuanBarangTerbaru;
-use App\Filament\Pemohon\TiketPerbaikanTerbaru;
+use App\Filament\Pemohon\Widgets\AktivitasLayananChart;
+use App\Filament\Pemohon\Widgets\PengajuanBarangTerbaru;
+use App\Filament\Pemohon\Widgets\TiketPerbaikanTerbaru;
 use Filament\Pages\Dashboard as BaseDashboard;
 
-class DashboardPemohon extends BaseDashboard
+class Dashboard extends BaseDashboard
 {
     protected static ?string $title = 'Dashboard';
 

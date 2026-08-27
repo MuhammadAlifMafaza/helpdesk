@@ -1,43 +1,56 @@
 <?php
 
-namespace App\Filament\Pemohon\Widgets;
+namespace App\Filament\Widgets\Admin;
 
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
-class TiketPerbaikanTerbaru extends TableWidget
+class AdminTiketTerbaru extends TableWidget
 {
     protected static bool $isLazy = false;
-
     protected static ?string $heading = 'Tiket Perbaikan Terbaru';
+    protected int|string|array $columnSpan = 'span';
+    protected static ?int $sort = 5;
 
-    protected static ?int $sort = 2;
+    protected function getTablePollingInterval(): ?string
+    {
+        return '30s';
+    }
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
                 TiketPerbaikan::query()
-                    ->where('user_id', auth()->id())
-                    ->with('ruangan')
+                    ->with([
+                        'user',
+                        'ruangan',
+                    ])
                     ->latest('created_at')
             )
             ->columns([
 
                 Tables\Columns\TextColumn::make('kode_tiket')
                     ->label('Kode Tiket')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Pemohon')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('keluhan')
                     ->label('Keluhan')
                     ->limit(45)
-                    ->wrap(),
+                    ->tooltip(
+                        fn (TiketPerbaikan $record) => $record->keluhan
+                    ),
 
                 Tables\Columns\TextColumn::make('ruangan.nama_ruangan')
                     ->label('Ruangan')
-                    ->placeholder('-'),
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
@@ -50,10 +63,12 @@ class TiketPerbaikanTerbaru extends TableWidget
                     }),
 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Diajukan')
+                    ->label('Dibuat')
                     ->dateTime('d M Y H:i')
                     ->sortable(),
+
             ])
-            ->paginated([5]);
+            ->defaultPaginationPageOption(5)
+            ->paginated([5, 10, 25]);
     }
 }

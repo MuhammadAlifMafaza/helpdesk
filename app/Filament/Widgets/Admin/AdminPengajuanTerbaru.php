@@ -1,32 +1,44 @@
 <?php
 
-namespace App\Filament\Pemohon\Widgets;
+namespace App\Filament\Widgets\Admin;
 
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
-class PengajuanBarangTerbaru extends TableWidget
+class AdminPengajuanTerbaru extends TableWidget
 {
     protected static bool $isLazy = false;
 
     protected static ?string $heading = 'Pengajuan Barang Terbaru';
 
-    protected static ?int $sort = 3;
+    protected int|string|array $columnSpan = 'span';
+    protected static ?int $sort = 6;
+
+
+    protected function getTablePollingInterval(): ?string
+    {
+        return '30s';
+    }
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
                 PengajuanBarang::query()
-                    ->where('user_id', auth()->id())
+                    ->with('user')
                     ->latest('created_at')
             )
             ->columns([
 
                 Tables\Columns\TextColumn::make('kode_pengajuan')
                     ->label('Kode Pengajuan')
+                    ->searchable()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Pemohon')
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('nama_barang')
@@ -35,7 +47,7 @@ class PengajuanBarangTerbaru extends TableWidget
 
                 Tables\Columns\TextColumn::make('jumlah')
                     ->label('Jumlah')
-                    ->alignCenter(),
+                    ->numeric(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
@@ -51,7 +63,9 @@ class PengajuanBarangTerbaru extends TableWidget
                     ->label('Diajukan')
                     ->dateTime('d M Y H:i')
                     ->sortable(),
+
             ])
-            ->paginated([5]);
+            ->defaultPaginationPageOption(5)
+            ->paginated([5, 10, 25]);
     }
 }

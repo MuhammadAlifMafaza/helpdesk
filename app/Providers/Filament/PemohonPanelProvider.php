@@ -2,7 +2,7 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pemohon\Pages\DashboardPemohon;
+use App\Filament\Pemohon\Pages\Dashboard;
 use App\Http\Middleware\IsPemohon;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -47,7 +47,7 @@ class PemohonPanelProvider extends PanelProvider
                 for: 'App\\Filament\\Pemohon\\Pages'
             )
             ->pages([
-                DashboardPemohon::class,
+                Dashboard::class,
             ])
             ->discoverWidgets(
                 in: app_path('Filament/Pemohon/Widgets'),

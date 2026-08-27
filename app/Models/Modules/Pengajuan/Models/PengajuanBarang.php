@@ -686,13 +686,9 @@ class PengajuanBarang extends Model
     public static function getAverageDuration(
         ?Builder $query = null
     ): float {
-        $query ??= static::query();
+        $minutes = static::getAverageDurationMinutes($query);
 
-        $minutes = (clone $query)
-            ->whereNotNull('durasi_pengerjaan_menit')
-            ->avg('durasi_pengerjaan_menit');
-
-        if (! $minutes) {
+        if ($minutes === null) {
             return 0;
         }
 
@@ -724,18 +720,50 @@ class PengajuanBarang extends Model
     public static function getAverageDurationDescription(
         ?Builder $query = null
     ): string {
-        $query ??= static::query();
+        $minutes = static::getAverageDurationMinutes($query);
 
-        $minutes = (clone $query)
-            ->whereNotNull('durasi_pengerjaan_menit')
-            ->avg('durasi_pengerjaan_menit');
-
-        if (! $minutes) {
+        if ($minutes === null) {
             return '-';
         }
 
         $days = round($minutes / 1440, 2);
 
         return "≈ {$days} Hari";
+    }
+
+    private static function getAverageDurationMinutes(
+        ?Builder $query = null
+    ): ?float {
+        $query ??= static::query();
+
+        $durations = (clone $query)
+            ->with([
+                'logs' => function (HasMany $query): void {
+                    $query
+                        ->where('kategori_log', 'Status')
+                        ->orderBy('created_at');
+                },
+            ])
+            ->get()
+            ->map(function (self $pengajuan): ?float {
+                $waktuMulai = $pengajuan->logs
+                    ->firstWhere('data_baru', 'In Progress')
+                    ?->created_at;
+                $waktuSelesai = $pengajuan->logs
+                    ->where('data_baru', 'Close')
+                    ->last()
+                    ?->created_at;
+
+                if (! $waktuMulai || ! $waktuSelesai) {
+                    return null;
+                }
+
+                return abs($waktuMulai->diffInMinutes($waktuSelesai));
+            })
+            ->filter();
+
+        return $durations->isEmpty()
+            ? null
+            : (float) $durations->average();
     }
 }
