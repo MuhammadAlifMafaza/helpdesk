@@ -14,8 +14,8 @@ class AdminPengajuanTerbaru extends TableWidget
     protected static ?string $heading = 'Pengajuan Barang Terbaru';
 
     protected int|string|array $columnSpan = 'span';
-    protected static ?int $sort = 6;
 
+    protected static ?int $sort = 6;
 
     protected function getTablePollingInterval(): ?string
     {

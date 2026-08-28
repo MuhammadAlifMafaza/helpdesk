@@ -2,18 +2,23 @@
 
 namespace App\Filament\Widgets\Admin;
 
-use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
+use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Carbon;
 
-class AdminTiketTrendChart extends ChartWidget
+class AdminLayananTrendChart extends ChartWidget
 {
+    protected static bool $isLazy = false;
+
     protected ?string $heading = 'Tren Layanan Helpdesk';
+
     protected ?string $description = 'Perbandingan jumlah layanan Perbaikan dan Pengajuan Barang berdasarkan periode.';
+
     protected ?string $pollingInterval = '60s';
+
     protected static ?int $sort = 2;
-    protected int|string|array $columnSpan = 'full';
+
+    protected int|string|array $columnSpan = 'span';
 
     /**
      * Filter periode chart.
@@ -140,17 +145,17 @@ class AdminTiketTrendChart extends ChartWidget
         $perbaikan = TiketPerbaikan::query()
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw(
-                "YEAR(created_at) as period, COUNT(*) as total"
+                'YEAR(created_at) as period, COUNT(*) as total'
             )
-            ->groupByRaw("YEAR(created_at)")
+            ->groupByRaw('YEAR(created_at)')
             ->pluck('total', 'period');
 
         $pengajuan = PengajuanBarang::query()
             ->whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw(
-                "YEAR(created_at) as period, COUNT(*) as total"
+                'YEAR(created_at) as period, COUNT(*) as total'
             )
-            ->groupByRaw("YEAR(created_at)")
+            ->groupByRaw('YEAR(created_at)')
             ->pluck('total', 'period');
 
         $labels = [];
@@ -221,5 +226,56 @@ class AdminTiketTrendChart extends ChartWidget
     protected function getType(): string
     {
         return 'line';
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'responsive' => true,
+
+            'maintainAspectRatio' => false,
+
+            'interaction' => [
+                'mode' => 'index',
+                'intersect' => false,
+            ],
+
+            'plugins' => [
+                'legend' => [
+                    'position' => 'bottom',
+
+                    'labels' => [
+                        'usePointStyle' => true,
+                        'pointStyle' => 'circle',
+                        'padding' => 16,
+                    ],
+                ],
+
+                'tooltip' => [
+                    'enabled' => true,
+                ],
+            ],
+
+            'scales' => [
+                'x' => [
+                    'grid' => [
+                        'display' => false,
+                    ],
+
+                    'ticks' => [
+                        'maxTicksLimit' => 7,
+                        'autoSkip' => true,
+                    ],
+                ],
+
+                'y' => [
+                    'beginAtZero' => true,
+
+                    'ticks' => [
+                        'precision' => 0,
+                    ],
+                ],
+            ],
+        ];
     }
 }

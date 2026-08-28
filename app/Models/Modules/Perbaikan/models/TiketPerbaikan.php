@@ -303,6 +303,19 @@ class TiketPerbaikan extends Model
         $query->where('status', TicketStatus::CLOSE->value);
     }
 
+    public function scopeCurrentlyHandledByTechnician(
+        Builder $query,
+        int|string|null $userId
+    ): void {
+        $query->whereHas('logs', function (Builder $logQuery) use ($userId): void {
+            $logQuery
+                ->where('user_id', $userId)
+                ->where('kategori_log', 'Status')
+                ->where('data_lama', TicketStatus::OPEN->value)
+                ->where('data_baru', TicketStatus::IN_PROGRESS->value);
+        });
+    }
+
     public function isLocked(): bool
     {
         return $this->status === 'Close';

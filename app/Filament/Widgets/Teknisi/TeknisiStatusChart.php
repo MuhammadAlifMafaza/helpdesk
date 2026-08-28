@@ -1,42 +1,53 @@
 <?php
 
-namespace App\Filament\Widgets\Admin;
+namespace App\Filament\Widgets\Teknisi;
 
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Widgets\ChartWidget;
 
-class AdminTiketStatusChart extends ChartWidget
+class TeknisiStatusChart extends ChartWidget
 {
-    protected ?string $heading = 'Status Perbaikan';
+    protected ?string $heading = 'Status Pekerjaan Saya';
 
     protected ?string $description =
-        'Distribusi status tiket perbaikan saat ini.';
+        'Distribusi tiket yang pernah ditangani oleh teknisi.';
 
     protected ?string $pollingInterval = '60s';
 
     protected static bool $isLazy = false;
 
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 2;
 
     protected int|string|array $columnSpan = 1;
 
     protected function getData(): array
     {
+        $userId = auth()->id();
+
+        $query = TiketPerbaikan::query()
+            ->whereHas('logs', function ($query) use ($userId) {
+                $query
+                    ->where('user_id', $userId)
+                    ->where('kategori_log', 'Status')
+                    ->where('data_lama', 'Open')
+                    ->where('data_baru', 'In Progress');
+            });
+
         return [
             'datasets' => [
                 [
-                    'label' => 'Tiket Perbaikan',
+                    'label' => 'Tiket Saya',
 
                     'data' => [
-                        TiketPerbaikan::query()
+                        (clone $query)
                             ->where('status', 'Open')
                             ->count(),
 
-                        TiketPerbaikan::query()
+                        (clone $query)
                             ->where('status', 'In Progress')
                             ->count(),
 
-                        TiketPerbaikan::query()
+                        (clone $query)
                             ->where('status', 'Close')
                             ->count(),
                     ],
@@ -47,17 +58,9 @@ class AdminTiketStatusChart extends ChartWidget
                         '#10B981',
                     ],
 
-                    'borderColor' => [
-                        '#2563EB',
-                        '#D97706',
-                        '#059669',
-                    ],
-
                     'borderWidth' => 2,
 
                     'hoverOffset' => 10,
-
-                    'hoverBorderWidth' => 3,
                 ],
             ],
 
@@ -83,16 +86,6 @@ class AdminTiketStatusChart extends ChartWidget
 
             'cutout' => '64%',
 
-            'interaction' => [
-                'mode' => 'nearest',
-                'intersect' => true,
-            ],
-
-            'animation' => [
-                'animateRotate' => true,
-                'animateScale' => true,
-            ],
-
             'plugins' => [
                 'legend' => [
                     'position' => 'bottom',
@@ -106,8 +99,6 @@ class AdminTiketStatusChart extends ChartWidget
 
                 'tooltip' => [
                     'enabled' => true,
-
-                    'displayColors' => true,
                 ],
             ],
         ];
@@ -115,10 +106,6 @@ class AdminTiketStatusChart extends ChartWidget
 
     public static function canView(): bool
     {
-        return auth()->user()?->hasAnyRole([
-            'admin',
-            'admin_super',
-            'super_admin',
-        ]) ?? false;
+        return auth()->user()?->hasRole('teknisi') ?? false;
     }
 }
