@@ -29,8 +29,8 @@ class HelpdeskNotificationService
                 url: $url,
                 icon: $icon,
                 color: $color,
+                referenceId: $referenceId,
                 data: $data,
-                referenceId: $referenceId
             )
         );
     }

@@ -2,28 +2,28 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\PrivateChannel;
+// use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
 class HelpdeskActivityCreated
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
+    use SerializesModels;
 
     public function __construct(
         public string $module,
-        public int $recordId,
         public string $activity,
-        public ?string $kode = null,
+        public string $kode,
         public ?int $actorId = null,
-        public ?string $referenceId = null,
         public array $data = [],
-    ) {}
-
-    public function broadcastOn(): array
-    {
-        return [
-            new PrivateChannel('Helpdesk-System-Notification'),
-        ];
+    ) {
     }
+
+    // public function broadcastOn(): array
+    // {
+    //     return [
+    //         new PrivateChannel('Helpdesk-System-Notification'),
+    //     ];
+    // }
 }

@@ -21,11 +21,9 @@ class HelpdeskNotification extends Notification implements ShouldQueue
         public ?string $color = null,
         public ?string $referenceId = null,
         public array $data = [],
-    ) {}
+    ) {
+    }
 
-    /**
-     * Channel notification.
-     */
     public function via(object $notifiable): array
     {
         return [
@@ -34,9 +32,6 @@ class HelpdeskNotification extends Notification implements ShouldQueue
         ];
     }
 
-    /**
-     * Database notification.
-     */
     public function toDatabase(object $notifiable): array
     {
         return [
@@ -47,16 +42,14 @@ class HelpdeskNotification extends Notification implements ShouldQueue
             'url' => $this->url,
             'icon' => $this->icon,
             'color' => $this->color,
-            'data' => $this->data,
             'referenceId' => $this->referenceId,
+            'data' => $this->data,
         ];
     }
 
-    /**
-     * Broadcast notification.
-     */
-    public function toBroadcast(object $notifiable): BroadcastMessage
-    {
+    public function toBroadcast(
+        object $notifiable
+    ): BroadcastMessage {
         return new BroadcastMessage([
             'type' => $this->type,
             'title' => $this->title,
@@ -65,13 +58,11 @@ class HelpdeskNotification extends Notification implements ShouldQueue
             'url' => $this->url,
             'icon' => $this->icon,
             'color' => $this->color,
+            'referenceId' => $this->referenceId,
             'data' => $this->data,
         ]);
     }
 
-    /**
-     * Custom broadcast type.
-     */
     public function broadcastType(): string
     {
         return 'helpdesk.notification';
