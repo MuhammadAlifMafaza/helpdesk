@@ -82,7 +82,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Service Desk')
                     ->collapsed(true),
                 NavigationGroup::make('Monitoring')
-                    ->collapsed(false)
+                    ->collapsed(true)
                     ->icon('heroicon-o-clock'),
                 NavigationGroup::make('Laporan')
                     ->collapsed(true)

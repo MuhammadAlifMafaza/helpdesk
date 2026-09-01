@@ -8,16 +8,10 @@ use Filament\Widgets\ChartWidget;
 class AdminTiketStatusChart extends ChartWidget
 {
     protected ?string $heading = 'Status Perbaikan';
-
-    protected ?string $description =
-        'Distribusi status tiket perbaikan saat ini.';
-
+    protected ?string $description = 'Distribusi status tiket perbaikan saat ini.';
     protected ?string $pollingInterval = '60s';
-
-    protected static bool $isLazy = false;
-
+    protected static bool $isLazy = true;
     protected static ?int $sort = 4;
-
     protected int|string|array $columnSpan = 1;
 
     protected function getData(): array

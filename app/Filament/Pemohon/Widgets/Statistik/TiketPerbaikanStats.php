@@ -14,44 +14,52 @@ class TiketPerbaikanStats extends StatsOverviewWidget
 
     protected int|string|array $columnSpan = 'full';
 
+    protected static bool $isLazy = false;
+
     protected function getStats(): array
     {
         $query = TiketPerbaikan::query()
             ->where('user_id', auth()->id());
 
         return [
+
             Stat::make(
                 'Total',
-                TiketPerbaikan::getTotalTiket($query)
+                number_format(
+                    TiketPerbaikan::getTotalTiket($query)
+                )
             )
-                // ->label('Total Tiket')
                 ->description('Seluruh tiket perbaikan Anda')
-                ->icon('heroicon-o-wrench-screwdriver'),
+                ->icon('heroicon-o-wrench-screwdriver')
+                ->color('primary'),
 
             Stat::make(
                 'Open',
-                TiketPerbaikan::getTotalOpen($query)
+                number_format(
+                    TiketPerbaikan::getTotalOpen($query)
+                )
             )
-                // ->label('Tiket Menunggu Penanganan')
                 ->description('Menunggu penanganan')
                 ->icon('heroicon-o-clock')
-                ->color('info'),
-
-            Stat::make(
-                'In Progress',
-                TiketPerbaikan::getTotalInProgress($query)
-            )
-                // ->label('Sedang Ditangani')
-                ->description('Sedang ditangani')
-                ->icon('heroicon-o-arrow-path')
                 ->color('warning'),
 
             Stat::make(
-                'Close',
-                TiketPerbaikan::getTotalClose($query)
+                'In Progress',
+                number_format(
+                    TiketPerbaikan::getTotalInProgress($query)
+                )
             )
-                // ->label('Tiket Ditutup')
-                ->description('Tiket yang telah ditutup')
+                ->description('Sedang ditangani')
+                ->icon('heroicon-o-arrow-path')
+                ->color('info'),
+
+            Stat::make(
+                'Close',
+                number_format(
+                    TiketPerbaikan::getTotalClose($query)
+                )
+            )
+                ->description('Tiket telah diselesaikan')
                 ->icon('heroicon-o-check-circle')
                 ->color('success'),
         ];

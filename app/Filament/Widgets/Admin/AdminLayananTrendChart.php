@@ -9,15 +9,10 @@ use Filament\Widgets\ChartWidget;
 class AdminLayananTrendChart extends ChartWidget
 {
     protected static bool $isLazy = false;
-
     protected ?string $heading = 'Tren Layanan Helpdesk';
-
     protected ?string $description = 'Perbandingan jumlah layanan Perbaikan dan Pengajuan Barang berdasarkan periode.';
-
     protected ?string $pollingInterval = '60s';
-
     protected static ?int $sort = 2;
-
     protected int|string|array $columnSpan = 'span';
 
     /**
@@ -278,4 +273,14 @@ class AdminLayananTrendChart extends ChartWidget
             ],
         ];
     }
+
+    public static function canView(): bool
+    {
+        return auth()->user()?->hasAnyRole([
+            'admin',
+            'admin_super',
+            'super_admin',
+        ]) ?? false;
+    }
+
 }

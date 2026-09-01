@@ -11,7 +11,6 @@ class AdminOverview extends StatsOverviewWidget
 {
     protected ?string $pollingInterval = '30s';
     protected int|string|array $columnSpan = 'full';
-
     protected function getColumns(): int
     {
         return 5;

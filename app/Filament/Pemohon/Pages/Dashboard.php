@@ -18,9 +18,9 @@ class Dashboard extends BaseDashboard
     protected function getFooterWidgets(): array
     {
         return [
-            AktivitasLayananChart::class,
-            TiketPerbaikanTerbaru::class,
-            PengajuanBarangTerbaru::class,
+            // AktivitasLayananChart::class,
+            // TiketPerbaikanTerbaru::class,
+            // PengajuanBarangTerbaru::class,
         ];
     }
 }

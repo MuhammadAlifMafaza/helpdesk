@@ -45,7 +45,7 @@ class AdminTiketTerbaru extends TableWidget
                     ->label('Keluhan')
                     ->limit(45)
                     ->tooltip(
-                        fn (TiketPerbaikan $record) => $record->keluhan
+                        fn(TiketPerbaikan $record) => $record->keluhan
                     ),
 
                 Tables\Columns\TextColumn::make('ruangan.nama_ruangan')
@@ -55,7 +55,7 @@ class AdminTiketTerbaru extends TableWidget
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Open' => 'warning',
                         'In Progress' => 'info',
                         'Close' => 'success',
@@ -71,4 +71,14 @@ class AdminTiketTerbaru extends TableWidget
             ->defaultPaginationPageOption(5)
             ->paginated([5, 10, 25]);
     }
+
+    public static function canView(): bool
+    {
+        return auth()->user()?->hasAnyRole([
+            'admin',
+            'admin_super',
+            'super_admin',
+        ]) ?? false;
+    }
+
 }

@@ -38,18 +38,14 @@ use UnitEnum;
 class PengajuanBarangResource extends Resource
 {
     protected static ?string $model = PengajuanBarang::class;
-
     protected static ?string $slug = 'pengajuan-barang';
-
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cube';
-
     protected static UnitEnum|string|null $navigationGroup = 'Service Desk';
-
     protected static ?string $pluralLabel = 'Pengajuan Barang';
-
     protected static ?string $navigationLabel = 'Pengajuan Barang';
-
     protected static ?string $recordTitleAttribute = 'PengajuanBarang';
+    protected static ?int $navigationSort = 2;
+
 
     public static function form(Schema $schema): Schema
     {

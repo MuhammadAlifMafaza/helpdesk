@@ -303,19 +303,6 @@ class TiketPerbaikan extends Model
         $query->where('status', TicketStatus::CLOSE->value);
     }
 
-    public function scopeCurrentlyHandledByTechnician(
-        Builder $query,
-        int|string|null $userId
-    ): void {
-        $query->whereHas('logs', function (Builder $logQuery) use ($userId): void {
-            $logQuery
-                ->where('user_id', $userId)
-                ->where('kategori_log', 'Status')
-                ->where('data_lama', TicketStatus::OPEN->value)
-                ->where('data_baru', TicketStatus::IN_PROGRESS->value);
-        });
-    }
-
     public function isLocked(): bool
     {
         return $this->status === 'Close';
@@ -843,5 +830,76 @@ class TiketPerbaikan extends Model
         return $durations->isEmpty()
             ? null
             : (float) $durations->average();
+    }
+
+    /**
+     * Tiket yang pernah diambil / ditangani oleh teknisi tertentu.
+     *
+     * Identitas teknisi berasal dari log perubahan:
+     * Open -> In Progress
+     */
+    public function scopeHandledByTechnician(
+        Builder $query,
+        int $userId
+    ): Builder {
+        return $query->whereHas('logs', function (Builder $logQuery) use ($userId) {
+            $logQuery
+                ->where('user_id', $userId)
+                ->where('kategori_log', 'Status')
+                ->where('data_lama', 'Open')
+                ->where('data_baru', 'In Progress');
+        });
+    }
+
+    /**
+     * Tiket yang saat ini sedang berada pada penanganan teknisi.
+     *
+     * Assignment terakhir pada tiket harus dilakukan oleh teknisi tersebut.
+     */
+    public function scopeCurrentlyHandledByTechnician(
+        Builder $query,
+        int $userId
+    ): Builder {
+        return $query->whereExists(function ($subQuery) use ($userId) {
+            $subQuery
+                ->selectRaw('1')
+                ->from('log_data_tiket_perbaikan as assignment_log')
+                ->whereColumn(
+                    'assignment_log.tiket_id',
+                    'tiket_perbaikan.id'
+                )
+                ->where('assignment_log.user_id', $userId)
+                ->where('assignment_log.kategori_log', 'Status')
+                ->where('assignment_log.data_lama', 'Open')
+                ->where('assignment_log.data_baru', 'In Progress')
+                ->whereNotExists(function ($laterAssignment) {
+                    $laterAssignment
+                        ->selectRaw('1')
+                        ->from(
+                            'log_data_tiket_perbaikan as later_log'
+                        )
+                        ->whereColumn(
+                            'later_log.tiket_id',
+                            'assignment_log.tiket_id'
+                        )
+                        ->where(
+                            'later_log.kategori_log',
+                            'Status'
+                        )
+                        ->where(
+                            'later_log.data_lama',
+                            'Open'
+                        )
+                        ->where(
+                            'later_log.data_baru',
+                            'In Progress'
+                        )
+                        ->whereColumn(
+                            'later_log.created_at',
+                            '>',
+                            'assignment_log.created_at'
+                        );
+                });
+        });
     }
 }

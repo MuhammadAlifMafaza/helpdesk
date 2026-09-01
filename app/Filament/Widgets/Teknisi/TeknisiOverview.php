@@ -18,85 +18,64 @@ class TeknisiOverview extends StatsOverviewWidget
     {
         $userId = auth()->id();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Tiket yang pernah diambil oleh teknisi
-        |--------------------------------------------------------------------------
-        */
-
         $tiketSaya = TiketPerbaikan::query()
-            ->whereHas('logs', function ($query) use ($userId) {
-                $query
-                    ->where('user_id', $userId)
-                    ->where('kategori_log', 'Status')
-                    ->where('data_lama', 'Open')
-                    ->where('data_baru', 'In Progress');
-            });
+            ->handledByTechnician($userId);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Statistik status
-        |--------------------------------------------------------------------------
-        */
+        $tiketAktif = TiketPerbaikan::query()
+            ->currentlyHandledByTechnician($userId)
+            ->where('status', 'In Progress');
 
-        $total = (clone $tiketSaya)->count();
+        $tiketSelesai = (clone $tiketSaya)
+            ->where('status', 'Close');
 
-        $inProgress = (clone $tiketSaya)
-            ->where('status', 'In Progress')
-            ->count();
+        $totalSaya = (clone $tiketSaya)->count();
 
-        $selesai = (clone $tiketSaya)
-            ->where('status', 'Close')
-            ->count();
+        $totalAktif = (clone $tiketAktif)->count();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Rata-rata durasi
-        |--------------------------------------------------------------------------
-        */
+        $totalSelesai = (clone $tiketSelesai)->count();
 
         $averageDuration = TiketPerbaikan::getAverageDurationHuman(
-            $tiketSaya
+            $tiketSelesai
         );
 
         return [
 
             Stat::make(
                 'Tiket Saya',
-                number_format($total)
+                number_format($totalSaya)
             )
                 ->description(
-                    'Tiket yang pernah saya tangani'
+                    'Tiket yang pernah tangani'
                 )
                 ->icon('heroicon-o-wrench-screwdriver')
                 ->color('primary'),
 
             Stat::make(
                 'Sedang Dikerjakan',
-                number_format($inProgress)
+                number_format($totalAktif)
             )
                 ->description(
-                    'Tiket yang masih dalam penanganan'
+                    'Pekerjaan yang sedang di kerjakan'
                 )
                 ->icon('heroicon-o-cog-6-tooth')
                 ->color('warning'),
 
             Stat::make(
                 'Selesai',
-                number_format($selesai)
+                number_format($totalSelesai)
             )
                 ->description(
-                    'Tiket yang telah ditutup'
+                    'Tiket yang telah di selesaikan'
                 )
                 ->icon('heroicon-o-check-circle')
                 ->color('success'),
 
             Stat::make(
-                'Rata-rata Durasi',
+                'Rata-rata Durasi Perbaikan',
                 $averageDuration
             )
                 ->description(
-                    'Rata-rata waktu penyelesaian'
+                    'Rata-rata waktu penyelesaian tiket'
                 )
                 ->icon('heroicon-o-clock')
                 ->color('info'),

@@ -10,11 +10,8 @@ use Filament\Widgets\TableWidget;
 class AdminPengajuanTerbaru extends TableWidget
 {
     protected static bool $isLazy = false;
-
     protected static ?string $heading = 'Pengajuan Barang Terbaru';
-
     protected int|string|array $columnSpan = 'span';
-
     protected static ?int $sort = 6;
 
     protected function getTablePollingInterval(): ?string
@@ -52,7 +49,7 @@ class AdminPengajuanTerbaru extends TableWidget
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Open' => 'warning',
                         'In Progress' => 'info',
                         'Close' => 'success',
@@ -68,4 +65,14 @@ class AdminPengajuanTerbaru extends TableWidget
             ->defaultPaginationPageOption(5)
             ->paginated([5, 10, 25]);
     }
+
+    public static function canView(): bool
+    {
+        return auth()->user()?->hasAnyRole([
+            'admin',
+            'admin_super',
+            'super_admin',
+        ]) ?? false;
+    }
+
 }

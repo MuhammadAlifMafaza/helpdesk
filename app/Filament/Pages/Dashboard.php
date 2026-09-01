@@ -9,8 +9,9 @@ use App\Filament\Widgets\Admin\AdminTiketStatusChart;
 use App\Filament\Widgets\Admin\AdminTiketTerbaru;
 use App\Filament\Widgets\Admin\AdminTiketTrendChart;
 use Filament\Pages\Page;
+use Filament\Pages\Dashboard as BaseDashboard;
 
-class Dashboard extends Page
+class Dashboard extends BaseDashboard
 {
     protected static bool $shouldRegisterNavigation = false;
 

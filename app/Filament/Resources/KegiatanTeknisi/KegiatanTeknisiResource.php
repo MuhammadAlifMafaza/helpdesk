@@ -45,7 +45,8 @@ class KegiatanTeknisiResource extends Resource
     protected static ?string $plural = 'kegiatan-teknisi';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
     protected static ?string $pluralLabel = 'Catatan Kegiatan Teknisi';
-    protected static ?string $navigationLabel = 'Kegiatan Teknisi';
+    protected static ?string $navigationLabel = 'Catatan Kegiatan';
+    protected static UnitEnum|string|null $navigationGroup = 'Teknisi';
     protected static ?string $recordTitleAttribute = 'LogHarian';
 
     public static function form(
@@ -83,7 +84,7 @@ class KegiatanTeknisiResource extends Resource
 
             ->columns([
                 TextColumn::make('teknisi.name')
-                    ->label('Teknisi')
+                    ->label('Nama Petugas')
                     ->searchable(),
 
                 TextColumn::make('tanggal')

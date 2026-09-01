@@ -9,10 +9,9 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 class PengajuanBarangStats extends StatsOverviewWidget
 {
     protected ?string $heading = 'Pengajuan Barang';
-
     protected static ?int $sort = 2;
-
     protected int|string|array $columnSpan = 'full';
+    protected static bool $isLazy = false;
 
     protected function getStats(): array
     {
@@ -20,34 +19,44 @@ class PengajuanBarangStats extends StatsOverviewWidget
             ->where('user_id', auth()->id());
 
         return [
+
             Stat::make(
                 'Total',
-                PengajuanBarang::getTotalPengajuan($query)
+                number_format(
+                    PengajuanBarang::getTotalPengajuan($query)
+                )
             )
                 ->description('Seluruh pengajuan barang Anda')
-                ->icon('heroicon-o-clipboard-document-list'),
+                ->icon('heroicon-o-clipboard-document-list')
+                ->color('primary'),
 
             Stat::make(
                 'Open',
-                PengajuanBarang::getTotalOpen($query)
+                number_format(
+                    PengajuanBarang::getTotalOpen($query)
+                )
             )
                 ->description('Menunggu diproses')
                 ->icon('heroicon-o-clock')
-                ->color('info'),
-
-            Stat::make(
-                'In Progress',
-                PengajuanBarang::getTotalInProgress($query)
-            )
-                ->description('Sedang diproses')
-                ->icon('heroicon-o-arrow-path')
                 ->color('warning'),
 
             Stat::make(
-                'Close',
-                PengajuanBarang::getTotalClose($query)
+                'In Progress',
+                number_format(
+                    PengajuanBarang::getTotalInProgress($query)
+                )
             )
-                ->description('Pengajuan yang telah ditutup')
+                ->description('Sedang diproses')
+                ->icon('heroicon-o-arrow-path')
+                ->color('info'),
+
+            Stat::make(
+                'Close',
+                number_format(
+                    PengajuanBarang::getTotalClose($query)
+                )
+            )
+                ->description('Pengajuan telah diselesaikan')
                 ->icon('heroicon-o-check-circle')
                 ->color('success'),
         ];

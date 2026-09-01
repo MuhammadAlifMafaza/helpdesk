@@ -9,31 +9,29 @@ use Filament\Widgets\ChartWidget;
 class AktivitasLayananChart extends ChartWidget
 {
     protected static bool $isLazy = false;
-
     protected ?string $heading = 'Aktivitas Layanan';
-
+    protected ?string $description = 'Perbandingan jumlah layanan Perbaikan dan Pengajuan Barang berdasarkan periode.';
     protected static ?int $sort = 3;
+    protected int|string|array $columnSpan = 'full';
+    protected ?string $pollingInterval = '60s';
+    public ?string $filter = 'daily';
 
-    protected int|string|array $columnSpan = 'span';
+    protected function getFilters(): array
+    {
+        return [
+            'daily' => 'Harian',
+            'monthly' => 'Bulanan',
+            'yearly' => 'Tahunan',
+        ];
+    }
 
     protected function getData(): array
     {
-        $period = $this->filter ?? 'month';
-
-        return match ($period) {
-            'day' => $this->getDailyData(),
-            'year' => $this->getYearlyData(),
-            default => $this->getMonthlyData(),
+        return match ($this->filter) {
+            'monthly' => $this->getMonthlyData(),
+            'yearly' => $this->getYearlyData(),
+            default => $this->getDailyData(),
         };
-    }
-
-    protected function getFilters(): ?array
-    {
-        return [
-            'day' => 'Hari',
-            'month' => 'Bulan',
-            'year' => 'Tahun',
-        ];
     }
 
     protected function getType(): string
@@ -41,26 +39,78 @@ class AktivitasLayananChart extends ChartWidget
         return 'line';
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Chart Options
+    |--------------------------------------------------------------------------
+    */
     protected function getOptions(): array
     {
         return [
             'responsive' => true,
 
+            /*
+            |--------------------------------------------------------------------------
+            | Interaction
+            |--------------------------------------------------------------------------
+            */
+
+            'interaction' => [
+                'mode' => 'index',
+                'intersect' => false,
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Plugins
+            |--------------------------------------------------------------------------
+            */
+
             'plugins' => [
+
                 'legend' => [
                     'display' => true,
                     'position' => 'top',
+
+                    'labels' => [
+                        'usePointStyle' => true,
+                        'pointStyle' => 'circle',
+                        'padding' => 20,
+                    ],
                 ],
 
                 'tooltip' => [
+                    'enabled' => true,
                     'mode' => 'index',
                     'intersect' => false,
+
+                    'displayColors' => true,
+
+                    'padding' => 12,
+
+                    'titleMarginBottom' => 8,
+
+                    'bodySpacing' => 6,
                 ],
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Scales
+            |--------------------------------------------------------------------------
+            */
+
             'scales' => [
+
                 'x' => [
-                    'stacked' => false,
+                    'grid' => [
+                        'display' => false,
+                    ],
+
+                    'ticks' => [
+                        'maxRotation' => 0,
+                        'autoSkip' => true,
+                    ],
                 ],
 
                 'y' => [
@@ -68,8 +118,102 @@ class AktivitasLayananChart extends ChartWidget
 
                     'ticks' => [
                         'precision' => 0,
+                        'stepSize' => 1,
+                    ],
+
+                    'grid' => [
+                        'drawTicks' => false,
                     ],
                 ],
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Elements
+            |--------------------------------------------------------------------------
+            */
+
+            'elements' => [
+
+                'line' => [
+                    'tension' => 0.35,
+                    'borderWidth' => 2,
+                ],
+
+                'point' => [
+                    'radius' => 3,
+                    'hoverRadius' => 6,
+                    'hoverBorderWidth' => 2,
+                ],
+            ],
+        ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dataset Configuration
+    |--------------------------------------------------------------------------
+    */
+    protected function getDatasets(
+        array $tiketData,
+        array $pengajuanData
+    ): array {
+        return [
+
+            /*
+            |--------------------------------------------------------------------------
+            | Tiket Perbaikan
+            |--------------------------------------------------------------------------
+            */
+
+            [
+                'label' => 'Tiket Perbaikan',
+
+                'data' => $tiketData,
+
+                'borderColor' => '#3B82F6',
+
+                'backgroundColor' => '#3B82F6',
+
+                'borderWidth' => 2,
+
+                'fill' => false,
+
+                'tension' => 0.35,
+
+                'pointRadius' => 3,
+
+                'pointHoverRadius' => 6,
+
+                'pointHoverBorderWidth' => 2,
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Pengajuan Barang
+            |--------------------------------------------------------------------------
+            */
+
+            [
+                'label' => 'Pengajuan Barang',
+
+                'data' => $pengajuanData,
+
+                'borderColor' => '#F59E0B',
+
+                'backgroundColor' => '#F59E0B',
+
+                'borderWidth' => 2,
+
+                'fill' => false,
+
+                'tension' => 0.35,
+
+                'pointRadius' => 3,
+
+                'pointHoverRadius' => 6,
+
+                'pointHoverBorderWidth' => 2,
             ],
         ];
     }
@@ -81,20 +225,33 @@ class AktivitasLayananChart extends ChartWidget
     */
     protected function getDailyData(): array
     {
-        $start = now()->startOfDay()->subDays(6);
+        $start = now()
+            ->startOfDay()
+            ->subDays(6);
+
         $end = now()->endOfDay();
 
-        $labels = collect();
+        /*
+        |--------------------------------------------------------------------------
+        | Labels
+        |--------------------------------------------------------------------------
+        */
+
+        $labels = [];
 
         for (
             $date = $start->copy();
             $date <= $end;
             $date->addDay()
         ) {
-            $labels->push(
-                $date->format('d M')
-            );
+            $labels[] = $date->translatedFormat('d M');
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tiket Perbaikan
+        |--------------------------------------------------------------------------
+        */
 
         $tiket = TiketPerbaikan::query()
             ->where('user_id', auth()->id())
@@ -106,6 +263,12 @@ class AktivitasLayananChart extends ChartWidget
             ->groupBy('tanggal')
             ->pluck('total', 'tanggal');
 
+        /*
+        |--------------------------------------------------------------------------
+        | Pengajuan Barang
+        |--------------------------------------------------------------------------
+        */
+
         $pengajuan = PengajuanBarang::query()
             ->where('user_id', auth()->id())
             ->whereBetween('created_at', [$start, $end])
@@ -115,6 +278,12 @@ class AktivitasLayananChart extends ChartWidget
             )
             ->groupBy('tanggal')
             ->pluck('total', 'tanggal');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dataset
+        |--------------------------------------------------------------------------
+        */
 
         $tiketData = [];
         $pengajuanData = [];
@@ -126,46 +295,18 @@ class AktivitasLayananChart extends ChartWidget
         ) {
             $key = $date->format('Y-m-d');
 
-            $tiketData[] = (int) (
-                $tiket[$key] ?? 0
-            );
+            $tiketData[] = (int) ($tiket[$key] ?? 0);
 
-            $pengajuanData[] = (int) (
-                $pengajuan[$key] ?? 0
-            );
+            $pengajuanData[] = (int) ($pengajuan[$key] ?? 0);
         }
 
         return [
-            'datasets' => [
-                [
-                    'label' => 'Tiket Perbaikan',
-                    'data' => $tiketData,
+            'datasets' => $this->getDatasets(
+                $tiketData,
+                $pengajuanData
+            ),
 
-                    'backgroundColor' => '#3B82F6',
-                    'borderColor' => '#2563EB',
-                    'borderWidth' => 1,
-                    'borderRadius' => 6,
-
-                    'barPercentage' => 0.7,
-                    'categoryPercentage' => 0.8,
-                ],
-
-                [
-                    'label' => 'Pengajuan Barang',
-                    'data' => $pengajuanData,
-
-                    // Pengajuan Barang
-                    'backgroundColor' => '#F59E0B',
-                    'borderColor' => '#D97706',
-                    'borderWidth' => 1,
-                    'borderRadius' => 6,
-
-                    'barPercentage' => 0.7,
-                    'categoryPercentage' => 0.8,
-                ],
-            ],
-
-            'labels' => $labels->toArray(),
+            'labels' => $labels,
         ];
     }
 
@@ -176,8 +317,17 @@ class AktivitasLayananChart extends ChartWidget
     */
     protected function getMonthlyData(): array
     {
-        $start = now()->startOfMonth()->subMonths(11);
+        $start = now()
+            ->startOfMonth()
+            ->subMonths(11);
+
         $end = now()->endOfMonth();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Period & Labels
+        |--------------------------------------------------------------------------
+        */
 
         $labels = [];
         $periods = [];
@@ -188,8 +338,15 @@ class AktivitasLayananChart extends ChartWidget
             $date->addMonth()
         ) {
             $periods[] = $date->copy();
+
             $labels[] = $date->translatedFormat('M Y');
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tiket Perbaikan
+        |--------------------------------------------------------------------------
+        */
 
         $tiket = TiketPerbaikan::query()
             ->where('user_id', auth()->id())
@@ -202,12 +359,18 @@ class AktivitasLayananChart extends ChartWidget
             ->groupBy('tahun', 'bulan')
             ->get()
             ->keyBy(
-                fn ($item) => sprintf(
+                fn($item) => sprintf(
                     '%04d-%02d',
                     $item->tahun,
                     $item->bulan
                 )
             );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pengajuan Barang
+        |--------------------------------------------------------------------------
+        */
 
         $pengajuan = PengajuanBarang::query()
             ->where('user_id', auth()->id())
@@ -220,12 +383,18 @@ class AktivitasLayananChart extends ChartWidget
             ->groupBy('tahun', 'bulan')
             ->get()
             ->keyBy(
-                fn ($item) => sprintf(
+                fn($item) => sprintf(
                     '%04d-%02d',
                     $item->tahun,
                     $item->bulan
                 )
             );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dataset
+        |--------------------------------------------------------------------------
+        */
 
         $tiketData = [];
         $pengajuanData = [];
@@ -243,33 +412,11 @@ class AktivitasLayananChart extends ChartWidget
         }
 
         return [
-            'datasets' => [
-                [
-                    'label' => 'Tiket Perbaikan',
-                    'data' => $tiketData,
+            'datasets' => $this->getDatasets(
+                $tiketData,
+                $pengajuanData
+            ),
 
-                    'backgroundColor' => '#3B82F6',
-                    'borderColor' => '#2563EB',
-                    'borderWidth' => 1,
-                    'borderRadius' => 6,
-
-                    'barPercentage' => 0.7,
-                    'categoryPercentage' => 0.8,
-                ],
-
-                [
-                    'label' => 'Pengajuan Barang',
-                    'data' => $pengajuanData,
-
-                    'backgroundColor' => '#F59E0B',
-                    'borderColor' => '#D97706',
-                    'borderWidth' => 1,
-                    'borderRadius' => 6,
-
-                    'barPercentage' => 0.7,
-                    'categoryPercentage' => 0.8,
-                ],
-            ],
             'labels' => $labels,
         ];
     }
@@ -281,11 +428,20 @@ class AktivitasLayananChart extends ChartWidget
     */
     protected function getYearlyData(): array
     {
-        $start = now()->startOfYear()->subYears(4);
+        $start = now()
+            ->startOfYear()
+            ->subYears(4);
+
         $end = now()->endOfYear();
 
-        $labels = [];
+        /*
+        |--------------------------------------------------------------------------
+        | Years & Labels
+        |--------------------------------------------------------------------------
+        */
+
         $years = [];
+        $labels = [];
 
         for (
             $year = $start->copy();
@@ -293,8 +449,15 @@ class AktivitasLayananChart extends ChartWidget
             $year->addYear()
         ) {
             $years[] = $year->year;
+
             $labels[] = (string) $year->year;
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tiket Perbaikan
+        |--------------------------------------------------------------------------
+        */
 
         $tiket = TiketPerbaikan::query()
             ->where('user_id', auth()->id())
@@ -306,6 +469,12 @@ class AktivitasLayananChart extends ChartWidget
             ->groupBy('tahun')
             ->pluck('total', 'tahun');
 
+        /*
+        |--------------------------------------------------------------------------
+        | Pengajuan Barang
+        |--------------------------------------------------------------------------
+        */
+
         $pengajuan = PengajuanBarang::query()
             ->where('user_id', auth()->id())
             ->whereBetween('created_at', [$start, $end])
@@ -316,42 +485,31 @@ class AktivitasLayananChart extends ChartWidget
             ->groupBy('tahun')
             ->pluck('total', 'tahun');
 
+        /*
+        |--------------------------------------------------------------------------
+        | Dataset
+        |--------------------------------------------------------------------------
+        */
+
         $tiketData = [];
         $pengajuanData = [];
 
         foreach ($years as $year) {
-            $tiketData[] = (int) ($tiket[$year] ?? 0);
-            $pengajuanData[] = (int) ($pengajuan[$year] ?? 0);
+            $tiketData[] = (int) (
+                $tiket[$year] ?? 0
+            );
+
+            $pengajuanData[] = (int) (
+                $pengajuan[$year] ?? 0
+            );
         }
 
         return [
-            'datasets' => [
-                [
-                    'label' => 'Tiket Perbaikan',
-                    'data' => $tiketData,
+            'datasets' => $this->getDatasets(
+                $tiketData,
+                $pengajuanData
+            ),
 
-                    'backgroundColor' => '#3B82F6',
-                    'borderColor' => '#2563EB',
-                    'borderWidth' => 1,
-                    'borderRadius' => 6,
-
-                    'barPercentage' => 0.7,
-                    'categoryPercentage' => 0.8,
-                ],
-
-                [
-                    'label' => 'Pengajuan Barang',
-                    'data' => $pengajuanData,
-
-                    'backgroundColor' => '#F59E0B',
-                    'borderColor' => '#D97706',
-                    'borderWidth' => 1,
-                    'borderRadius' => 6,
-
-                    'barPercentage' => 0.7,
-                    'categoryPercentage' => 0.8,
-                ],
-            ],
             'labels' => $labels,
         ];
     }

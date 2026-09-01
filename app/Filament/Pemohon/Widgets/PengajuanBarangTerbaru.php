@@ -10,10 +10,9 @@ use Filament\Widgets\TableWidget;
 class PengajuanBarangTerbaru extends TableWidget
 {
     protected static bool $isLazy = false;
-
     protected static ?string $heading = 'Pengajuan Barang Terbaru';
-
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 5;
+    protected int|string|array $columnSpan = 'span';
 
     public function table(Table $table): Table
     {
@@ -27,11 +26,14 @@ class PengajuanBarangTerbaru extends TableWidget
 
                 Tables\Columns\TextColumn::make('kode_pengajuan')
                     ->label('Kode Pengajuan')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable()
+                    ->weight('medium'),
 
                 Tables\Columns\TextColumn::make('nama_barang')
                     ->label('Nama Barang')
-                    ->searchable(),
+                    ->searchable()
+                    ->wrap(),
 
                 Tables\Columns\TextColumn::make('jumlah')
                     ->label('Jumlah')
@@ -40,7 +42,7 @@ class PengajuanBarangTerbaru extends TableWidget
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Open' => 'warning',
                         'In Progress' => 'info',
                         'Close' => 'success',
@@ -52,6 +54,7 @@ class PengajuanBarangTerbaru extends TableWidget
                     ->dateTime('d M Y H:i')
                     ->sortable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->paginated([5]);
     }
 }
