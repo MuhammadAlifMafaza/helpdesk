@@ -18,6 +18,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\View\PanelsRenderHook;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -53,7 +54,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
-
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -69,7 +69,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make(),
             ])
-            ->homeUrl(fn () => match (auth()->user()?->getRoleNames()->first()) {
+            ->homeUrl(fn() => match (auth()->user()?->getRoleNames()->first()) {
                 'admin' => '/admin/admin-dashboard',
                 'teknisi' => '/admin/teknisi-dashboard',
                 default => '/admin',
@@ -78,6 +78,11 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
                 'auth',
             ])
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn(): \Illuminate\Contracts\View\View =>
+                view('components.helpdesk-realtime-notification')
+            )
             ->navigationGroups([
                 NavigationGroup::make('Service Desk')
                     ->collapsed(true),

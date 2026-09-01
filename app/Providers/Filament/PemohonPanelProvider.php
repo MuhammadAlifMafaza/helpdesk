@@ -18,6 +18,7 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\View\PanelsRenderHook;
 
 class PemohonPanelProvider extends PanelProvider
 {
@@ -70,6 +71,11 @@ class PemohonPanelProvider extends PanelProvider
                 Authenticate::class,
                 IsPemohon::class,
             ])
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn(): \Illuminate\Contracts\View\View =>
+                view('components.helpdesk-realtime-notification')
+            )
             ->navigationGroups([
                 NavigationGroup::make('Pelayanan')
                     ->collapsed(true)
