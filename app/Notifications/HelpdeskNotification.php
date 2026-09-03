@@ -24,6 +24,10 @@ class HelpdeskNotification extends Notification implements ShouldQueue
     ) {
     }
 
+    /* ========================================================================
+     * Notification channels.
+     * ========================================================================
+     */
     public function via(object $notifiable): array
     {
         return [
@@ -32,8 +36,13 @@ class HelpdeskNotification extends Notification implements ShouldQueue
         ];
     }
 
-    public function toDatabase(object $notifiable): array
-    {
+    /* ========================================================================
+     * Notification payloads.
+     * ========================================================================
+     */
+    public function toDatabase(
+        object $notifiable
+    ): array {
         return [
             'type' => $this->type,
             'title' => $this->title,
@@ -42,14 +51,19 @@ class HelpdeskNotification extends Notification implements ShouldQueue
             'url' => $this->url,
             'icon' => $this->icon,
             'color' => $this->color,
-            'referenceId' => $this->referenceId,
+            'reference_id' => $this->referenceId,
             'data' => $this->data,
         ];
     }
 
+    /* ========================================================================
+     * Broadcast payloads.
+     * ========================================================================
+     */
     public function toBroadcast(
-        object $notifiable
+        object $notifiable,
     ): BroadcastMessage {
+
         return new BroadcastMessage([
             'type' => $this->type,
             'title' => $this->title,
@@ -58,11 +72,21 @@ class HelpdeskNotification extends Notification implements ShouldQueue
             'url' => $this->url,
             'icon' => $this->icon,
             'color' => $this->color,
-            'referenceId' => $this->referenceId,
+            'reference_id' => $this->referenceId,
             'data' => $this->data,
         ]);
     }
 
+    /* ========================================================================
+     * Broadcast type.
+     * ========================================================================
+     */
+    public function broadcastOn(): array
+    {
+        return [
+            'helpdesk-notifications',
+        ];
+    }
     public function broadcastType(): string
     {
         return 'helpdesk.notification';

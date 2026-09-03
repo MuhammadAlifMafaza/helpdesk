@@ -2,18 +2,19 @@
 
 namespace App\Models\Modules\Perbaikan\Models;
 
+// Imports necesery Modules or Classes
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Events\HelpdeskActivityCreated;
 
 // Imports necesery Files(Models)
 use App\Models\User;
 use App\Models\Modules\Master\Models\MasterRuangan;
 use App\Models\Modules\Perbaikan\Enums\TicketStatus;
-use App\Services\HelpdeskNotificationService;
 
 class TiketPerbaikan extends Model
 {
@@ -100,20 +101,6 @@ class TiketPerbaikan extends Model
         );
     }
 
-    public function notifyNewTiket(): void
-    {
-        // Implementation for notifying about new ticket
-        HelpdeskNotificationService::sendNotification(
-            recipient: $this->user,
-            type: 'tiket_baru',
-            title: 'Tiket Baru Dibuat',
-            message: "Tiket dengan kode {$this->kode_tiket} telah dibuat oleh {$this->user->name} dari {$this->ruangan->nama}.",
-            kode: $this->kode_tiket,
-            url: $this->getNotificationUrl(),
-            referenceId: $this->id,
-        );
-    }
-
     /*
     |--------------------------------------------------------------------------
     | Model Lifecycle
@@ -130,8 +117,20 @@ class TiketPerbaikan extends Model
                 keterangan: 'Tiket dibuat'
             );
 
-            $tiket->notifyNewTiket();
-
+            HelpdeskActivityCreated::dispatch(
+                module: 'perbaikan',
+                activity: 'created',
+                referenceId: $tiket->id,
+                kode: $tiket->kode_tiket,
+                actorId: $tiket->user_id,
+                data: [
+                    'message' => "Tiket {$tiket->kode_tiket} baru telah dibuat.",
+                    'user_id' => $tiket->user_id,
+                    'user_name' => $tiket->user?->name,
+                    'ruangan' => $tiket->ruangan?->nama_ruangan,
+                    'keluhan' => $tiket->keluhan,
+                ],
+            );
         });
 
         static::deleting(function (self $tiket): void {
@@ -323,11 +322,25 @@ class TiketPerbaikan extends Model
             'status' => $statusBaru,
         ]);
 
-        $this->tambahLog(
+        $log = $this->tambahLog(
             kategori: 'Status',
             lama: $statusLama,
             baru: $statusBaru,
             keterangan: $catatan
+        );
+
+        HelpdeskActivityCreated::dispatch(
+            module: 'perbaikan',
+            activity: 'status',
+            referenceId: $this->id,
+            kode: $this->kode_tiket,
+            actorId: auth()->id(),
+            data: [
+                'old_status' => $statusLama,
+                'new_status' => $statusBaru,
+                'message' => "Status {$this->kode_tiket} berubah dari {$statusLama} menjadi {$statusBaru}.",
+                'log_id' => $log->id,
+            ],
         );
 
         return true;
@@ -376,64 +389,38 @@ class TiketPerbaikan extends Model
     | Chat
     |--------------------------------------------------------------------------
     */
-    public function sendMessage(
-        string $pesan
-    ): LogPerbaikan {
-
-        return $this->tambahLog(
-            kategori: 'Chat',
-            lama: null,
-            baru: null,
-            keterangan: $pesan
-        );
-
-        $this->notifyChatRecipients(
-            $pesan
-        );
-
-        return $log;
-    }
-
     public function chatLogs(): HasMany
     {
         return $this->logs()
             ->where('kategori_log', 'Chat');
     }
 
-    protected function notifyChatRecipients(
+    public function sendMessage(
         string $pesan
-    ): void {
+    ): LogPerbaikan {
 
-        $senderId = auth()->id();
+        $log = $this->tambahLog(
+            kategori: 'Chat',
+            lama: null,
+            baru: null,
+            keterangan: $pesan
+        );
 
-        $recipients = User::query()
-            ->whereKeyNot($senderId)
-            ->where(function ($query) {
-                $query
-                    ->whereHas('roles', function ($q) {
-                        $q->whereIn('name', [
-                            'admin',
-                            'teknisi',
-                            'admin_super',
-                            'super_admin',
-                        ]);
-                    })
-                    ->orWhereKey($this->user_id);
-            })
-            ->get();
+        HelpdeskActivityCreated::dispatch(
+            module: 'perbaikan',
+            activity: 'chat',
+            referenceId: $this->id,
+            kode: $this->kode_tiket,
+            actorId: auth()->id(),
+            data: [
+                'message' => $pesan,
+                'sender_id' => auth()->id(),
+                'sender_name' => auth()->user()?->name,
+                'log_id' => $log->id,
+            ],
+        );
 
-        foreach ($recipients as $recipient) {
-
-            HelpdeskNotificationService::sendNotification(
-                recipient: $recipient,
-                type: 'perbaikan_chat',
-                title: 'Pesan Baru',
-                message: $pesan,
-                kode: $this->kode_tiket,
-                url: $this->getNotificationUrl(),
-                referenceId: $this->id,
-            );
-        }
+        return $log;
     }
 
     /*
@@ -495,12 +482,27 @@ class TiketPerbaikan extends Model
             $field => $valueBaru,
         ]);
 
-        $this->tambahLog(
+        $log = $this->tambahLog(
             kategori: 'Update Data',
             lama: (string) $valueLama,
             baru: (string) $valueBaru,
             keterangan: $catatan
-            ?? "Field {$field} diperbarui"
+            ?? "{$field} diperbarui oleh " . (auth()->user()?->name ?? 'System')
+        );
+
+        HelpdeskActivityCreated::dispatch(
+            module: 'perbaikan',
+            activity: 'updated',
+            referenceId: $this->id,
+            kode: $this->kode_tiket,
+            actorId: auth()->id(),
+            data: [
+                'field' => $field,
+                'old_value' => $valueLama,
+                'new_value' => $valueBaru,
+                'message' => "Data {$this->kode_tiket} diperbarui.",
+                'log_id' => $log->id,
+            ],
         );
 
         return true;
@@ -541,15 +543,35 @@ class TiketPerbaikan extends Model
             );
         }
 
+        if ((int) $this->ruangan_id === $ruanganIdBaru) {
+            return false;
+        }
+
         $this->update([
             'ruangan_id' => $ruanganIdBaru,
         ]);
 
-        $this->tambahLog(
+        $log = $this->tambahLog(
             kategori: 'Update Data',
             lama: $ruanganLama,
             baru: $ruanganBaru->nama_ruangan,
             keterangan: 'Ruangan dipindahkan'
+        );
+
+        HelpdeskActivityCreated::dispatch(
+            module: 'perbaikan',
+            activity: 'updated',
+            referenceId: $this->id,
+            kode: $this->kode_tiket,
+            actorId: auth()->id(),
+            data: [
+                'field' => 'ruangan_id',
+                'field_label' => 'Ruangan',
+                'old_value' => $ruanganLama,
+                'new_value' => $ruanganBaru->nama_ruangan,
+                'message' => "Ruangan {$this->kode_tiket} diperbarui.",
+                'log_id' => $log->id,
+            ],
         );
 
         return true;

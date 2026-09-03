@@ -138,7 +138,7 @@ class PengajuanBarangsTable
                 */
 
                 DeleteAction::make()
-                    ->label('')
+                    ->label('batalkan')
                     ->tooltip('Batalkan Tiket')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')

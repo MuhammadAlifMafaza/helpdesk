@@ -8,32 +8,26 @@ use App\Filament\Resources\PengajuanBarangs\Pages\ListPengajuanBarangs;
 use App\Filament\Resources\PengajuanBarangs\Pages\ViewPengajuanBarang;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteAction;
-/* FILAMENT IMPORT */
-
-// Filament Actions imports
 use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
-// Filament Forms imports
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-// Filament Resources imports
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
-// Filament Table imports
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use UnitEnum;
 
 class PengajuanBarangResource extends Resource
 {
@@ -43,50 +37,56 @@ class PengajuanBarangResource extends Resource
     protected static UnitEnum|string|null $navigationGroup = 'Service Desk';
     protected static ?string $pluralLabel = 'Pengajuan Barang';
     protected static ?string $navigationLabel = 'Pengajuan Barang';
-    protected static ?string $recordTitleAttribute = 'PengajuanBarang';
+    protected static ?string $recordTitleAttribute = 'kode_pengajuan';
     protected static ?int $navigationSort = 2;
 
-
+    /*
+    |--------------------------------------------------------------------------
+    | Form
+    |--------------------------------------------------------------------------
+    */
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->schema([
                 Select::make('user_id')
                     ->label('Pemohon')
-                    ->relationship(
-                        'user',
-                        'name'
-                    )
+                    ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
                     ->required(),
 
                 TextInput::make('nama_barang')
+                    ->label('Nama Barang')
                     ->required()
                     ->maxLength(255),
 
                 TextInput::make('jumlah')
+                    ->label('Jumlah Barang')
                     ->numeric()
                     ->default(1)
+                    ->minValue(1)
                     ->required(),
 
                 Textarea::make('alasan')
+                    ->label('Alasan Permintaan')
                     ->rows(4)
                     ->required(),
 
                 Select::make('status')
-                    ->options([
-                        'Open' => 'Open',
-                        'In Progress' => 'In Progress',
-                        'Close' => 'Close',
-                        // 'Close' => 'Rejected',
-                    ])
+                    ->label('Status')
+                    ->options(self::statusOptions())
                     ->default('Open')
-                    ->required()
-                    ->disabled(),
+                    ->disabled()
+                    ->dehydrated(false),
             ]);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Infolist
+    |--------------------------------------------------------------------------
+    */
     public static function infolist(Schema $schema): Schema
     {
         return $schema
@@ -106,13 +106,13 @@ class PengajuanBarangResource extends Resource
 
                         TextEntry::make('status')
                             ->badge()
-                            ->icon(fn (string $state) => match ($state) {
+                            ->icon(fn(string $state) => match ($state) {
                                 'Open' => 'heroicon-o-folder-open',
                                 'In Progress' => 'heroicon-o-arrow-path',
                                 'Close' => 'heroicon-o-check-circle',
                                 default => 'heroicon-o-question-mark-circle',
                             })
-                            ->color(fn (string $state) => match ($state) {
+                            ->color(fn(string $state) => match ($state) {
                                 'Open' => 'info',
                                 'In Progress' => 'warning',
                                 'Close' => 'success',
@@ -123,13 +123,13 @@ class PengajuanBarangResource extends Resource
 
                         TextEntry::make('status_outcome')
                             ->badge()
-                            ->icon(fn (?string $state) => match ($state) {
+                            ->icon(fn(?string $state) => match ($state) {
                                 'Completed' => 'heroicon-o-check-circle',
                                 'Rejected' => 'heroicon-o-x-circle',
                                 'Reopen' => 'heroicon-o-arrow-path',
                                 default => 'heroicon-o-question-mark-circle',
                             })
-                            ->color(fn (?string $state): string => match ($state) {
+                            ->color(fn(?string $state): string => match ($state) {
                                 'Completed' => 'success',
                                 'Rejected' => 'danger',
                                 'Reopen' => 'warning',
@@ -208,13 +208,13 @@ class PengajuanBarangResource extends Resource
 
                 TextColumn::make('status')
                     ->badge()
-                    ->icon(fn (string $state) => match ($state) {
+                    ->icon(fn(string $state) => match ($state) {
                         'Open' => 'heroicon-o-folder-open',
                         'In Progress' => 'heroicon-o-arrow-path',
                         'Close' => 'heroicon-o-check-circle',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn (string $state) => match ($state) {
+                    ->color(fn(string $state) => match ($state) {
                         'Open' => 'info',
                         'In Progress' => 'warning',
                         'Close' => 'success',
@@ -223,13 +223,13 @@ class PengajuanBarangResource extends Resource
 
                 TextColumn::make('status_outcome')
                     ->badge()
-                    ->icon(fn (?string $state) => match ($state) {
+                    ->icon(fn(?string $state) => match ($state) {
                         'Completed' => 'heroicon-o-check-circle',
                         'Rejected' => 'heroicon-o-x-circle',
                         'Reopen' => 'heroicon-o-arrow-path',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn (?string $state): string => match ($state) {
+                    ->color(fn(?string $state): string => match ($state) {
                         'Completed' => 'success',
                         'Rejected' => 'danger',
                         'Reopen' => 'warning',
@@ -241,7 +241,7 @@ class PengajuanBarangResource extends Resource
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn ($record) => $record->created_at->format('H:i:s')
+                        fn($record) => $record->created_at->format('H:i:s')
                     ),
 
                 TextColumn::make('waktu_mulai')
@@ -249,7 +249,7 @@ class PengajuanBarangResource extends Resource
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn ($record) => $record->created_at->format('H:i:s')
+                        fn($record) => $record->waktu_mulai?->format('H:i:s')
                     ),
 
                 TextColumn::make('waktu_selesai')
@@ -257,7 +257,7 @@ class PengajuanBarangResource extends Resource
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn ($record) => $record->created_at->format('H:i:s')
+                        fn($record) => $record->waktu_selesai?->format('H:i:s')
                     ),
 
                 TextColumn::make('durasi_pengerjaan')
@@ -277,20 +277,20 @@ class PengajuanBarangResource extends Resource
                     ->label('')
                     ->icon('heroicon-o-wrench-screwdriver')
                     ->visible(
-                        fn ($record) => $record->status === 'Open'
+                        fn($record) => $record->status === 'Open'
                     )
                     ->action(function ($record) {
 
                         $record->updateStatus(
                             'In Progress',
                             'Tiket mulai dikerjakan oleh '
-                            .auth()->user()->name
+                            . auth()->user()->name
                         );
 
                         $record->sendMessage(
                             'Teknisi '
-                            .auth()->user()->name
-                            .' mengambil tiket ini.'
+                            . auth()->user()->name
+                            . ' mengambil tiket ini.'
                         );
                     }),
 
@@ -300,7 +300,7 @@ class PengajuanBarangResource extends Resource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(
-                        fn ($record) => $record->status === 'In Progress'
+                        fn($record) => $record->status === 'In Progress'
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -325,7 +325,7 @@ class PengajuanBarangResource extends Resource
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
                     ->visible(
-                        fn ($record) => $record->status === 'In Progress'
+                        fn($record) => $record->status === 'In Progress'
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -350,7 +350,7 @@ class PengajuanBarangResource extends Resource
                     ->color('primary')
                     ->icon('heroicon-o-arrow-path')
                     ->visible(
-                        fn ($record) => $record->isClosed()
+                        fn($record) => $record->isClosed()
                         &&
                         (
                             auth()->user()->hasRole('admin')
@@ -378,19 +378,19 @@ class PengajuanBarangResource extends Resource
 
                 RestoreAction::make()
                     ->label('')
-                    ->visible(fn ($record) => $record->trashed()),
+                    ->visible(fn($record) => $record->trashed()),
 
                 EditAction::make()
                     ->label('')
                     ->visible(
-                        fn ($record) => $record->canStaffEdit()
+                        fn($record) => $record->canStaffEdit()
                     ),
 
                 DeleteAction::make()
                     ->label('')
                     ->tooltip('Soft Delete')
                     ->visible(
-                        fn ($record) => $record->isClosed()
+                        fn($record) => $record->isClosed()
                         &&
                         (
                             auth()->user()->hasRole('admin')
@@ -404,7 +404,7 @@ class PengajuanBarangResource extends Resource
                     ->label('')
                     ->tooltip('Force Delete')
                     ->visible(
-                        fn () => auth()->user()->hasRole('super_admin')
+                        fn() => auth()->user()->hasRole('super_admin')
                     ),
 
             ])

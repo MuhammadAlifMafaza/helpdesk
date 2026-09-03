@@ -10,38 +10,28 @@ class LogPengajuan extends Model
 {
     protected $table = 'log_data_pengajuan_barang';
 
+    // Kategori Log
     const STATUS = 'Status';
-
     const CHAT = 'Chat';
-
     const UPDATE_DATA = 'Update Data';
-
     const PRIORITAS = 'Prioritas';
-
     public const EVENT_CREATE = 'CREATE';
-
     public const EVENT_PROCESS = 'PROCESS';
-
     public const EVENT_APPROVE = 'APPROVE';
-
     public const EVENT_REJECT = 'REJECT';
-
     public const EVENT_REOPEN = 'REOPEN';
-
     public const EVENT_PENDING = 'PENDING';
-
     public const EVENT_CHAT = 'CHAT';
-
     public const EVENT_UPDATE = 'UPDATE';
-
     public const EVENT_DELETE = 'DELETE';
-
     public const EVENT_STATUS = 'STATUS';
-
     public const EVENT_SYSTEM = 'SYSTEM';
-
     public $timestamps = false;
 
+    /* ============================================================
+     * Fillable Fields
+     * ============================================================
+     */
     protected $fillable = [
         'pengajuan_id',
         'user_id',
@@ -52,6 +42,10 @@ class LogPengajuan extends Model
         'created_at',
     ];
 
+    /* =============================================================
+     * Accessors
+     * ============================================================
+     */
     public function getFieldLabelAttribute(): ?string
     {
         if ($this->kategori_log !== self::UPDATE_DATA) {
@@ -99,8 +93,9 @@ class LogPengajuan extends Model
         );
     }
 
-    /**
-     * Summary of isStatusActivity
+    /* ============================================================
+     * Activity Checkers
+     * ============================================================
      */
     public function isStatusActivity(): bool
     {
@@ -247,7 +242,6 @@ class LogPengajuan extends Model
         Builder $query,
         string $search
     ): Builder {
-
         return $query->where(function (Builder $query) use ($search) {
 
             /*
@@ -255,7 +249,6 @@ class LogPengajuan extends Model
             | Data Log
             |--------------------------------------------------------------------------
             */
-
             $query
                 ->where('kategori_log', 'like', "%{$search}%")
                 ->orWhere('keterangan', 'like', "%{$search}%")
@@ -267,7 +260,6 @@ class LogPengajuan extends Model
             | Admin (User Log)
             |--------------------------------------------------------------------------
             */
-
             $query->orWhereHas('user', function (Builder $q) use ($search) {
                 $q
                     ->where('name', 'like', "%{$search}%")
@@ -279,7 +271,6 @@ class LogPengajuan extends Model
             | Data Pengajuan
             |--------------------------------------------------------------------------
             */
-
             $query->orWhereHas('pengajuan', function (Builder $q) use ($search) {
                 $q
                     ->where('nama_barang', 'like', "%{$search}%")
@@ -294,7 +285,6 @@ class LogPengajuan extends Model
             | Pemohon
             |--------------------------------------------------------------------------
             */
-
             $query->orWhereHas('pengajuan.user', function (Builder $q) use ($search) {
                 $q
                     ->where('name', 'like', "%{$search}%")
@@ -302,38 +292,26 @@ class LogPengajuan extends Model
             });
 
             $query->orWhere(function ($q) use ($search) {
-
                 foreach (self::searchableEvents() as $event) {
-
                     if (
                         str_contains(
                             strtolower($event['name']),
                             strtolower($search)
                         )
                     ) {
-
                         $q->orWhere(function ($qq) use ($event) {
-
                             $event['query']($qq);
-
                         });
-
                     }
-
                 }
-
             });
-
         });
-
     }
 
     public function getEventTypeAttribute(): string
     {
         return match ($this->kategori_log) {
-
             'Status' => match (true) {
-
                     blank($this->data_lama)
                     && $this->data_baru === 'Open' => self::EVENT_CREATE,
 
@@ -355,13 +333,9 @@ class LogPengajuan extends Model
                 },
 
             'Pending' => self::EVENT_PENDING,
-
             'Chat' => self::EVENT_CHAT,
-
             'Update Data' => self::EVENT_UPDATE,
-
             'Delete Data' => self::EVENT_DELETE,
-
             default => self::EVENT_SYSTEM,
         };
     }
@@ -369,25 +343,15 @@ class LogPengajuan extends Model
     public function getEventNameAttribute(): string
     {
         return match ($this->event_type) {
-
             self::EVENT_CREATE => 'Pengajuan Dibuat',
-
             self::EVENT_PROCESS => 'Pengajuan Diproses',
-
             self::EVENT_APPROVE => 'Pengajuan Disetujui',
-
             self::EVENT_REJECT => 'Pengajuan Ditolak',
-
             self::EVENT_REOPEN => 'Pengajuan Dibuka Kembali',
-
             self::EVENT_PENDING => 'Pending',
-
             self::EVENT_CHAT => 'Pesan Baru',
-
             self::EVENT_UPDATE => 'Perubahan Data',
-
             self::EVENT_DELETE => 'Hapus Data',
-
             default => 'Aktivitas',
         };
     }
@@ -395,11 +359,8 @@ class LogPengajuan extends Model
     public function getEventDescriptionAttribute(): string
     {
         return match ($this->event_type) {
-
             self::EVENT_UPDATE => "{$this->data_lama} → {$this->data_baru}",
-
             self::EVENT_DELETE => "Pengajuan dihapus oleh {$this->user?->name}",
-
             default => $this->keterangan,
         };
     }
@@ -407,23 +368,14 @@ class LogPengajuan extends Model
     public function getSummaryAttribute(): string
     {
         return match ($this->event_type) {
-
             self::EVENT_CREATE => "Pengajuan {$this->pengajuan?->kode_pengajuan} dibuat.",
-
             self::EVENT_PROCESS => "Pengajuan {$this->pengajuan?->kode_pengajuan} sedang diproses.",
-
             self::EVENT_APPROVE => 'Pengajuan telah disetujui.',
-
             self::EVENT_REJECT => 'Pengajuan ditolak.',
-
             self::EVENT_PENDING => 'Pengajuan ditunda.',
-
             self::EVENT_CHAT => $this->keterangan,
-
             self::EVENT_UPDATE => 'Data pengajuan diperbarui.',
-
             self::EVENT_DELETE => 'Pengajuan dihapus.',
-
             default => $this->keterangan,
         };
     }
@@ -431,25 +383,15 @@ class LogPengajuan extends Model
     public function getEventIconAttribute(): string
     {
         return match ($this->event_type) {
-
             self::EVENT_CREATE => 'heroicon-o-plus-circle',
-
             self::EVENT_PROCESS => 'heroicon-o-check-circle',
-
             self::EVENT_PENDING => 'heroicon-o-pause-circle',
-
             self::EVENT_CHAT => 'heroicon-o-chat-bubble-left-right',
-
             self::EVENT_UPDATE => 'heroicon-o-pencil-square',
-
             self::EVENT_APPROVE => 'heroicon-o-check-badge',
-
             self::EVENT_REJECT => 'heroicon-o-x-circle',
-
             self::EVENT_REOPEN => 'heroicon-o-arrow-path',
-
             self::EVENT_DELETE => 'heroicon-o-trash',
-
             default => 'heroicon-o-clock',
         };
     }
@@ -457,25 +399,15 @@ class LogPengajuan extends Model
     public function getEventColorAttribute(): string
     {
         return match ($this->event_type) {
-
             self::EVENT_CREATE => 'info',
-
             self::EVENT_PROCESS => 'process',
-
             self::EVENT_PENDING => 'pending',
-
             self::EVENT_CHAT => 'chat',
-
             self::EVENT_UPDATE => 'gray',
-
             self::EVENT_APPROVE => 'success',
-
             self::EVENT_REJECT => 'danger',
-
             self::EVENT_REOPEN => 'reopen',
-
             self::EVENT_DELETE => 'danger',
-
             default => 'gray',
         };
     }
@@ -483,25 +415,15 @@ class LogPengajuan extends Model
     public function getHumanActivityAttribute(): string
     {
         return match ($this->event_type) {
-
             self::EVENT_CREATE => "{$this->user?->name} membuat pengajuan barang.",
-
             self::EVENT_PROCESS => "{$this->user?->name} mulai memproses pengajuan.",
-
             self::EVENT_APPROVE => "{$this->user?->name} menyetujui pengajuan.",
-
             self::EVENT_PENDING => "{$this->user?->name} menunda proses pengajuan.",
-
             self::EVENT_CHAT => "{$this->user?->name} mengirim pesan.",
-
             self::EVENT_UPDATE => "{$this->user?->name} memperbarui data pengajuan.",
-
             self::EVENT_REJECT => "{$this->user?->name} menolak pengajuan.",
-
             self::EVENT_REOPEN => "{$this->user?->name} membuka kembali pengajuan.",
-
             self::EVENT_DELETE => "{$this->user?->name} menghapus pengajuan.",
-
             default => "{$this->user?->name} melakukan aktivitas.",
         };
     }
@@ -509,13 +431,10 @@ class LogPengajuan extends Model
     public function getSeverityAttribute(): string
     {
         return match ($this->event_type) {
-
             self::EVENT_DELETE,
             self::EVENT_REJECT => 'high',
-
             self::EVENT_PENDING,
             self::EVENT_REOPEN => 'medium',
-
             default => 'normal',
         };
     }
@@ -523,25 +442,15 @@ class LogPengajuan extends Model
     public function getPriorityAttribute(): int
     {
         return match ($this->event_type) {
-
             self::EVENT_DELETE => 100,
-
             self::EVENT_REJECT => 90,
-
             self::EVENT_APPROVE => 80,
-
             self::EVENT_REOPEN => 70,
-
             self::EVENT_PROCESS => 60,
-
             self::EVENT_CREATE => 50,
-
             self::EVENT_UPDATE => 40,
-
             self::EVENT_CHAT => 30,
-
             self::EVENT_PENDING => 20,
-
             default => 10,
         };
     }
@@ -549,17 +458,11 @@ class LogPengajuan extends Model
     public function getCurrentStageAttribute(): string
     {
         return match ($this->pengajuan->status) {
-
             'Open' => 'Menunggu Persetujuan',
-
             'In Progress' => 'Sedang Diproses',
-
             'Close' => match ($this->pengajuan->status_outcome) {
-
                     'Completed' => 'Disetujui',
-
                     'Rejected' => 'Ditolak',
-
                     default => 'Selesai',
                 },
 

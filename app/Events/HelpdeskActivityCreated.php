@@ -8,8 +8,7 @@ use Illuminate\Queue\SerializesModels;
 
 class HelpdeskActivityCreated
 {
-    use Dispatchable;
-    use SerializesModels;
+    use Dispatchable, SerializesModels;
 
     public function __construct(
         public string $module,
@@ -17,13 +16,8 @@ class HelpdeskActivityCreated
         public string $kode,
         public ?int $actorId = null,
         public array $data = [],
+        public ?string $url = null,
+        public ?string $referenceId = null,
     ) {
     }
-
-    // public function broadcastOn(): array
-    // {
-    //     return [
-    //         new PrivateChannel('Helpdesk-System-Notification'),
-    //     ];
-    // }
 }

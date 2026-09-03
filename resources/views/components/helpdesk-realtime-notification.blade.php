@@ -4,38 +4,58 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener(
+            'helpdesk-notification',
+            (event) => {
 
-            if (!window.Echo) {
-                console.warn('Laravel Echo belum tersedia.')
-                return
-            }
+                const notification = event.detail
 
-            const userId = @js(auth()->id())
+                let body = ''
 
-            const channel = window.Echo.private(
-                `users.${userId}`
-            )
+                if (notification.kode) {
 
-            channel.notification((notification) => {
+                    body += `
+                        <strong>
+                            ${notification.kode}
+                        </strong>
+                    `
+                }
 
-                console.log(
-                    '[HELPDESK REALTIME]',
-                    notification
-                )
+                if (
+                    notification.data?.sender_name
+                ) {
 
-                window.dispatchEvent(
-                    new CustomEvent(
-                        'helpdesk-notification',
-                        {
-                            detail: notification
-                        }
+                    body += `
+                        <br>
+                        ${notification.data.sender_name}
+                    `
+                }
+
+                body += `
+                    <br>
+                    ${notification.message ?? ''}
+                `
+
+                const toast =
+                    new window.FilamentNotification()
+
+                toast
+                    .title(
+                        notification.title ??
+                        'Notifikasi Helpdesk'
                     )
-                )
+                    .body(body)
 
-            })
+                if (notification.color) {
+                    toast.color(notification.color)
+                }
 
-        })
+                if (notification.icon) {
+                    toast.icon(notification.icon)
+                }
+
+                toast.send()
+            }
+        )
     </script>
-
 @endauth

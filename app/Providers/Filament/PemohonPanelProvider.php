@@ -56,6 +56,7 @@ class PemohonPanelProvider extends PanelProvider
             )
             ->widgets([
             ])
+            ->databaseNotifications()
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

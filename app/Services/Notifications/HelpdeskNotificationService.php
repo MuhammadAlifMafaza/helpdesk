@@ -1,12 +1,22 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Notifications;
 
 use App\Models\User;
 use App\Notifications\HelpdeskNotification;
 
 class HelpdeskNotificationService
 {
+    /**
+     * Kirim notification secara manual.
+     *
+     * Digunakan untuk kebutuhan non-domain-event.
+     *
+     * Domain notification utama menggunakan:
+     * HelpdeskActivityCreated
+     * ->
+     * SendHelpdeskNotification
+     */
     public static function sendNotification(
         User $recipient,
         string $type,
@@ -31,7 +41,7 @@ class HelpdeskNotificationService
                 color: $color,
                 referenceId: $referenceId,
                 data: $data,
-            )
+            ),
         );
     }
 }
