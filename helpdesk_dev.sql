@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Waktu pembuatan: 01 Sep 2026 pada 01.27
+-- Waktu pembuatan: 03 Sep 2026 pada 03.02
 -- Versi server: 26.7.0
 -- Versi PHP: 8.3.30
 
@@ -33,6 +33,15 @@ CREATE TABLE `cache` (
   `expiration` bigint NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data untuk tabel `cache`
+--
+
+INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
+('laravel-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6', 'i:1;', 1788403478),
+('laravel-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6:timer', 'i:1788403478;', 1788403478),
+('laravel-cache-spatie.permission.cache', 'a:3:{s:5:\"alias\";a:4:{s:1:\"a\";s:2:\"id\";s:1:\"b\";s:4:\"name\";s:1:\"c\";s:10:\"guard_name\";s:1:\"r\";s:5:\"roles\";}s:11:\"permissions\";a:62:{i:0;a:4:{s:1:\"a\";i:1;s:1:\"b\";s:12:\"ViewAny:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:1;a:4:{s:1:\"a\";i:2;s:1:\"b\";s:9:\"View:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:2;a:4:{s:1:\"a\";i:3;s:1:\"b\";s:11:\"Create:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:3;a:4:{s:1:\"a\";i:4;s:1:\"b\";s:11:\"Update:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:4;a:4:{s:1:\"a\";i:5;s:1:\"b\";s:11:\"Delete:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:5;a:4:{s:1:\"a\";i:6;s:1:\"b\";s:14:\"DeleteAny:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:6;a:4:{s:1:\"a\";i:7;s:1:\"b\";s:12:\"Restore:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:7;a:4:{s:1:\"a\";i:8;s:1:\"b\";s:16:\"ForceDelete:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:8;a:4:{s:1:\"a\";i:9;s:1:\"b\";s:19:\"ForceDeleteAny:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:9;a:4:{s:1:\"a\";i:10;s:1:\"b\";s:15:\"RestoreAny:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:10;a:4:{s:1:\"a\";i:11;s:1:\"b\";s:14:\"Replicate:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:11;a:4:{s:1:\"a\";i:12;s:1:\"b\";s:12:\"Reorder:Role\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:12;a:4:{s:1:\"a\";i:13;s:1:\"b\";s:21:\"ViewAny:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:13;a:4:{s:1:\"a\";i:14;s:1:\"b\";s:18:\"View:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:14;a:4:{s:1:\"a\";i:15;s:1:\"b\";s:20:\"Create:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:15;a:4:{s:1:\"a\";i:16;s:1:\"b\";s:20:\"Update:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:16;a:4:{s:1:\"a\";i:17;s:1:\"b\";s:20:\"Delete:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:17;a:4:{s:1:\"a\";i:18;s:1:\"b\";s:23:\"DeleteAny:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:18;a:4:{s:1:\"a\";i:19;s:1:\"b\";s:21:\"Restore:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:19;a:4:{s:1:\"a\";i:20;s:1:\"b\";s:25:\"ForceDelete:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:20;a:4:{s:1:\"a\";i:21;s:1:\"b\";s:28:\"ForceDeleteAny:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:21;a:4:{s:1:\"a\";i:22;s:1:\"b\";s:24:\"RestoreAny:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:22;a:4:{s:1:\"a\";i:23;s:1:\"b\";s:23:\"Replicate:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:23;a:4:{s:1:\"a\";i:24;s:1:\"b\";s:21:\"Reorder:MasterRuangan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:24;a:4:{s:1:\"a\";i:25;s:1:\"b\";s:22:\"ViewAny:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:25;a:4:{s:1:\"a\";i:26;s:1:\"b\";s:19:\"View:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:2;i:1;i:4;i:2;i:5;}}i:26;a:4:{s:1:\"a\";i:27;s:1:\"b\";s:21:\"Create:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:2;i:1;i:4;i:2;i:5;}}i:27;a:4:{s:1:\"a\";i:28;s:1:\"b\";s:21:\"Update:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:2;i:1;i:4;i:2;i:5;}}i:28;a:4:{s:1:\"a\";i:29;s:1:\"b\";s:21:\"Delete:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:29;a:4:{s:1:\"a\";i:30;s:1:\"b\";s:24:\"DeleteAny:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:30;a:4:{s:1:\"a\";i:31;s:1:\"b\";s:22:\"Restore:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:31;a:4:{s:1:\"a\";i:32;s:1:\"b\";s:26:\"ForceDelete:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:32;a:4:{s:1:\"a\";i:33;s:1:\"b\";s:29:\"ForceDeleteAny:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:33;a:4:{s:1:\"a\";i:34;s:1:\"b\";s:25:\"RestoreAny:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:34;a:4:{s:1:\"a\";i:35;s:1:\"b\";s:24:\"Replicate:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:35;a:4:{s:1:\"a\";i:36;s:1:\"b\";s:22:\"Reorder:TiketPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:36;a:4:{s:1:\"a\";i:37;s:1:\"b\";s:12:\"ViewAny:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:37;a:4:{s:1:\"a\";i:38;s:1:\"b\";s:9:\"View:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:38;a:4:{s:1:\"a\";i:39;s:1:\"b\";s:11:\"Create:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:39;a:4:{s:1:\"a\";i:40;s:1:\"b\";s:11:\"Update:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:40;a:4:{s:1:\"a\";i:41;s:1:\"b\";s:11:\"Delete:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:41;a:4:{s:1:\"a\";i:42;s:1:\"b\";s:14:\"DeleteAny:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:42;a:4:{s:1:\"a\";i:43;s:1:\"b\";s:12:\"Restore:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:43;a:4:{s:1:\"a\";i:44;s:1:\"b\";s:16:\"ForceDelete:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:44;a:4:{s:1:\"a\";i:45;s:1:\"b\";s:19:\"ForceDeleteAny:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:45;a:4:{s:1:\"a\";i:46;s:1:\"b\";s:15:\"RestoreAny:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:46;a:4:{s:1:\"a\";i:47;s:1:\"b\";s:14:\"Replicate:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:47;a:4:{s:1:\"a\";i:48;s:1:\"b\";s:12:\"Reorder:User\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:48;a:4:{s:1:\"a\";i:49;s:1:\"b\";s:19:\"View:AdminDashboard\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:49;a:4:{s:1:\"a\";i:50;s:1:\"b\";s:21:\"View:TeknisiDashboard\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:3:{i:0;i:2;i:1;i:3;i:2;i:5;}}i:50;a:4:{s:1:\"a\";i:51;s:1:\"b\";s:20:\"ViewAny:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:51;a:4:{s:1:\"a\";i:52;s:1:\"b\";s:17:\"View:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:2:{i:0;i:2;i:1;i:5;}}i:52;a:4:{s:1:\"a\";i:53;s:1:\"b\";s:19:\"Create:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:53;a:4:{s:1:\"a\";i:54;s:1:\"b\";s:19:\"Update:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:54;a:4:{s:1:\"a\";i:55;s:1:\"b\";s:19:\"Delete:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:55;a:4:{s:1:\"a\";i:56;s:1:\"b\";s:22:\"DeleteAny:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:56;a:4:{s:1:\"a\";i:57;s:1:\"b\";s:20:\"Restore:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:57;a:4:{s:1:\"a\";i:58;s:1:\"b\";s:24:\"ForceDelete:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:58;a:4:{s:1:\"a\";i:59;s:1:\"b\";s:27:\"ForceDeleteAny:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:59;a:4:{s:1:\"a\";i:60;s:1:\"b\";s:23:\"RestoreAny:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:60;a:4:{s:1:\"a\";i:61;s:1:\"b\";s:22:\"Replicate:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}i:61;a:4:{s:1:\"a\";i:62;s:1:\"b\";s:20:\"Reorder:LogPerbaikan\";s:1:\"c\";s:3:\"web\";s:1:\"r\";a:1:{i:0;i:5;}}}s:5:\"roles\";a:4:{i:0;a:3:{s:1:\"a\";i:2;s:1:\"b\";s:5:\"admin\";s:1:\"c\";s:3:\"web\";}i:1;a:3:{s:1:\"a\";i:5;s:1:\"b\";s:11:\"super_admin\";s:1:\"c\";s:3:\"web\";}i:2;a:3:{s:1:\"a\";i:4;s:1:\"b\";s:7:\"pemohon\";s:1:\"c\";s:3:\"web\";}i:3;a:3:{s:1:\"a\";i:3;s:1:\"b\";s:7:\"teknisi\";s:1:\"c\";s:3:\"web\";}}}', 1788488772);
+
 -- --------------------------------------------------------
 
 --
@@ -43,6 +52,22 @@ CREATE TABLE `cache_locks` (
   `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `owner` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `expiration` bigint NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `failed_jobs`
+--
+
+CREATE TABLE `failed_jobs` (
+  `id` bigint UNSIGNED NOT NULL,
+  `uuid` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `connection` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `queue` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payload` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `exception` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `failed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -109,7 +134,12 @@ INSERT INTO `log_data_pengajuan_barang` (`id`, `pengajuan_id`, `user_id`, `kateg
 (27, 6, 4, 'Chat', NULL, NULL, 'inafgaengo', '2026-08-21 23:29:33'),
 (28, 6, 7, 'Chat', NULL, NULL, 'amote', '2026-08-21 23:30:50'),
 (29, 6, 1, 'Status', 'In Progress', 'Close', '[DITOLAK] Barang tidak dapat ditemukan', '2026-08-22 09:45:16'),
-(30, 7, 4, 'Chat', NULL, NULL, 'd', '2026-08-23 19:28:14');
+(30, 7, 4, 'Chat', NULL, NULL, 'd', '2026-08-23 19:28:14'),
+(53, 53, 4, 'Status', NULL, 'Open', 'Pengajuan dibuat', '2026-09-03 02:27:48'),
+(54, 53, 4, 'Chat', NULL, NULL, 'fasfa', '2026-09-03 02:28:03'),
+(55, 53, 4, 'Delete Data', 'Open', 'Deleted', 'Pengajuan barang telah dihapus oleh Eko', '2026-09-03 02:42:17'),
+(56, 54, 4, 'Status', NULL, 'Open', 'Pengajuan dibuat', '2026-09-03 02:46:08'),
+(57, 54, 4, 'Delete Data', 'Open', 'Deleted', 'Pengajuan barang telah dihapus oleh Eko', '2026-09-03 02:46:26');
 
 -- --------------------------------------------------------
 
@@ -270,7 +300,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (4, '0001_01_01_000000_create_users_table', 3),
 (6, '2026_08_22_143652_create_notifications_table', 4),
 (7, '2026_08_22_160750_create_jobs_table', 5),
-(53, '2026_09_01_020816_add_dashboard_indexes_to_log_perbaikan_table', 6);
+(53, '2026_09_01_020816_add_dashboard_indexes_to_log_perbaikan_table', 6),
+(104, '2026_09_02_125939_create_failed_jobs_table', 7);
 
 -- --------------------------------------------------------
 
@@ -329,6 +360,36 @@ CREATE TABLE `notifications` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data untuk tabel `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `type`, `notifiable_type`, `notifiable_id`, `data`, `read_at`, `created_at`, `updated_at`) VALUES
+('015545ff-e1c0-4f99-bcdd-dfbb8aa94af9', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 2, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"Printer Baru\",\"jumlah\":1}}', NULL, '2026-09-03 02:27:48', '2026-09-03 02:27:48'),
+('03a18dfe-9923-4c32-951a-c30d4dc13270', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 1, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"Printer Baru\",\"jumlah\":1}}', NULL, '2026-09-03 02:27:48', '2026-09-03 02:27:48'),
+('2a626c6b-9c49-4705-b7b7-8d517f5559f7', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 3, '{\"type\":\"pengajuan.chat\",\"title\":\"Pesan Baru \\u00b7 PJB-03092026-0001\",\"message\":\"fasfa\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-chat-bubble-left-right\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"fasfa\",\"sender_id\":4,\"sender_name\":\"Eko\",\"log_id\":54}}', NULL, '2026-09-03 02:28:04', '2026-09-03 02:28:04'),
+('3081fa05-21f1-4b3f-84df-abbdb4bd154c', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 1, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/54\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"54\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"rwar\",\"jumlah\":1}}', NULL, '2026-09-03 02:46:10', '2026-09-03 02:46:10'),
+('38bae144-1747-40e5-944d-638ee5d38f18', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 3, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/54\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"54\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"rwar\",\"jumlah\":1}}', NULL, '2026-09-03 02:46:10', '2026-09-03 02:46:10'),
+('42092bc5-207b-4e17-9c37-af2731b6b030', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 7, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"Printer Baru\",\"jumlah\":1}}', NULL, '2026-09-03 02:27:48', '2026-09-03 02:27:48'),
+('4b394ae4-8d8a-40de-843d-25f859fa4bf0', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 1, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"Printer Baru\",\"jumlah\":1}}', NULL, '2026-09-03 02:27:48', '2026-09-03 02:27:48'),
+('61eef1aa-47c7-4284-828d-c87f0a53c49b', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 3, '{\"type\":\"pengajuan.chat\",\"title\":\"Pesan Baru \\u00b7 PJB-03092026-0001\",\"message\":\"fasfa\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-chat-bubble-left-right\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"fasfa\",\"sender_id\":4,\"sender_name\":\"Eko\",\"log_id\":54}}', NULL, '2026-09-03 02:28:04', '2026-09-03 02:28:04'),
+('6481a661-9e84-4a61-a602-17ce15f33a6f', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 7, '{\"type\":\"pengajuan.chat\",\"title\":\"Pesan Baru \\u00b7 PJB-03092026-0001\",\"message\":\"fasfa\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-chat-bubble-left-right\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"fasfa\",\"sender_id\":4,\"sender_name\":\"Eko\",\"log_id\":54}}', NULL, '2026-09-03 02:28:04', '2026-09-03 02:28:04'),
+('6d830a39-7adb-463c-bc36-3ff1143a53e8', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 2, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/54\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"54\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"rwar\",\"jumlah\":1}}', NULL, '2026-09-03 02:46:10', '2026-09-03 02:46:10'),
+('7663fbf2-1864-4860-b419-b2535ba9456d', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 7, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"Printer Baru\",\"jumlah\":1}}', NULL, '2026-09-03 02:27:48', '2026-09-03 02:27:48'),
+('81318e44-8119-45e3-bee4-1fec0d7c21b2', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 1, '{\"type\":\"pengajuan.chat\",\"title\":\"Pesan Baru \\u00b7 PJB-03092026-0001\",\"message\":\"fasfa\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-chat-bubble-left-right\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"fasfa\",\"sender_id\":4,\"sender_name\":\"Eko\",\"log_id\":54}}', NULL, '2026-09-03 02:28:04', '2026-09-03 02:28:04'),
+('8c38cdc4-9abd-4a49-bab0-bad9162ca9e0', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 2, '{\"type\":\"pengajuan.chat\",\"title\":\"Pesan Baru \\u00b7 PJB-03092026-0001\",\"message\":\"fasfa\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-chat-bubble-left-right\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"fasfa\",\"sender_id\":4,\"sender_name\":\"Eko\",\"log_id\":54}}', NULL, '2026-09-03 02:28:04', '2026-09-03 02:28:04'),
+('9109a07c-1bc7-40a6-b504-605a82c82fb3', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 3, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/54\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"54\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"rwar\",\"jumlah\":1}}', NULL, '2026-09-03 02:46:10', '2026-09-03 02:46:10'),
+('91882b26-3e96-4ac3-b384-23208944df8b', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 1, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/54\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"54\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"rwar\",\"jumlah\":1}}', NULL, '2026-09-03 02:46:10', '2026-09-03 02:46:10'),
+('9bf75a06-33d0-4e3a-9297-14870b5a91a4', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 7, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/54\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"54\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"rwar\",\"jumlah\":1}}', NULL, '2026-09-03 02:46:10', '2026-09-03 02:46:10'),
+('a9f02e25-781a-4e01-9cb2-aba781ab2684', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 2, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/54\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"54\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"rwar\",\"jumlah\":1}}', NULL, '2026-09-03 02:46:10', '2026-09-03 02:46:10'),
+('b38c003b-ffd5-4b8e-9d22-66540cd7d8f0', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 2, '{\"type\":\"pengajuan.chat\",\"title\":\"Pesan Baru \\u00b7 PJB-03092026-0001\",\"message\":\"fasfa\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-chat-bubble-left-right\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"fasfa\",\"sender_id\":4,\"sender_name\":\"Eko\",\"log_id\":54}}', NULL, '2026-09-03 02:28:04', '2026-09-03 02:28:04'),
+('b7967cc0-2c3a-48e3-9fd5-f6571a56d2e5', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 7, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/54\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"54\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"rwar\",\"jumlah\":1}}', NULL, '2026-09-03 02:46:10', '2026-09-03 02:46:10'),
+('becadbdb-3cc9-46b0-ba42-80110cee2d2a', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 2, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"Printer Baru\",\"jumlah\":1}}', NULL, '2026-09-03 02:27:48', '2026-09-03 02:27:48'),
+('c663b12f-d006-4277-a85c-70d5e94d0b70', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 7, '{\"type\":\"pengajuan.chat\",\"title\":\"Pesan Baru \\u00b7 PJB-03092026-0001\",\"message\":\"fasfa\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-chat-bubble-left-right\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"fasfa\",\"sender_id\":4,\"sender_name\":\"Eko\",\"log_id\":54}}', NULL, '2026-09-03 02:28:04', '2026-09-03 02:28:04'),
+('ee87933d-3d34-4e85-b418-b98cac63b381', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 3, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"Printer Baru\",\"jumlah\":1}}', NULL, '2026-09-03 02:27:48', '2026-09-03 02:27:48'),
+('fdc06343-b523-45e5-96e0-8aefa01b4d2a', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 1, '{\"type\":\"pengajuan.chat\",\"title\":\"Pesan Baru \\u00b7 PJB-03092026-0001\",\"message\":\"fasfa\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-chat-bubble-left-right\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"fasfa\",\"sender_id\":4,\"sender_name\":\"Eko\",\"log_id\":54}}', NULL, '2026-09-03 02:28:04', '2026-09-03 02:28:04'),
+('ffaac58f-bc0c-4cc7-8c8d-34634ddec2e1', 'App\\Notifications\\HelpdeskNotification', 'App\\Models\\User', 3, '{\"type\":\"pengajuan.created\",\"title\":\"Pengajuan Barang Baru\",\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"kode\":\"PJB-03092026-0001\",\"url\":\"http:\\/\\/helpdesk.test\\/admin\\/pengajuan-barang\\/53\",\"icon\":\"heroicon-o-cube\",\"color\":\"info\",\"reference_id\":\"53\",\"data\":{\"message\":\"Pengajuan PJB-03092026-0001 baru telah dibuat.\",\"user_id\":4,\"user_name\":\"Eko\",\"nama_barang\":\"Printer Baru\",\"jumlah\":1}}', NULL, '2026-09-03 02:27:48', '2026-09-03 02:27:48');
+
 -- --------------------------------------------------------
 
 --
@@ -369,7 +430,9 @@ INSERT INTO `pengajuan_barang` (`id`, `user_id`, `nama_barang`, `jumlah`, `alasa
 (4, 3, 'RAM DDR 4 3200Mhz', 12, 'Komponen yang dibutuhkan untuk perbaikan komputer', 'Close', '2026-06-29 03:50:16', '2026-07-09 19:15:27', NULL),
 (5, 5, 'Printer Baru', 12, 'Kekurangan perangkat printer untuk kebutuhan inventaris', 'Open', '2026-07-20 21:32:50', '2026-07-20 21:32:50', NULL),
 (6, 4, 'COBA barang', 1, 'COBAfff', 'Close', '2026-08-19 19:03:53', '2026-08-22 09:45:15', NULL),
-(7, 4, 'ateafea', 15, 'taefae', 'Open', '2026-08-19 19:20:17', '2026-08-19 19:55:14', NULL);
+(7, 4, 'ateafea', 15, 'taefae', 'Open', '2026-08-19 19:20:17', '2026-08-19 19:55:14', NULL),
+(53, 4, 'Printer Baru', 1, 'fafff', 'Open', '2026-09-03 02:27:48', '2026-09-03 02:48:10', NULL),
+(54, 4, 'rwar', 1, 'arwar', 'Open', '2026-09-03 02:46:08', '2026-09-03 02:48:08', NULL);
 
 -- --------------------------------------------------------
 
@@ -754,6 +817,14 @@ ALTER TABLE `cache_locks`
   ADD KEY `cache_locks_expiration_index` (`expiration`);
 
 --
+-- Indeks untuk tabel `failed_jobs`
+--
+ALTER TABLE `failed_jobs`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`),
+  ADD KEY `failed_jobs_connection_queue_failed_at_index` (`connection`,`queue`,`failed_at`);
+
+--
 -- Indeks untuk tabel `jobs`
 --
 ALTER TABLE `jobs`
@@ -885,16 +956,22 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT untuk tabel `failed_jobs`
+--
+ALTER TABLE `failed_jobs`
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT untuk tabel `jobs`
 --
 ALTER TABLE `jobs`
-  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT untuk tabel `log_data_pengajuan_barang`
 --
 ALTER TABLE `log_data_pengajuan_barang`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT untuk tabel `log_data_tiket_perbaikan`
@@ -918,13 +995,13 @@ ALTER TABLE `master_ruangan`
 -- AUTO_INCREMENT untuk tabel `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+  MODIFY `id` int UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=105;
 
 --
 -- AUTO_INCREMENT untuk tabel `pengajuan_barang`
 --
 ALTER TABLE `pengajuan_barang`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT untuk tabel `permissions`
