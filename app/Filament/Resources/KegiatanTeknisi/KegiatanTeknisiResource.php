@@ -6,47 +6,47 @@ use App\Filament\Resources\KegiatanTeknisi\Pages\CreateKegiatanTeknisi;
 use App\Filament\Resources\KegiatanTeknisi\Pages\EditKegiatanTeknisi;
 use App\Filament\Resources\KegiatanTeknisi\Pages\ListKegiatanTeknisi;
 use App\Filament\Resources\KegiatanTeknisi\Pages\ViewKegiatanTeknisi;
-use App\Filament\Resources\KegiatanTeknisi\Schemas\KegiatanTeknisiForm;
 use App\Filament\Resources\KegiatanTeknisi\Schemas\KegiatanTeknisiInfolist;
-use App\Filament\Resources\KegiatanTeknisi\Tables\KegiatanTeknisiTable;
 use App\Models\Modules\Teknisi\Models\KegiatanTeknisi;
-
-use UnitEnum;
+use App\Models\User;
 use BackedEnum;
-
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+// Filament Action Imports
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
+// Filament Tables Import
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-
-// Filament Action Imports
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\ViewAction;
-use Filament\Actions\Action;
-
-// Filament Tables Import
-use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Table;
+// Filament Forms Import
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Columns\TextColumn;
-
-// Filament Forms Import
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Hidden;
+use UnitEnum;
 
 class KegiatanTeknisiResource extends Resource
 {
     protected static ?string $model = KegiatanTeknisi::class;
 
-    protected static ?string $plural = 'kegiatan-teknisi';
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
-    protected static ?string $pluralLabel = 'Catatan Kegiatan Teknisi';
+    protected static ?string $slug = 'kegiatan-teknisi';
+
     protected static ?string $navigationLabel = 'Catatan Kegiatan';
+
+    protected static ?string $pluralLabel = 'Catatan Kegiatan Teknisi';
+
     protected static UnitEnum|string|null $navigationGroup = 'Teknisi';
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
+
     protected static ?string $recordTitleAttribute = 'LogHarian';
 
     public static function form(
@@ -61,10 +61,42 @@ class KegiatanTeknisiResource extends Resource
                     ->default(auth()->id()),
 
                 DatePicker::make('tanggal')
+                    ->label('Tanggal')
                     ->required()
                     ->default(now()),
 
+                Select::make('ruangan_id')
+                    ->label('Ruangan')
+                    ->relationship('ruangan', 'nama_ruangan')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
+
+                Select::make('nama_petugas')
+                    ->label('Nama Petugas')
+                    ->multiple()
+                    ->options(
+                        User::query()
+                            ->whereIn('role', ['teknisi', 'admin'])
+                            ->pluck('name', 'id')
+                            ->toArray()
+                    )
+                    ->dehydrateStateUsing(function ($state) {
+                        if (blank($state)) {
+                            return null;
+                        }
+
+                        return User::whereIn('id', $state)
+                            ->pluck('name')
+                            ->implode(', ');
+                    })
+
+                    ->searchable()
+                    ->preload()
+                    ->nullable(),
+
                 Textarea::make('deskripsi_kegiatan')
+                    ->label('Catatan Kegiatan')
                     ->rows(8)
                     ->required()
                     ->columnSpanFull(),
@@ -82,22 +114,39 @@ class KegiatanTeknisiResource extends Resource
     {
         return $table
 
+            ->defaultSort('tanggal', 'desc')
             ->columns([
                 TextColumn::make('teknisi.name')
-                    ->label('Nama Petugas')
+                    ->label('Dibuat Oleh')
                     ->searchable(),
 
+                TextColumn::make('nama_petugas')
+                    ->label('Nama Petugas')
+                    ->placeholder('-')
+                    ->wrap()
+                    ->searchable(),
+
+                TextColumn::make('ruangan.nama_ruangan')
+                    ->label('Ruangan')
+                    ->searchable()
+                    ->default('-'),
+
                 TextColumn::make('tanggal')
-                    ->date('d M Y'),
+                    ->label('Tanggal')
+                    ->date('d M Y')
+                    ->timezone('Asia/Jakarta'),
 
                 TextColumn::make('deskripsi_kegiatan')
+                    ->label('Catatan Kegiatan')
                     ->limit(60)
-                    ->tooltip(fn($record) => $record->deskripsi_kegiatan)
+                    ->tooltip(fn ($record) => $record->deskripsi_kegiatan)
                     ->wrap()
                     ->searchable(),
 
                 TextColumn::make('created_at')
-                    ->since(),
+                    ->label('Dibuat Pada')
+                    ->since()
+                    ->timezone('Asia/Jakarta'),
             ])
 
             ->actions([
@@ -121,7 +170,7 @@ class KegiatanTeknisiResource extends Resource
                             &&
                             $record->teknisi_id == $user->id;
                     })
-                    ->disabled(fn($record) => $record->trashed()),
+                    ->disabled(fn ($record) => $record->trashed()),
 
                 DeleteAction::make()
                     ->visible(function ($record) {
@@ -141,7 +190,6 @@ class KegiatanTeknisiResource extends Resource
                             $record->teknisi_id == $user->id;
                     }),
 
-
             ])
 
             ->filters([
@@ -151,7 +199,7 @@ class KegiatanTeknisiResource extends Resource
                     ->relationship(
                         'teknisi',
                         'name',
-                        fn(Builder $query) => $query->role(['teknisi', 'admin', 'super_admin'])
+                        fn (Builder $query) => $query->role(['teknisi', 'admin', 'super_admin'])
 
                     )
                     ->searchable()
@@ -171,13 +219,11 @@ class KegiatanTeknisiResource extends Resource
                         return $query
                             ->when(
                                 $data['tanggal_mulai'],
-                                fn(Builder $query, $date) =>
-                                $query->whereDate('tanggal', '>=', $date)
+                                fn (Builder $query, $date) => $query->whereDate('tanggal', '>=', $date)
                             )
                             ->when(
                                 $data['tanggal_selesai'],
-                                fn(Builder $query, $date) =>
-                                $query->whereDate('tanggal', '<=', $date)
+                                fn (Builder $query, $date) => $query->whereDate('tanggal', '<=', $date)
                             );
 
                     }),
@@ -218,8 +264,8 @@ class KegiatanTeknisiResource extends Resource
                             now()->year,
                             now()->year - 5
                         ))
-                            ->mapWithKeys(fn($year) => [
-                                $year => $year
+                            ->mapWithKeys(fn ($year) => [
+                                $year => $year,
                             ])
                             ->toArray()
                     )
@@ -237,7 +283,6 @@ class KegiatanTeknisiResource extends Resource
                     }),
 
                 TrashedFilter::make(),
-
 
             ])
 
@@ -263,6 +308,7 @@ class KegiatanTeknisiResource extends Resource
             'edit' => EditKegiatanTeknisi::route('/{record}/edit'),
         ];
     }
+
     public static function canCreate(): bool
     {
         return auth()->user()->hasAnyRole([
@@ -271,7 +317,6 @@ class KegiatanTeknisiResource extends Resource
             'teknisi',
         ]);
     }
-
 
     public static function canEdit($record): bool
     {
@@ -329,32 +374,32 @@ class KegiatanTeknisiResource extends Resource
         ]);
     }
 
-    public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+    // public static function getEloquentQuery(): Builder
+    // {
+    //     $query = parent::getEloquentQuery()
+    //         ->withoutGlobalScopes([
+    //             SoftDeletingScope::class,
+    //         ]);
 
-        $user = auth()->user();
+    //     $user = auth()->user();
 
-        if (
-            $user->hasRole('super_admin') ||
-            $user->hasRole('admin')
-        ) {
-            return $query;
-        }
+    //     if (
+    //         $user->hasRole('super_admin') ||
+    //         $user->hasRole('admin')
+    //     ) {
+    //         return $query;
+    //     }
 
-        if ($user->hasRole('teknisi')) {
+    //     if ($user->hasRole('teknisi')) {
 
-            return $query->where(
-                'teknisi_id',
-                $user->id
-            );
+    //         return $query->where(
+    //             'teknisi_id',
+    //             $user->id
+    //         );
 
-        }
+    //     }
 
-        abort(403);
+    //     abort(403);
 
-    }
+    // }
 }

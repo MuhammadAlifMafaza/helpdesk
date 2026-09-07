@@ -4,17 +4,28 @@ namespace App\Filament\Resources\TicketServices\Pages;
 
 use App\Filament\Resources\TicketServices\TicketServiceResource;
 use App\Models\Modules\Perbaikan\models\TiketPerbaikan as TicketService;
-use Filament\Actions\EditAction;
-use Filament\Resources\Pages\ViewRecord;
-use Filament\Notifications\Notification;
-use Filament\Forms\Components\Textarea;
 use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\ViewRecord;
+use Livewire\Attributes\On;
 
 class ViewTicketService extends ViewRecord
 {
     protected static string $resource = TicketServiceResource::class;
 
     public string $chatMessage = '';
+
+    #[On('helpdesk-realtime-update')]
+    public function refreshRealtimeData(?string $module = null, int|string|null $reference_id = null): void
+    {
+        if ($module !== 'perbaikan' || (string) $this->record->getKey() !== (string) $reference_id) {
+            return;
+        }
+
+        $this->record->refresh();
+    }
 
     public function sendChatMessage(): void
     {
@@ -86,19 +97,18 @@ class ViewTicketService extends ViewRecord
                 ->label('Edit Tiket')
                 ->icon('heroicon-o-pencil'),
 
-
             Action::make('ambil_tiket')
                 ->label('Ambil Tiket')
                 ->icon('heroicon-o-wrench-screwdriver')
                 ->visible(
-                    fn($record) => $record->status === 'Open'
+                    fn ($record) => $record->status === 'Open'
                 )
                 ->action(function ($record) {
 
                     $record->updateStatus(
                         'In Progress',
                         'Tiket mulai dikerjakan oleh '
-                        . auth()->user()->name
+                        .auth()->user()->name
                     );
 
                 }),
@@ -108,7 +118,7 @@ class ViewTicketService extends ViewRecord
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->visible(
-                    fn($record) => $record->status === 'In Progress'
+                    fn ($record) => $record->status === 'In Progress'
                 )
                 ->requiresConfirmation()
                 ->form([
@@ -128,7 +138,7 @@ class ViewTicketService extends ViewRecord
                 ->color('danger')
                 ->icon('heroicon-o-x-circle')
                 ->visible(
-                    fn($record) => $record->status === 'In Progress'
+                    fn ($record) => $record->status === 'In Progress'
                 )
                 ->requiresConfirmation()
                 ->form([
@@ -148,7 +158,7 @@ class ViewTicketService extends ViewRecord
                 ->color('primary')
                 ->icon('heroicon-o-arrow-path')
                 ->visible(
-                    fn($record) => $record->isClosed()
+                    fn ($record) => $record->isClosed()
                 )
                 ->requiresConfirmation()
                 ->form([
@@ -164,7 +174,6 @@ class ViewTicketService extends ViewRecord
 
                 }),
 
-
             Action::make('chat')
                 ->label('Kirim Pesan')
                 ->icon('heroicon-o-chat-bubble-left-right')
@@ -173,7 +182,7 @@ class ViewTicketService extends ViewRecord
 
                     Textarea::make('message')
                         ->label('Pesan')
-                        ->required()
+                        ->required(),
 
                 ])
                 ->action(function (TicketService $record, array $data) {
@@ -189,7 +198,7 @@ class ViewTicketService extends ViewRecord
                         )
                         ->send();
 
-                })
+                }),
         ];
     }
 

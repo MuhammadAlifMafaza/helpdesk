@@ -3,13 +3,12 @@
 namespace App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Tables;
 
 use Filament\Actions\ViewAction;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\Filter;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class LaporanPermintaanBarangsTable
 {
@@ -42,21 +41,21 @@ class LaporanPermintaanBarangsTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn($record) => $record->status_label)
-                    ->color(fn($record) => $record->status_color)
-                    ->icon(fn($record) => $record->status_icon),
+                    ->formatStateUsing(fn ($record) => $record->status_label)
+                    ->color(fn ($record) => $record->status_color)
+                    ->icon(fn ($record) => $record->status_icon),
 
                 TextColumn::make('outcome')
                     ->label('Hasil Persetujuan')
                     ->badge()
-                    ->formatStateUsing(fn($record) => $record->outcome_label)
-                    ->color(fn($record) => $record->outcome_color),
+                    ->formatStateUsing(fn ($record) => $record->outcome_label)
+                    ->color(fn ($record) => $record->outcome_color),
 
                 // 1. Kolom Waktu Mulai dengan deskripsi (misal: "2 hari yang lalu")
                 TextColumn::make('pengajuan.waktu_mulai')
                     ->label('Waktu Mulai')
                     ->dateTime('d M Y, H:i')
-                    ->description(fn($record) => $record->pengajuan?->waktu_mulai?->diffForHumans())
+                    ->description(fn ($record) => $record->pengajuan?->waktu_mulai?->diffForHumans())
                     ->sortable()
                     ->toggleable(),
 
@@ -72,7 +71,7 @@ class LaporanPermintaanBarangsTable
                     ->label('Durasi Pengerjaan')
                     // Menambahkan teks kecil di bawahnya: "Kategori: Cepat (≈ 2.5 Jam)"
                     ->description(function ($record) {
-                        if (!$record->pengajuan?->waktu_selesai && $record->status === 'In Progress') {
+                        if (! $record->pengajuan?->waktu_selesai && $record->status === 'In Progress') {
                             return 'Sedang Dihitung...';
                         }
 
@@ -80,7 +79,7 @@ class LaporanPermintaanBarangsTable
                         $jam = $record->durasi_jam > 0 ? " (≈ {$record->durasi_jam} Jam)" : '';
 
                         // Memanggil helper getProcessCategoryAttribute()
-                        return "Kategori: {$record->process_category}" . $jam;
+                        return "Kategori: {$record->process_category}".$jam;
                     })
                     ->toggleable(),
 
@@ -105,7 +104,7 @@ class LaporanPermintaanBarangsTable
                         'In Progress' => 'Sedang Diproses',
                         'Close' => 'Selesai',
                     ])
-                    ->query(fn(Builder $query, array $data) => $query->status($data['value'])),
+                    ->query(fn (Builder $query, array $data) => $query->status($data['value'])),
             ])
             ->actions([
                 // ViewAction::make(),

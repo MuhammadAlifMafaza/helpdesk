@@ -2,10 +2,7 @@
 
 namespace App\Filament\Resources\Laporan\LaporanKegiatans;
 
-use App\Filament\Resources\Laporan\LaporanKegiatans\Pages\CreateLaporanKegiatan;
-use App\Filament\Resources\Laporan\LaporanKegiatans\Pages\EditLaporanKegiatan;
 use App\Filament\Resources\Laporan\LaporanKegiatans\Pages\ListLaporanKegiatans;
-use App\Filament\Resources\Laporan\LaporanKegiatans\Pages\ViewLaporanKegiatan;
 use App\Filament\Resources\Laporan\LaporanKegiatans\Schemas\LaporanKegiatanForm;
 use App\Filament\Resources\Laporan\LaporanKegiatans\Schemas\LaporanKegiatanInfolist;
 use App\Filament\Resources\Laporan\LaporanKegiatans\Tables\LaporanKegiatansTable;
@@ -19,14 +16,16 @@ class LaporanKegiatanResource extends Resource
 {
     protected static ?string $model = LaporanKegiatan::class;
 
-    protected static ?string $slug = 'Laporan-Kegiatan';
+    protected static ?string $slug = 'laporan-kegiatan';
 
-    // navigation
-    protected static UnitEnum|string|null $navigationGroup = 'Laporan'; // Navigation Group
+    // Navigation
+    protected static UnitEnum|string|null $navigationGroup = 'Laporan';
 
-    protected static ?string $navigationLabel = 'Laporan Kegiatan Teknisi'; // Navigation Label
+    protected static ?string $navigationLabel = 'Laporan Kegiatan Teknisi';
 
     protected static ?string $pluralLabel = 'Laporan Kegiatan Teknisi';
+
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $recordTitleAttribute = 'LaporanKegiatan';
 
@@ -56,9 +55,6 @@ class LaporanKegiatanResource extends Resource
     {
         return [
             'index' => ListLaporanKegiatans::route('/'),
-            'create' => CreateLaporanKegiatan::route('/create'),
-            'view' => ViewLaporanKegiatan::route('/{record}'),
-            'edit' => EditLaporanKegiatan::route('/{record}/edit'),
         ];
     }
 }

@@ -2,10 +2,6 @@
 
 namespace App\Filament\Resources\KegiatanTeknisi\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Tables\Table;
 
 class KegiatanTeknisiTable
@@ -22,11 +18,6 @@ class KegiatanTeknisiTable
             ->recordActions([
                 // ViewAction::make(),
                 // EditAction::make(),
-            ])
-            ->toolbarActions([
-                // BulkActionGroup::make([
-                //     DeleteBulkAction::make(),
-                // ]),
             ]);
     }
 }

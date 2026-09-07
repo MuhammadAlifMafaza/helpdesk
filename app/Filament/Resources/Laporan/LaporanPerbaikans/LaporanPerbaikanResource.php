@@ -2,31 +2,27 @@
 
 namespace App\Filament\Resources\Laporan\LaporanPerbaikans;
 
-use App\Filament\Resources\Laporan\LaporanPerbaikans\Pages\CreateLaporanPerbaikan;
-use App\Filament\Resources\Laporan\LaporanPerbaikans\Pages\EditLaporanPerbaikan;
 use App\Filament\Resources\Laporan\LaporanPerbaikans\Pages\ListLaporanPerbaikans;
-use App\Filament\Resources\Laporan\LaporanPerbaikans\Pages\ViewLaporanPerbaikan;
 use App\Filament\Resources\Laporan\LaporanPerbaikans\Schemas\LaporanPerbaikanForm;
 use App\Filament\Resources\Laporan\LaporanPerbaikans\Schemas\LaporanPerbaikanInfolist;
 use App\Filament\Resources\Laporan\LaporanPerbaikans\Tables\LaporanPerbaikansTable;
 use App\Models\Modules\Laporan\Models\LaporanPerbaikan;
-
-use BackedEnum;
-use UnitEnum;
-
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
 
 class LaporanPerbaikanResource extends Resource
 {
     protected static ?string $model = LaporanPerbaikan::class;
+
     protected static ?string $slug = 'Laporan-Perbaikan';
+
     // navigation
     protected static UnitEnum|string|null $navigationGroup = 'Laporan'; // Navigation Group
+
     protected static ?string $navigationLabel = 'Laporan Perbaikan'; // Navigation Label
+
     protected static ?string $pluralLabel = 'Laporan Perbaikan';
 
     protected static ?string $recordTitleAttribute = 'LaporanPerbaikan';
@@ -57,9 +53,6 @@ class LaporanPerbaikanResource extends Resource
     {
         return [
             'index' => ListLaporanPerbaikans::route('/'),
-            // 'create' => CreateLaporanPerbaikan::route('/create'),
-            // 'view' => ViewLaporanPerbaikan::route('/{record}'),
-            // 'edit' => EditLaporanPerbaikan::route('/{record}/edit'),
         ];
     }
 }

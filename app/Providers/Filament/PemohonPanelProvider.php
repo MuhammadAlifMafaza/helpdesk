@@ -12,13 +12,14 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\View\PanelsRenderHook;
 
 class PemohonPanelProvider extends PanelProvider
 {
@@ -74,15 +75,14 @@ class PemohonPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn(): \Illuminate\Contracts\View\View =>
-                view('components.helpdesk-realtime-notification')
+                fn (): View => view('components.helpdesk-realtime-notification')
             )
             ->navigationGroups([
                 NavigationGroup::make('Pelayanan')
                     ->collapsed(true)
                     ->icon('heroicon-o-wrench-screwdriver'),
                 NavigationGroup::make('Monitoring')
-                    ->collapsed(false)
+                    ->collapsed(true)
                     ->icon('heroicon-o-clock'),
             ]);
     }

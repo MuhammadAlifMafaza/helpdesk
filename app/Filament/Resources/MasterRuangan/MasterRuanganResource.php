@@ -6,37 +6,37 @@ use App\Filament\Resources\MasterRuangan\Pages\CreateMasterRuangan;
 use App\Filament\Resources\MasterRuangan\Pages\EditMasterRuangan;
 use App\Filament\Resources\MasterRuangan\Pages\ListMasterRuangan;
 use App\Filament\Resources\MasterRuangan\Pages\ViewMasterRuangan;
-use App\Filament\Resources\MasterRuangan\Schemas\MasterRuanganForm;
 use App\Filament\Resources\MasterRuangan\Schemas\MasterRuanganInfolist;
 use App\Filament\Resources\MasterRuangan\Tables\MasterRuanganTable;
 use App\Models\Modules\Master\Models\MasterRuangan;
-
 // import untuk enum data and form
-use Filament\Forms\Form;
-use Filament\Tables\Table;
-
-use Filament\Forms\Components\TextInput;
-
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables;
-use UnitEnum;
 use BackedEnum;
-use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
-
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use UnitEnum;
 
 class MasterRuanganResource extends Resource
 {
     protected static ?string $slug = 'master-ruangan';
+
     protected static ?string $model = MasterRuangan::class;
+
     protected static ?string $navigationLabel = 'Master Ruangan';
+
     protected static ?string $recordTitleAttribute = 'Master Ruangan';
+
     protected static UnitEnum|string|null $navigationGroup = 'Master Data';
+
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-building-office';
+
     protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
@@ -51,14 +51,12 @@ class MasterRuanganResource extends Resource
                 TextInput::make('nama_gedung')
                     ->required()
                     ->maxLength(255),
-                TextInput::make('created_at')
+
+                DateTimePicker::make('created_at')
                     ->disabled()
                     ->label('Tanggal Dibuat')
-                    ->dateTime('d M Y H:i:s'),
-                TextInput::make('updated_at')
-                    ->disabled()
-                    ->label('Tanggal Diperbarui')
-                    ->dateTime('d M Y H:i:s'),
+                    ->displayFormat('d M Y H:i:s')
+                    ->default(now()),
             ]);
 
     }
@@ -89,14 +87,11 @@ class MasterRuanganResource extends Resource
             ])
             ->actions([
                 EditAction::make()
-                ->label('')
-                ->tooltip('Edit'),
+                    ->label('')
+                    ->tooltip('Edit'),
                 DeleteAction::make()
-                ->label('')
-                ->tooltip('Delete'),
-            ])
-            ->bulkActions([
-                DeleteBulkAction::make(),
+                    ->label('')
+                    ->tooltip('Delete'),
             ]);
 
     }
@@ -117,14 +112,14 @@ class MasterRuanganResource extends Resource
             'edit' => EditMasterRuangan::route('/{record}/edit'),
         ];
     }
+
     public static function canViewAny(): bool
     {
         return auth()->check() &&
             auth()->user()->hasAnyRole([
                 'admin',
                 'teknisi',
-                'super_admin'
+                'super_admin',
             ]);
     }
-
 }

@@ -3,21 +3,15 @@
 namespace App\Filament\Resources\Laporan\LaporanPerbaikans\Tables;
 
 use App\Models\Modules\Laporan\Models\LaporanPerbaikan;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
-
-// Filament Filters
-use Filament\Tables\Enums\FiltersLayout;
-use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
-use Illuminate\Support\Facades\DB;
+use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\TextColumn;
+// Filament Filters
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class LaporanPerbaikansTable
 {
@@ -39,10 +33,10 @@ class LaporanPerbaikansTable
                     ->copyable()
                     ->weight('bold')
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchLaporan($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchLaporan($search)
                     ),
 
                 TextColumn::make('nama_pemohon')
@@ -61,7 +55,7 @@ class LaporanPerbaikansTable
 
                 BadgeColumn::make('ownership_label')
                     ->label('Kepemilikan')
-                    ->color(fn($record) => $record->ownership_color)->label('Kepemilikan Barang')
+                    ->color(fn ($record) => $record->ownership_color)->label('Kepemilikan Barang')
                     ->searchable()
                     ->sortable(),
 
@@ -71,24 +65,24 @@ class LaporanPerbaikansTable
 
                 BadgeColumn::make('status_label')
                     ->label('Status')
-                    ->color(fn($record) => $record->status_color),
+                    ->color(fn ($record) => $record->status_color),
 
                 BadgeColumn::make('service_category')
                     ->label('Kategori')
-                    ->color(fn($record) => $record->service_category_color),
+                    ->color(fn ($record) => $record->service_category_color),
 
                 TextColumn::make('tanggal_mulai')
                     ->label('Mulai')
                     ->placeholder('Tiket Masih Belum Dikerjakan')
                     ->description(
-                        fn($record) => $record->Jam_mulai
+                        fn ($record) => $record->Jam_mulai
                     ),
 
                 TextColumn::make('tanggal_selesai')
                     ->label('Selesai')
                     ->placeholder('Masih Dikerjakan')
                     ->description(
-                        fn($record) => $record->jam_selesai
+                        fn ($record) => $record->jam_selesai
                     ),
 
                 TextColumn::make('durasi')
@@ -178,13 +172,10 @@ class LaporanPerbaikansTable
                     ->form([
                         Select::make('kepemilikan')
                             ->options([
-                                'Inventaris Kantor'
-                                => 'Inventaris Kantor',
-                                'Pribadi'
-                                => 'Pribadi',
-                                'Lainnya'
-                                => 'Lainnya',
-                            ])
+                                'Inventaris Kantor' => 'Inventaris Kantor',
+                                'Pribadi' => 'Pribadi',
+                                'Lainnya' => 'Lainnya',
+                            ]),
                     ])
 
                     ->query(function (Builder $query, array $data): Builder {
@@ -197,28 +188,20 @@ class LaporanPerbaikansTable
                     ->form([
                         Select::make('kategori')
                             ->options([
-                                'Cepat'
-                                => 'Cepat',
+                                'Cepat' => 'Cepat',
 
-                                'Normal'
-                                => 'Normal',
+                                'Normal' => 'Normal',
 
-                                'Lama'
-                                => 'Lama',
+                                'Lama' => 'Lama',
 
-                                'Belum Selesai'
-                                => 'Belum Selesai',
-                            ])
+                                'Belum Selesai' => 'Belum Selesai',
+                            ]),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->kategoriDurasi(
                             $data['kategori'] ?? null
                         );
                     }),
-            ])
-
-            ->bulkActions([]);
-
-
+            ]);
     }
 }

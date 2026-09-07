@@ -530,12 +530,9 @@ class TiketPerbaikan extends Model
     public function updateRuangan(
         int $ruanganIdBaru
     ): bool {
-
         $ruanganLama = $this->ruangan?->nama_ruangan;
 
-        $ruanganBaru = MasterRuangan::find(
-            $ruanganIdBaru
-        );
+        $ruanganBaru = MasterRuangan::find($ruanganIdBaru);
 
         if (!$ruanganBaru) {
             throw new \InvalidArgumentException(
@@ -555,7 +552,7 @@ class TiketPerbaikan extends Model
             kategori: 'Update Data',
             lama: $ruanganLama,
             baru: $ruanganBaru->nama_ruangan,
-            keterangan: 'Ruangan dipindahkan'
+            keterangan: 'Ruangan dipindahkan',
         );
 
         HelpdeskActivityCreated::dispatch(

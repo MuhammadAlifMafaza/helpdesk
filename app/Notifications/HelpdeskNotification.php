@@ -21,8 +21,7 @@ class HelpdeskNotification extends Notification implements ShouldQueue
         public ?string $color = null,
         public ?string $referenceId = null,
         public array $data = [],
-    ) {
-    }
+    ) {}
 
     /* ========================================================================
      * Notification channels.
@@ -52,7 +51,9 @@ class HelpdeskNotification extends Notification implements ShouldQueue
             'icon' => $this->icon,
             'color' => $this->color,
             'reference_id' => $this->referenceId,
-            'data' => $this->data,
+            'data' => array_merge($this->data, [
+                'module' => explode('.', $this->type)[0] ?? null,
+            ]),
         ];
     }
 
@@ -65,6 +66,7 @@ class HelpdeskNotification extends Notification implements ShouldQueue
     ): BroadcastMessage {
 
         return new BroadcastMessage([
+            'id' => $this->id,
             'type' => $this->type,
             'title' => $this->title,
             'message' => $this->message,
@@ -73,7 +75,9 @@ class HelpdeskNotification extends Notification implements ShouldQueue
             'icon' => $this->icon,
             'color' => $this->color,
             'reference_id' => $this->referenceId,
-            'data' => $this->data,
+            'data' => array_merge($this->data, [
+                'module' => explode('.', $this->type)[0] ?? null,
+            ]),
         ]);
     }
 
@@ -81,12 +85,6 @@ class HelpdeskNotification extends Notification implements ShouldQueue
      * Broadcast type.
      * ========================================================================
      */
-    public function broadcastOn(): array
-    {
-        return [
-            'helpdesk-notifications',
-        ];
-    }
     public function broadcastType(): string
     {
         return 'helpdesk.notification';

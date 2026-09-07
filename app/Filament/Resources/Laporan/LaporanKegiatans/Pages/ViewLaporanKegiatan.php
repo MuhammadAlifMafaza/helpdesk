@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Laporan\LaporanKegiatans\Pages;
 
 use App\Filament\Resources\Laporan\LaporanKegiatans\LaporanKegiatanResource;
-use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewLaporanKegiatan extends ViewRecord
@@ -12,8 +11,6 @@ class ViewLaporanKegiatan extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return [
-            EditAction::make(),
-        ];
+        return [];
     }
 }

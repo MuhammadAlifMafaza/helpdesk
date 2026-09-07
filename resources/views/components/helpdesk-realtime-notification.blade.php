@@ -1,7 +1,9 @@
 @auth
-    <div>
-        <!-- It always seems impossible until it is done. - Nelson Mandela -->
-    </div>
+    @vite('resources/js/app.js')
+
+    <script>
+        window.helpdeskUserId = @json(auth()->id())
+    </script>
 
     <script>
         document.addEventListener(

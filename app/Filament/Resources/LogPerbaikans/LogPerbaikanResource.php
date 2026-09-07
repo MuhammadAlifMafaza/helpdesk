@@ -3,28 +3,34 @@
 namespace App\Filament\Resources\LogPerbaikans;
 
 use App\Filament\Resources\LogPerbaikans\Pages\ListLogPerbaikans;
+use App\Filament\Resources\LogPerbaikans\Schemas\LogPerbaikanInfolist;
 use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
-use BackedEnum;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
-use Filament\Schemas\Components\Grid;
 use Filament\Resources\Resource;
-use Filament\Support\Icons\Heroicon;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Schema;
 // Filament Forms imports
 
 // Filament Tables(Data) imports
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class LogPerbaikanResource extends Resource
 {
     protected static ?string $model = LogPerbaikan::class; // Model yang digunakan untuk resource ini
+
     protected static ?string $slug = 'log-perbaikan'; // slug atau URL path untuk resource ini
+
     protected static ?string $pluralLabel = 'Timeline Perbaikan';
+
     protected static UnitEnum|string|null $navigationGroup = 'Monitoring';
+
     protected static ?string $navigationLabel = 'Timeline Perbaikan';
+
     protected static ?string $recordTitleAttribute = 'LogPerbaikan';
 
     public static function table(Table $table): Table
@@ -123,6 +129,10 @@ class LogPerbaikanResource extends Resource
                     ) => $query->searchTimeline($search)
                     ),
 
+            ])
+
+            ->actions([
+                ViewAction::make(),
             ])
 
             ->filters([
@@ -225,7 +235,7 @@ class LogPerbaikanResource extends Resource
                                 DatePicker::make('until')
                                     ->label('Sampai Tanggal')
                                     ->native(false),
-                            ])
+                            ]),
                     ])
                     ->query(function (Builder $query, array $data) {
 
@@ -250,6 +260,11 @@ class LogPerbaikanResource extends Resource
                     }),
 
             ]);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return LogPerbaikanInfolist::configure($schema);
     }
 
     public static function getRelations(): array

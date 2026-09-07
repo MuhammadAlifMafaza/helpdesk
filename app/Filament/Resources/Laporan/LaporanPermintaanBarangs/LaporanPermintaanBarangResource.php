@@ -2,11 +2,7 @@
 
 namespace App\Filament\Resources\Laporan\LaporanPermintaanBarangs;
 
-use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Pages\CreateLaporanPermintaanBarang;
-use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Pages\EditLaporanPermintaanBarang;
 use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Pages\ListLaporanPermintaanBarangs;
-use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Pages\ViewLaporanPermintaanBarang;
-use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Schemas\LaporanPermintaanBarangForm;
 use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Schemas\LaporanPermintaanBarangInfolist;
 use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Tables\LaporanPermintaanBarangsTable;
 use App\Models\Modules\Laporan\Models\LaporanPermintaanBarang;
@@ -18,14 +14,17 @@ use UnitEnum;
 class LaporanPermintaanBarangResource extends Resource
 {
     protected static ?string $model = LaporanPermintaanBarang::class;
+
     protected static ?string $slug = 'Laporan-Permintaan-Barang';
 
     // navigation
     protected static UnitEnum|string|null $navigationGroup = 'Laporan'; // Navigation Group
-    protected static ?string $navigationLabel = 'Laporan Permintaan Barang'; // Navigation Label
-    protected static ?string $pluralLabel = 'Laporan Permintaan Barang';
-    protected static ?string $recordTitleAttribute = 'LaporanPermintaanBarang';
 
+    protected static ?string $navigationLabel = 'Laporan Permintaan Barang'; // Navigation Label
+
+    protected static ?string $pluralLabel = 'Laporan Permintaan Barang';
+
+    protected static ?string $recordTitleAttribute = 'LaporanPermintaanBarang';
 
     public static function infolist(Schema $schema): Schema
     {
@@ -49,5 +48,13 @@ class LaporanPermintaanBarangResource extends Resource
         return [
             'index' => ListLaporanPermintaanBarangs::route('/'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->hasAnyRole([
+            'admin',
+            'super_admin',
+        ]);
     }
 }

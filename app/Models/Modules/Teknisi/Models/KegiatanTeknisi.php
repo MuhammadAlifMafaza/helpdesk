@@ -2,23 +2,24 @@
 
 namespace App\Models\Modules\Teknisi\Models;
 
+use App\Models\Modules\Master\Models\MasterRuangan;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\User;
-
 
 class KegiatanTeknisi extends Model
 {
     use SoftDeletes;
 
     protected $table = 'log_harian_teknisi';
-    protected $cast = [
-        'tanggal' => 'date',
 
+    protected $casts = [
+        'tanggal' => 'date',
     ];
+
     protected $fillable = [
-        'id',
         'teknisi_id',
+        'ruangan_id',
         'tanggal',
         'deskripsi_kegiatan',
     ];
@@ -31,5 +32,11 @@ class KegiatanTeknisi extends Model
         );
     }
 
-    
+    public function ruangan()
+    {
+        return $this->belongsTo(
+            MasterRuangan::class,
+            'ruangan_id'
+        );
+    }
 }

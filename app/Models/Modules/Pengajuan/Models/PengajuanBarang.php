@@ -3,16 +3,15 @@
 namespace App\Models\Modules\Pengajuan\Models;
 
 // Imports necesery Modules or Classes
+use App\Events\HelpdeskActivityCreated;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Events\HelpdeskActivityCreated;
-
 // Imports necesery Files(Models)
-use App\Models\User;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PengajuanBarang extends Model
 {
@@ -147,7 +146,7 @@ class PengajuanBarang extends Model
     {
         $user ??= auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -184,18 +183,18 @@ class PengajuanBarang extends Model
             return true;
         }
 
-        return !$this->isClosed();
+        return ! $this->isClosed();
     }
 
     public function canPemohonEdit(): bool
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
-        if (!$user->hasRole('pemohon')) {
+        if (! $user->hasRole('pemohon')) {
             return false;
         }
 
@@ -217,11 +216,11 @@ class PengajuanBarang extends Model
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
-        if (!$user->hasRole('pemohon')) {
+        if (! $user->hasRole('pemohon')) {
             return false;
         }
 
@@ -323,7 +322,7 @@ class PengajuanBarang extends Model
     ) {
         return $this->updateStatus(
             'In Progress',
-            '[REOPEN] ' .
+            '[REOPEN] '.
             ($catatan ?? 'Pengajuan dibuka kembali')
         );
     }
@@ -343,7 +342,7 @@ class PengajuanBarang extends Model
     ) {
         return $this->updateStatus(
             'Close',
-            '[SELESAI] ' . ($catatan ?? '')
+            '[SELESAI] '.($catatan ?? '')
         );
     }
 
@@ -352,7 +351,7 @@ class PengajuanBarang extends Model
     ) {
         return $this->updateStatus(
             'Close',
-            '[DITOLAK] ' . ($catatan ?? '')
+            '[DITOLAK] '.($catatan ?? '')
         );
     }
 
@@ -403,7 +402,7 @@ class PengajuanBarang extends Model
     */
     public function updateDataPemohon(array $data): bool
     {
-        if (!$this->canPemohonEdit()) {
+        if (! $this->canPemohonEdit()) {
             return false;
         }
 
@@ -411,7 +410,7 @@ class PengajuanBarang extends Model
 
         foreach (self::ALLOWED_UPDATE_FIELDS as $field => $label) {
 
-            if (!array_key_exists($field, $data)) {
+            if (! array_key_exists($field, $data)) {
                 continue;
             }
 
@@ -431,7 +430,7 @@ class PengajuanBarang extends Model
     ): bool {
 
         if (
-            !array_key_exists(
+            ! array_key_exists(
                 $field,
                 self::ALLOWED_UPDATE_FIELDS
             )
@@ -458,7 +457,7 @@ class PengajuanBarang extends Model
             lama: (string) $valueLama,
             baru: (string) $valueBaru,
             keterangan: $catatan
-            ?? "{$namaField} diperbarui oleh" . (auth()->user()?->name ?? 'System')
+            ?? "{$namaField} diperbarui oleh ".(auth()->user()?->name ?? 'System')
         );
 
         HelpdeskActivityCreated::dispatch(
@@ -484,7 +483,7 @@ class PengajuanBarang extends Model
         ?string $catatan = null
     ): bool {
 
-        if (!$this->canPemohonDelete()) {
+        if (! $this->canPemohonDelete()) {
             return false;
         }
 
@@ -536,8 +535,8 @@ class PengajuanBarang extends Model
     public function getDurasiPengerjaanAttribute(): ?string
     {
         if (
-            !$this->waktu_mulai ||
-            !$this->waktu_selesai
+            ! $this->waktu_mulai ||
+            ! $this->waktu_selesai
         ) {
             return null;
         }
@@ -585,7 +584,7 @@ class PengajuanBarang extends Model
     */
     public function getStatusOutcomeAttribute(): ?string
     {
-        if (!$this->isClosed()) {
+        if (! $this->isClosed()) {
             return null;
         }
 
@@ -595,7 +594,7 @@ class PengajuanBarang extends Model
             ->latest('created_at')
             ->first();
 
-        if (!$closeLog) {
+        if (! $closeLog) {
             return null;
         }
 
@@ -719,8 +718,8 @@ class PengajuanBarang extends Model
         $days = round($hours / 24, 2);
 
         return number_format($hours, 2)
-            . ' Jam'
-            . " ({$days} Hari)";
+            .' Jam'
+            ." ({$days} Hari)";
     }
 
     /**
@@ -757,13 +756,13 @@ class PengajuanBarang extends Model
             ->map(function (self $pengajuan): ?float {
                 $waktuMulai = $pengajuan->logs
                     ->firstWhere('data_baru', 'In Progress')
-                        ?->created_at;
+                    ?->created_at;
                 $waktuSelesai = $pengajuan->logs
                     ->where('data_baru', 'Close')
                     ->last()
-                        ?->created_at;
+                    ?->created_at;
 
-                if (!$waktuMulai || !$waktuSelesai) {
+                if (! $waktuMulai || ! $waktuSelesai) {
                     return null;
                 }
 

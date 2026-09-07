@@ -7,12 +7,23 @@ use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
+use Livewire\Attributes\On;
 
 class ViewTiketPerbaikan extends ViewRecord
 {
     protected static string $resource = TiketPerbaikanResource::class;
 
     public string $chatMessage = '';
+
+    #[On('helpdesk-realtime-update')]
+    public function refreshRealtimeData(?string $module = null, int|string|null $reference_id = null): void
+    {
+        if ($module !== 'perbaikan' || (string) $this->record->getKey() !== (string) $reference_id) {
+            return;
+        }
+
+        $this->record->refresh();
+    }
 
     public function sendChatMessage(): void
     {

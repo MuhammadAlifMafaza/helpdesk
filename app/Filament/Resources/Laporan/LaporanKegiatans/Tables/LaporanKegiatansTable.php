@@ -2,14 +2,13 @@
 
 namespace App\Filament\Resources\Laporan\LaporanKegiatans\Tables;
 
-
 use Filament\Actions\ViewAction;
-use Filament\Tables;
-use Filament\Tables\Table;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Forms\Components\DatePicker;
+
 class LaporanKegiatansTable
 {
     public static function configure(Table $table): Table
@@ -23,8 +22,8 @@ class LaporanKegiatansTable
                 TextColumn::make('tanggal_kegiatan')
                     ->label('Hari / Tanggal')
                     // Format bahasa Indonesia bawaan Carbon, misal: "Monday, 10 Jul 2026"
-                    ->formatStateUsing(fn($state) => $state ? $state->locale('id')->translatedFormat('l, d F Y') : '-')
-                    ->description(fn($record) => $record->tanggal_kegiatan?->diffForHumans())
+                    ->formatStateUsing(fn ($state) => $state ? $state->locale('id')->translatedFormat('l, d F Y') : '-')
+                    ->description(fn ($record) => $record->tanggal_kegiatan?->diffForHumans())
                     ->sortable()
                     ->searchable(['tanggal']),
 

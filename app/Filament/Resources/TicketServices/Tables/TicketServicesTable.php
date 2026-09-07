@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\TicketServices\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\DeleteAction;
@@ -16,7 +14,7 @@ class TicketServicesTable
     {
         return $table
             ->columns([
-                // kolom data 
+                // kolom data
                 TextColumn::make('index')->label('No')->rowIndex(),
                 TextColumn::make('Keluhan')->label('Nama Layanan')->searchable()->sortable(),
                 TextColumn::make('kepemilikan')->label('Kepemilikan')->searchable()->sortable(),
@@ -32,10 +30,6 @@ class TicketServicesTable
                 EditAction::make(),
                 DeleteAction::make(),
             ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ]);
+        ;
     }
 }
