@@ -29,6 +29,8 @@ class PemohonPanelProvider extends PanelProvider
             ->id('pemohon')
             ->path('pemohon')
             ->login()
+            ->passwordReset()
+            ->profile()
             ->brandName('Helpdesk System')
             ->brandLogo(asset('branding/logo-tag.svg'))
             ->brandLogoHeight('4rem')

@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 
 class UserForm
 {
@@ -12,39 +13,47 @@ class UserForm
     {
         return $schema
             ->components([
-                //
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255)
-                    ->label('Nama Pengguna'),
+                Section::make('Informasi Akun')
+                    ->description('Data utama yang digunakan untuk masuk ke sistem.')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('name')
+                            ->label('Nama Pengguna')
+                            ->required()
+                            ->maxLength(255),
 
-                TextInput::make('email')
-                    ->email()
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(255)
-                    ->label('Email'),
+                        TextInput::make('email')
+                            ->label('Email')
+                            ->email()
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255),
 
-                TextInput::make('password')
-                    ->password()
-                    ->revealable()
-                    ->required(fn($record) => $record === null)
-                    ->dehydrated(fn($state) => filled($state))
-                    ->dehydrateStateUsing(fn($state) => bcrypt($state))
-                    ->label('Password'),
+                        TextInput::make('password')
+                            ->label('Password')
+                            ->password()
+                            ->revealable()
+                            ->helperText(fn ($record): string => $record ? 'Kosongkan jika tidak ingin mengubah password.' : '')
+                            ->required(fn ($record): bool => $record === null)
+                            ->dehydrated(fn ($state): bool => filled($state))
+                            ->maxLength(255),
+                    ]),
 
-                TextInput::make('unit_bidang')
-                    ->label('Unit / Bidang')
-                    ->required()
-                    ->maxLength(255)
-                    ->label('Unit / Bidang'),
+                Section::make('Akses dan Penempatan')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('unit_bidang')
+                            ->label('Unit / Bidang')
+                            ->required()
+                            ->maxLength(255),
 
-                Select::make('roles')
-                    ->relationship('roles', 'name')
-                    ->multiple()
-                    ->preload()
-                    ->searchable()
-                    ->required(),
+                        Select::make('roles')
+                            ->label('Role Pengguna')
+                            ->relationship('roles', 'name')
+                            ->preload()
+                            ->searchable()
+                            ->required(),
+                    ]),
 
             ]);
     }

@@ -28,6 +28,8 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->login()
+            ->passwordReset()
+            ->profile()
             ->id('admin')
             ->path('admin')
             ->brandName('Helpdesk System')

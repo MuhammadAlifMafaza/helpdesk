@@ -97,6 +97,7 @@ class KegiatanTeknisiResource extends Resource
 
                 Textarea::make('deskripsi_kegiatan')
                     ->label('Catatan Kegiatan')
+                    ->placeholder('Tuliskan catatan kegiatan teknisi di sini...')
                     ->rows(8)
                     ->required()
                     ->columnSpanFull(),

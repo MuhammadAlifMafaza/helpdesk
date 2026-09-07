@@ -14,23 +14,27 @@ class UserInfolist
             ->columns(2)
             ->schema([
                 Section::make('Informasi Pengguna')
+                    ->description('Detail akun dan akses pengguna dalam sistem.')
                     ->columns(2)
                     ->columnSpanFull()
                     ->schema([
                         TextEntry::make('name')
-                            ->label('Nama'),
+                            ->label('Nama Pengguna')
+                            ->weight('bold'),
 
                         TextEntry::make('email')
                             ->label('Email')
-                            ->copyable(),
+                            ->copyable()
+                            ->copyMessage('Email berhasil disalin'),
 
                         TextEntry::make('unit_bidang')
                             ->label('Unit / Bidang')
                             ->placeholder('-'),
 
                         TextEntry::make('roles.name')
-                            ->label('Peran')
+                            ->label('Role Pengguna')
                             ->badge()
+                            ->separator(', ')
                             ->placeholder('-'),
                     ]),
 
