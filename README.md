@@ -1,58 +1,184 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Helpdesk System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Platform layanan helpdesk untuk mengelola permintaan bantuan, tiket perbaikan, penugasan teknisi, monitoring aktivitas, dan pelaporan layanan dalam satu sistem terintegrasi.
 
-## About Laravel
+Sistem ini dirancang untuk mempercepat alur layanan dari pelaporan pengguna sampai penyelesaian oleh teknisi, sekaligus menyediakan histori aktivitas dan laporan yang dapat diekspor.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Gambaran Sistem
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```mermaid
+flowchart LR
+    A[Pemohon membuat tiket atau pengajuan] --> B[Admin memverifikasi dan mengelola layanan]
+    B --> C[Teknisi menangani pekerjaan]
+    C --> D[Aktivitas dan status tercatat]
+    D --> E[Pemohon menerima pembaruan]
+    D --> F[Laporan dan ekspor data]
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Fitur Utama
 
-## Contributing
+- Manajemen tiket perbaikan layanan.
+- Pengajuan barang dengan status dan histori proses.
+- Penugasan serta pencatatan kegiatan teknisi.
+- Monitoring log pengajuan dan log perbaikan.
+- Laporan kegiatan, perbaikan, dan permintaan barang.
+- Ekspor laporan ke Excel, PDF, dan Word.
+- Notifikasi database dan pembaruan realtime menggunakan Laravel Reverb.
+- Profil pengguna untuk mengubah data pribadi dan password.
+- Reset password melalui email.
+- Manajemen pengguna dan role berbasis permission.
+- Filter data berdasarkan status, tanggal, kategori, dan kebutuhan operasional.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Role Pengguna
 
-## Code of Conduct
+| Role | Panel | Akses utama |
+| --- | --- | --- |
+| `pemohon` | `/pemohon` | Membuat dan memantau tiket perbaikan serta pengajuan barang miliknya sendiri. |
+| `teknisi` | `/admin` | Melihat dan menangani tiket, memperbarui proses, serta mencatat kegiatan teknisi. |
+| `admin` | `/admin` | Mengelola layanan, pengguna, ruangan, monitoring, dan laporan operasional. |
+| `super_admin` | `/admin` | Akses administratif penuh, termasuk pengelolaan role dan permission. |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Teknologi
 
-## Security Vulnerabilities
+- PHP 8.3
+- Laravel 13
+- Filament 5
+- Livewire 4
+- MySQL
+- Laravel Reverb dan Laravel Echo untuk realtime event
+- Spatie Laravel Permission untuk role dan permission
+- Laravel Excel untuk ekspor spreadsheet
+- DomPDF dan PHPWord untuk dokumen laporan
+- Vite dan Tailwind CSS 4 untuk asset frontend
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Persyaratan
 
-## License
+- PHP 8.3 atau lebih baru
+- Composer
+- Node.js dan npm
+- MySQL/MariaDB
+- Ekstensi PHP yang dibutuhkan Laravel dan koneksi database
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Instalasi Lokal
+
+Clone repository lalu masuk ke folder proyek:
+
+```bash
+git clone <url-repository> helpdesk
+cd helpdesk
+```
+
+Install dependency dan siapkan environment:
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+```
+
+Atur koneksi database pada `.env`, kemudian jalankan migrasi:
+
+```bash
+php artisan migrate
+```
+
+Install dan build asset frontend:
+
+```bash
+npm install
+npm run build
+```
+
+## Konfigurasi Environment
+
+Contoh konfigurasi database:
+
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=helpdesk_dev
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Untuk pengembangan tanpa email sungguhan, gunakan mailer log:
+
+```dotenv
+MAIL_MAILER=log
+```
+
+Link reset password dapat dibaca pada `storage/logs/laravel.log`. Untuk mengirim email sungguhan, ganti `MAIL_MAILER` dengan konfigurasi SMTP yang valid.
+
+## Menjalankan Aplikasi
+
+Mode development utama:
+
+```bash
+composer run dev
+```
+
+Perintah tersebut menjalankan server Laravel, queue listener, dan Vite secara bersamaan. Jika membutuhkan realtime notification, jalankan Reverb pada terminal terpisah:
+
+```bash
+php artisan reverb:start
+```
+
+Alternatif menjalankan server web dan Vite secara terpisah:
+
+```bash
+php artisan serve
+npm run dev
+```
+
+Panel aplikasi tersedia pada:
+
+- Admin: `http://localhost:8000/admin`
+- Pemohon: `http://localhost:8000/pemohon`
+
+Sesuaikan URL dengan nilai `APP_URL` dan konfigurasi web server lokal yang digunakan.
+
+## Struktur Folder Utama
+
+```text
+app/
+|-- Broadcasting/       # Channel realtime
+|-- Events/             # Event aktivitas helpdesk
+|-- Exports/            # Export laporan
+|-- Filament/           # Panel, resource, page, widget, dan exporter
+|-- Http/               # Controller dan middleware
+|-- Models/             # Model user dan domain helpdesk
+|-- Notifications/      # Notifikasi aplikasi
+`-- Services/           # Layanan notifikasi dan generator laporan
+
+database/
+|-- factories/          # Factory untuk pengujian dan data awal
+|-- migrations/         # Struktur database
+`-- seeders/            # Data awal aplikasi
+
+resources/
+|-- css/                # Style frontend
+|-- js/                 # Echo dan integrasi JavaScript
+`-- views/              # Blade views
+```
+
+## Keamanan
+
+- Akses panel dibatasi berdasarkan role pengguna.
+- Data pemohon dibatasi pada tiket dan pengajuan miliknya sendiri.
+- Password disimpan menggunakan hashing Laravel.
+- Reset password menggunakan token dengan masa berlaku terbatas.
+- Permission resource dikelola dengan Filament Shield dan Spatie Permission.
+- Jangan memasukkan kredensial SMTP, `APP_KEY`, atau secret Reverb ke repository.
+
+## Pengujian
+
+Jalankan seluruh test suite dengan:
+
+```bash
+php artisan test --compact
+```
+
+## Lisensi
+
+Proyek ini dikembangkan untuk kebutuhan operasional helpdesk. Lisensi dan aturan distribusi mengikuti kebijakan organisasi pemilik repository.
