@@ -140,7 +140,6 @@
         line-height: 20px;
 
         word-break: break-word;
-        white-space: pre-wrap;
     }
 
     /* ---------------------------------------------------------
@@ -356,18 +355,33 @@
             @foreach ($logs as $log)
 
                 @php
-                    $category = strtolower(trim($log->kategori_log ?? ''));
+                    $eventType = $log->event_type;
+                    $eventDescription = $log->event_description ?: $log->keterangan;
 
                     /*
                      * Tentukan tipe visual berdasarkan kategori.
                      */
-                    $eventClass = match ($category) {
-                        'create' => 'ticket-timeline-create',
-                        'delete' => 'ticket-timeline-delete',
-                        'status' => 'ticket-timeline-status-event',
-                        'chat' => 'ticket-timeline-chat',
-                        default => '',
+                    $eventClass = match ($eventType) {
+                        'CREATE' => 'ticket-timeline-create',
+                        'DELETE' => 'ticket-timeline-delete',
+                        'CHAT' => 'ticket-timeline-chat',
+                        'UPDATE' => 'ticket-timeline-update',
+                        default => 'ticket-timeline-status-event',
                     };
+
+                    $eventLabel = $log->event_name ?: $log->kategori_log;
+
+                    $isStatusEvent = in_array($eventType, [
+                        'CREATE',
+                        'PROCESS',
+                        'ASSIGN',
+                        'APPROVE',
+                        'REJECT',
+                        'REOPEN',
+                        'PENDING',
+                        'COMPLETE',
+                        'STATUS',
+                    ], true);
 
                     /*
                      * Bersihkan value status.
@@ -395,7 +409,7 @@
 
 
                     {{-- =========================================
-                         MARKER
+                    MARKER
                     ========================================== --}}
                     <div class="ticket-timeline-marker">
 
@@ -409,7 +423,7 @@
 
 
                     {{-- =========================================
-                         CONTENT
+                    CONTENT
                     ========================================== --}}
                     <div class="ticket-timeline-content">
 
@@ -437,13 +451,13 @@
 
 
                         {{-- =====================================
-                             CHAT / NORMAL ACTIVITY
+                        CHAT / NORMAL ACTIVITY
                         ====================================== --}}
                         @if (
-                            $log->timeline_title &&
-                            $category !== 'status' &&
-                            $category !== 'delete'
-                        )
+                                $log->timeline_title &&
+                                !$isStatusEvent &&
+                                $eventType !== 'DELETE'
+                            )
 
                             <div class="ticket-timeline-message">
                                 {{ $log->timeline_title }}
@@ -453,9 +467,9 @@
 
 
                         {{-- =====================================
-                             STATUS
+                        STATUS
                         ====================================== --}}
-                        @if ($category === 'status')
+                        @if ($isStatusEvent)
 
                             @if ($newValue)
 
@@ -486,10 +500,10 @@
                             @endif
 
 
-                            @if ($log->timeline_title)
+                            @if ($eventDescription)
 
                                 <div class="ticket-timeline-description">
-                                    {{ $log->timeline_title }}
+                                    {{ $eventDescription }}
                                 </div>
 
                             @endif
@@ -498,9 +512,9 @@
 
 
                         {{-- =====================================
-                             DELETE
+                        DELETE
                         ====================================== --}}
-                        @if ($category === 'delete')
+                        @if ($eventType === 'DELETE')
 
                             @if ($oldValue || $newValue)
 
@@ -535,16 +549,16 @@
                             @endif
 
 
-                            @if ($log->timeline_title)
+                            @if ($eventDescription)
 
                                 <div class="ticket-timeline-description">
-                                    {{ $log->timeline_title }}
+                                    {{ $eventDescription }}
                                 </div>
 
                             @endif
 
 
-                            @if ($log->keterangan)
+                            @if ($log->keterangan && $log->keterangan !== $eventDescription)
 
                                 <div class="ticket-timeline-description">
                                     {{ $log->keterangan }}
@@ -556,9 +570,9 @@
 
 
                         {{-- =====================================
-                             UPDATE
+                        UPDATE
                         ====================================== --}}
-                        @if ($category === 'update')
+                        @if ($eventType === 'UPDATE')
 
                             @if ($oldValue || $newValue)
 
@@ -593,16 +607,16 @@
                             @endif
 
 
-                            @if ($log->timeline_title)
+                            @if ($eventDescription)
 
                                 <div class="ticket-timeline-message">
-                                    {{ $log->timeline_title }}
+                                    {{ $eventDescription }}
                                 </div>
 
                             @endif
 
 
-                            @if ($log->keterangan)
+                            @if ($log->keterangan && $log->keterangan !== $eventDescription)
 
                                 <div class="ticket-timeline-description">
                                     {{ $log->keterangan }}
@@ -614,13 +628,14 @@
 
 
                         {{-- =====================================
-                             KETERANGAN UMUM
+                        KETERANGAN UMUM
                         ====================================== --}}
                         @if (
-                            $log->keterangan &&
-                            $category !== 'delete' &&
-                            $category !== 'update'
-                        )
+                                $log->keterangan &&
+                                $eventType !== 'DELETE' &&
+                                $eventType !== 'UPDATE' &&
+                                !$isStatusEvent
+                            )
 
                             <div class="ticket-timeline-message">
                                 {{ $log->keterangan }}
