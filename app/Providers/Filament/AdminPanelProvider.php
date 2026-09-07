@@ -71,9 +71,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make(),
             ])
-            ->homeUrl(fn () => match (auth()->user()?->getRoleNames()->first()) {
-                'admin' => '/admin/admin-dashboard',
-                'teknisi' => '/admin/teknisi-dashboard',
+            ->homeUrl(fn() => match (auth()->user()?->getRoleNames()->first()) {
                 default => '/admin',
             })
             ->authMiddleware([
@@ -82,7 +80,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn (): View => view('components.helpdesk-realtime-notification')
+                fn(): View => view('components.helpdesk-realtime-notification')
             )
             ->navigationGroups([
                 NavigationGroup::make('Service Desk')
