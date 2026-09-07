@@ -10,7 +10,7 @@ Sistem ini dirancang untuk mempercepat alur layanan dari pelaporan pengguna samp
 
 # Konteks Proyek
 
-Helpdesk System merupakan implementasi Sistem Informasi Manajemen Pelayanan Internal untuk mendukung Bidang Pelayanan dan Perawatan Infrastruktur Institut Widya Pratama, Kota Pekalongan. Sistem ini dikembangkan oleh Muhammad Alif Mafaza (NIM 23.230.0035) sebagai proyek magang dan Tugas Akhir melalui skema Teknologi Tepat Guna (TTG).
+Helpdesk System merupakan implementasi Sistem Informasi Manajemen Pelayanan Internal untuk mendukung Bidang Pelayanan dan Perawatan Infrastruktur Institut Widya Pratama, Kota Pekalongan.
 
 Sistem dibuat untuk menggantikan pencatatan layanan yang sebelumnya tersebar pada dokumen terpisah. Fokus implementasinya adalah mengintegrasikan pelayanan Tiket Perbaikan, Pengajuan Barang, aktivitas teknisi, komunikasi melalui timeline, audit trail, serta pengukuran durasi layanan dalam satu platform web.
 
@@ -79,7 +79,7 @@ Sistem ini berdiri sendiri dan pada tahap saat ini tidak mencakup integrasi API 
 Clone repository lalu masuk ke folder proyek:
 
 ```bash
-git clone <url-repository> helpdesk
+git clone https://github.com/MuhammadAlifMafaza/helpdesk.git
 cd helpdesk
 ```
 
@@ -186,11 +186,9 @@ resources/
 - Permission resource dikelola dengan Filament Shield dan Spatie Permission.
 - Jangan memasukkan kredensial SMTP, `APP_KEY`, atau secret Reverb ke repository.
 
-## Kepemilikan Dan Penggunaan
+## Penggunaan Institusional
 
-Repository ini dimiliki dan dikembangkan oleh Muhammad Alif Mafaza. Sistem ditujukan untuk mendukung operasional internal Institut Widya Pratama, khususnya Bidang Pelayanan dan Perawatan Infrastruktur.
-
-Ketentuan penggunaan, hak implementasi, pemeliharaan, akses source code, serta lisensi institusional masih menunggu penetapan resmi antara pemilik repository dan Institut Widya Pratama. README ini tidak menetapkan kebijakan hukum atau regulasi kampus secara sepihak.
+Sistem ini ditujukan untuk mendukung operasional internal Institut Widya Pratama, khususnya Bidang Pelayanan dan Perawatan Infrastruktur. Ketentuan penggunaan produksi, pemeliharaan, akses source code, serta kebijakan internal institusi mengikuti keputusan resmi pihak yang berwenang.
 
 ## Pengujian
 
@@ -199,12 +197,16 @@ Jalankan seluruh test suite dengan:
 ```bash
 php artisan test --compact
 ```
-
 ## Status Dokumentasi
 
 Dokumentasi sistem didukung oleh:
 
 - Laporan Magang di Unit Teknisi dan Perawatan Infrastruktur Institut Widya Pratama.
 - Proposal Tugas Akhir berjudul *Implementasi Sistem Informasi Manajemen Pelayanan Internal (Helpdesk) pada Bidang Pelayanan dan Perawatan Infrastruktur di Institut Widya Pratama*.
+- Manual Book System.
 
 Dokumen tersebut menjadi referensi konteks bisnis, alur proses, kebutuhan sistem, desain database, dan rancangan implementasi. Detail regulasi penggunaan produksi tetap mengikuti keputusan resmi institusi.
+
+## Lisensi
+
+Proyek ini menggunakan **MIT License**. Teks lisensi lengkap tersedia pada [LICENSE](LICENSE). Penggunaan di lingkungan institusi tetap harus mengikuti kebijakan resmi Institut Widya Pratama.
