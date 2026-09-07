@@ -1,19 +1,34 @@
+<p align="center">
+    <img src="public/branding/logo-tag.svg" alt="Helpdesk System" width="960">
+</p>
+
 # Helpdesk System
 
 Platform layanan helpdesk untuk mengelola permintaan bantuan, tiket perbaikan, penugasan teknisi, monitoring aktivitas, dan pelaporan layanan dalam satu sistem terintegrasi.
 
 Sistem ini dirancang untuk mempercepat alur layanan dari pelaporan pengguna sampai penyelesaian oleh teknisi, sekaligus menyediakan histori aktivitas dan laporan yang dapat diekspor.
 
+# Konteks Proyek
+
+Helpdesk System merupakan implementasi Sistem Informasi Manajemen Pelayanan Internal untuk mendukung Bidang Pelayanan dan Perawatan Infrastruktur Institut Widya Pratama, Kota Pekalongan. Sistem ini dikembangkan oleh Muhammad Alif Mafaza (NIM 23.230.0035) sebagai proyek magang dan Tugas Akhir melalui skema Teknologi Tepat Guna (TTG).
+
+Sistem dibuat untuk menggantikan pencatatan layanan yang sebelumnya tersebar pada dokumen terpisah. Fokus implementasinya adalah mengintegrasikan pelayanan Tiket Perbaikan, Pengajuan Barang, aktivitas teknisi, komunikasi melalui timeline, audit trail, serta pengukuran durasi layanan dalam satu platform web.
+
+## Ruang Lingkup
+
+- **Tiket Perbaikan:** pelaporan kerusakan, penanganan teknisi, pembaruan status, dan penyelesaian layanan.
+- **Pengajuan Barang:** pengajuan kebutuhan perangkat atau barang, proses evaluasi, komunikasi, dan keputusan akhir.
+- **Kegiatan Teknisi:** pencatatan aktivitas harian sebagai dokumentasi pekerjaan.
+- **Timeline dan audit trail:** riwayat perubahan status serta komunikasi antar pengguna.
+- **Monitoring dan laporan:** rekapitulasi layanan, durasi pengerjaan, indikator SLA, dan ekspor dokumen.
+
+Sistem ini berdiri sendiri dan pada tahap saat ini tidak mencakup integrasi API dengan sistem eksternal.
+
 ## Gambaran Sistem
 
-```mermaid
-flowchart LR
-    A[Pemohon membuat tiket atau pengajuan] --> B[Admin memverifikasi dan mengelola layanan]
-    B --> C[Teknisi menangani pekerjaan]
-    C --> D[Aktivitas dan status tercatat]
-    D --> E[Pemohon menerima pembaruan]
-    D --> F[Laporan dan ekspor data]
-```
+<p align="center">
+    <img src="public/images/helpdesk-flow.svg" alt="Alur layanan Helpdesk System" width="100%">
+</p>
 
 ## Fitur Utama
 
@@ -31,12 +46,12 @@ flowchart LR
 
 ## Role Pengguna
 
-| Role | Panel | Akses utama |
-| --- | --- | --- |
-| `pemohon` | `/pemohon` | Membuat dan memantau tiket perbaikan serta pengajuan barang miliknya sendiri. |
-| `teknisi` | `/admin` | Melihat dan menangani tiket, memperbarui proses, serta mencatat kegiatan teknisi. |
-| `admin` | `/admin` | Mengelola layanan, pengguna, ruangan, monitoring, dan laporan operasional. |
-| `super_admin` | `/admin` | Akses administratif penuh, termasuk pengelolaan role dan permission. |
+| Role            | Panel        | Akses utama                                                                       |
+| --------------- | ------------ | --------------------------------------------------------------------------------- |
+| `pemohon`     | `/pemohon` | Membuat dan memantau tiket perbaikan serta pengajuan barang miliknya sendiri.     |
+| `teknisi`     | `/admin`   | Melihat dan menangani tiket, memperbarui proses, serta mencatat kegiatan teknisi. |
+| `admin`       | `/admin`   | Mengelola layanan, pengguna, ruangan, monitoring, dan laporan operasional.        |
+| `super_admin` | `/admin`   | Akses administratif penuh, termasuk pengelolaan role dan permission.              |
 
 ## Teknologi
 
@@ -171,6 +186,12 @@ resources/
 - Permission resource dikelola dengan Filament Shield dan Spatie Permission.
 - Jangan memasukkan kredensial SMTP, `APP_KEY`, atau secret Reverb ke repository.
 
+## Kepemilikan Dan Penggunaan
+
+Repository ini dimiliki dan dikembangkan oleh Muhammad Alif Mafaza. Sistem ditujukan untuk mendukung operasional internal Institut Widya Pratama, khususnya Bidang Pelayanan dan Perawatan Infrastruktur.
+
+Ketentuan penggunaan, hak implementasi, pemeliharaan, akses source code, serta lisensi institusional masih menunggu penetapan resmi antara pemilik repository dan Institut Widya Pratama. README ini tidak menetapkan kebijakan hukum atau regulasi kampus secara sepihak.
+
 ## Pengujian
 
 Jalankan seluruh test suite dengan:
@@ -179,6 +200,11 @@ Jalankan seluruh test suite dengan:
 php artisan test --compact
 ```
 
-## Lisensi
+## Status Dokumentasi
 
-Proyek ini dikembangkan untuk kebutuhan operasional helpdesk. Lisensi dan aturan distribusi mengikuti kebijakan organisasi pemilik repository.
+Dokumentasi sistem didukung oleh:
+
+- Laporan Magang di Unit Teknisi dan Perawatan Infrastruktur Institut Widya Pratama.
+- Proposal Tugas Akhir berjudul *Implementasi Sistem Informasi Manajemen Pelayanan Internal (Helpdesk) pada Bidang Pelayanan dan Perawatan Infrastruktur di Institut Widya Pratama*.
+
+Dokumen tersebut menjadi referensi konteks bisnis, alur proses, kebutuhan sistem, desain database, dan rancangan implementasi. Detail regulasi penggunaan produksi tetap mengikuti keputusan resmi institusi.
