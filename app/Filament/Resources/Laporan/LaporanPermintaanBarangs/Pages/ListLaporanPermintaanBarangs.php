@@ -2,16 +2,15 @@
 
 namespace App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Pages;
 
+use App\Exports\LaporanPermintaanExport;
 use App\Filament\Resources\Laporan\LaporanPermintaanBarangs\LaporanPermintaanBarangResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Services\Laporan\LaporanExportService;
+use App\Services\Laporan\Pdf\LaporanPermintaanPdf;
+use App\Services\Laporan\Word\LaporanPermintaanWord;
+// Nanti kita akan buat class Export ini (sementara biarkan di-import)
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
-use App\Services\Laporan\LaporanExportService;
-
-// Nanti kita akan buat class Export ini (sementara biarkan di-import)
-use App\Exports\LaporanPermintaanExport;
-use App\Services\Laporan\Word\LaporanPermintaanWord;
-use App\Services\Laporan\Pdf\LaporanPermintaanPdf;
+use Filament\Resources\Pages\ListRecords;
 
 class ListLaporanPermintaanBarangs extends ListRecords
 {
@@ -23,16 +22,14 @@ class ListLaporanPermintaanBarangs extends ListRecords
             ActionGroup::make([
                 // Tombol Export Excel
                 Action::make('excel')
-                    ->disabled()
-                    ->label('Excel (coming soon)')
+                    ->label('Excel')
                     ->icon('heroicon-o-document-chart-bar')
-                    // ->color('success')
-                    ->color('gray')
+                    ->color('success')
                     ->action(function () {
                         return app(LaporanExportService::class)->exportExcel(
                             $this->getFilteredTableQuery(),
                             LaporanPermintaanExport::class,
-                            'Laporan-Permintaan-Barang-' . now()->format('(d-m-Y)') . '.xlsx'
+                            'Laporan-Permintaan-Barang-'.now()->format('(d-m-Y)').'.xlsx'
                         );
                     }),
 
@@ -72,6 +69,7 @@ class ListLaporanPermintaanBarangs extends ListRecords
                             query: $this->getFilteredTableQuery(),
                             exportClass: LaporanPermintaanPdf::class,
                         );
+
                         return redirect($url);
                     }),
             ])

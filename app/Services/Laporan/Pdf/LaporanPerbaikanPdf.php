@@ -29,6 +29,7 @@ class LaporanPerbaikanPdf extends BasePdfExporter
         return [
             'title' => 'LAPORAN PERBAIKAN PC TEKNISI',
             'documentNumber' => 'No. 003/IWIMA/KTPI-P3SDI/0426',
+            'documentCode' => '1FM-01.07.16/R0',
             'periode' => $this->periode,
             'printedBy' => auth()->user()?->name ?? 'Sistem',
             'printDate' => now()->translatedFormat('d F Y H:i'),
@@ -46,7 +47,7 @@ class LaporanPerbaikanPdf extends BasePdfExporter
                     'title' => 'Ka. UPT Laboratorium Komputer & Bahasa',
                     'name' => 'Wachid Darmawan, M.Kom',
                 ],
-            ]
+            ],
         ];
     }
 }

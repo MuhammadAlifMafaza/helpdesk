@@ -2,54 +2,41 @@
 
 namespace App\Exports;
 
-use Illuminate\Database\Eloquent\Builder;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-
-class LaporanKegiatanExport implements
-    FromQuery,
-    WithHeadings,
-    WithMapping,
-    ShouldAutoSize
+class LaporanKegiatanExport extends BaseLaporanExport
 {
-    protected Builder $query;
-
-    public function __construct(Builder $query)
+    protected function reportTitle(): string
     {
-        // Menerima query yang sudah difilter dari tabel Filament
-        $this->query = $query;
+        return 'LAPORAN KEGIATAN TEKNISI';
     }
 
-    public function query()
+    protected function documentNumber(): string
     {
-        return $this->query;
+        return 'No. 005/IWIMA/KTPI-P3SDI/0426';
     }
 
-    /* Menentukan Judul Kolom (Baris 1) di Excel */
     public function headings(): array
     {
         return [
-            'Hari / Tanggal',
-            'Nama Teknisi',
+            'No',
+            'Tanggal',
+            'Petugas',
+            'Lokasi',
             'Deskripsi Kegiatan',
+            'Status',
+            'Catatan (opsional)',
         ];
     }
 
-    /* Memetakan Data ke dalam Kolom Excel */
     public function map($laporan): array
     {
         return [
-            // Memanfaatkan helper tanggal dari model, dengan format bahasa Indonesia
-            $laporan->tanggal_kegiatan
-            ? $laporan->tanggal_kegiatan->locale('id')->translatedFormat('l, d F Y')
-            : '-',
-
-            $laporan->nama_teknisi,
-
-            // Menggunakan Null Coalescing (??) jika deskripsi kosong
+            $this->nextRowNumber(),
+            $laporan->tanggal_kegiatan?->format('d/m/Y') ?? '-',
+            $laporan->nama_teknisi ?? '-',
+            $laporan->lokasi ?? '-',
             $laporan->deskripsi ?? '-',
+            $laporan->status_label ?? $laporan->status ?? '-',
+            $laporan->catatan ?? '-',
         ];
     }
 }

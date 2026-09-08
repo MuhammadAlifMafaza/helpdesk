@@ -2,62 +2,43 @@
 
 namespace App\Exports;
 
-use App\Models\Modules\Laporan\Models\LaporanPerbaikan;
-use Illuminate\Database\Eloquent\Builder;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-
-class LaporanPerbaikanExport implements
-    FromQuery,
-    WithHeadings,
-    WithMapping,
-    ShouldAutoSize
+class LaporanPerbaikanExport extends BaseLaporanExport
 {
-    protected Builder $query;
-
-    public function __construct(Builder $query)
+    protected function reportTitle(): string
     {
-        $this->query = $query;
+        return 'LAPORAN PERBAIKAN PC TEKNISI';
     }
 
-    public function query()
+    protected function documentNumber(): string
     {
-        return $this->query;
+        return 'No. 003/IWIMA/KTPI-P3SDI/0426';
     }
 
     public function headings(): array
     {
         return [
+            'No',
             'Kode Tiket',
             'Pemohon',
-            'Keluhan',
             'Lokasi',
-            'Kepemilikan',
-            'Teknisi',
+            'Tgl Masuk',
+            'Tgl Selesai',
+            'Keterangan',
             'Status',
-            'Kategori',
-            'Mulai',
-            'Selesai',
-            'Durasi',
         ];
     }
 
     public function map($laporan): array
     {
         return [
-            $laporan->kode_tiket,
-            $laporan->nama_pemohon,
-            $laporan->keluhan,
-            $laporan->lokasi,
-            $laporan->kepemilikan,
-            $laporan->nama_teknisi,
-            $laporan->status_label,
-            $laporan->service_category,
-            optional($laporan->waktu_mulai)?->format('d-m-Y H:i'),
-            optional($laporan->waktu_selesai)?->format('d-m-Y H:i'),
-            $laporan->durasi,
+            $this->nextRowNumber(),
+            $laporan->kode_tiket ?? '-',
+            $laporan->nama_pemohon ?? '-',
+            $laporan->lokasi ?? '-',
+            $laporan->waktu_mulai?->format('d/m/Y') ?? '-',
+            $laporan->waktu_selesai?->format('d/m/Y') ?? '-',
+            $laporan->keluhan ?? $laporan->service_category ?? '-',
+            $laporan->status_label ?? $laporan->status ?? '-',
         ];
     }
 }

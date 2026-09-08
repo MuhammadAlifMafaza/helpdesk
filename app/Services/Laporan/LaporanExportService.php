@@ -12,11 +12,12 @@ class LaporanExportService
     public function exportExcel(
         Builder $query,
         string $export,
-        string $filename
+        string $filename,
+        string $periode = '-'
     ): BinaryFileResponse {
 
         return Excel::download(
-            new $export($query),
+            new $export($query, $periode),
             $filename
         );
 
@@ -25,11 +26,13 @@ class LaporanExportService
     public function exportWord(
         Builder $query,
         string $wordExporter,
+        string $periode = '-'
     ): BinaryFileResponse {
 
         /** @var \App\Services\Laporan\Word\BaseWordExporter $export */
         $export = new $wordExporter(
-            $query
+            $query,
+            $periode
         );
 
         return $export->download();
@@ -38,18 +41,20 @@ class LaporanExportService
     /* Export PDF (Download File) */
     public function exportPDF(
         Builder $query,
-        string $exportClass
+        string $exportClass,
+        string $periode = '-'
     ): BinaryFileResponse {  // <- Pastikan ini BinaryFileResponse
-        $exporter = new $exportClass($query);
+        $exporter = new $exportClass($query, $periode);
         return $exporter->download();
     }
 
     /* Print Preview (Tampilkan di Browser) */
     public function print(
         Builder $query,
-        string $exportClass
+        string $exportClass,
+        string $periode = '-'
     ): string { // <- Ubah ini menjadi 'string' karena mengembalikan URL
-        $exporter = new $exportClass($query);
+        $exporter = new $exportClass($query, $periode);
         return $exporter->stream();
     }
 }

@@ -5,132 +5,104 @@
     <meta charset="UTF-8">
     <title>{{ $title }}</title>
     <style>
-        body {
-            font-family: sans-serif;
-            font-size: 11px;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .font-bold {
-            font-weight: bold;
-        }
-
-        .mb-2 {
-            margin-bottom: 20px;
-        }
-
-        /* Desain Tabel Utama */
-        table.data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        table.data-table th,
-        table.data-table td {
-            border: 1px solid #444;
-            padding: 6px;
-            text-align: left;
-        }
-
-        table.data-table th {
-            background-color: #D9EAD3;
-            text-align: center;
-        }
-
-        /* Desain Tabel Info & TTD */
-        table.layout-table {
-            width: 100%;
-            border: none;
-        }
-
-        table.layout-table td {
-            border: none;
-            padding: 2px;
-        }
+        @include('laporan.pdf._styles')
     </style>
 </head>
 
 <body>
-
-    <div class="text-center mb-2">
-        <h2 style="margin: 0;">{{ $title }}</h2>
-        <p style="margin: 5px 0 0 0; font-size: 12px;">{{ $documentNumber }}</p>
-    </div>
-
-    <table class="layout-table">
-        <tr>
-            <td width="15%" class="font-bold">Periode</td>
-            <td width="2%">:</td>
-            <td>{{ $periode }}</td>
-        </tr>
-        <tr>
-            <td class="font-bold">Tanggal Cetak</td>
-            <td>:</td>
-            <td>{{ $printDate }}</td>
-        </tr>
-        <tr>
-            <td class="font-bold">Dicetak Oleh</td>
-            <td>:</td>
-            <td>{{ $printedBy }}</td>
-        </tr>
-    </table>
-
-    <table class="data-table mb-2">
-        <thead>
+    @include('laporan.pdf._header')
+    <main>
+        <div class="report-title">
+            <h1>{{ $title }}</h1>
+            <p>{{ $documentNumber }}</p>
+        </div>
+        <table class="info-table">
             <tr>
-                <th>No</th>
-                <th>Kode Tiket</th>
-                <th>Pemohon</th>
-                <th>Lokasi</th>
-                <th>Teknisi</th>
-                <th>Status</th>
-                <th>Mulai</th>
-                <th>Selesai</th>
+                <td class="info-label">Periode</td>
+                <td class="info-separator">:</td>
+                <td>{{ $periode }}</td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach($records as $index => $row)
+            <tr>
+                <td class="info-label">Tgl. Dibuat</td>
+                <td class="info-separator">:</td>
+                <td>{{ now()->locale('id')->translatedFormat('d F Y') }}</td>
+            </tr>
+        </table>
+        @php
+            $completedRecords = $records->filter(function ($row) {
+                $status = strtolower((string) ($row->status_label ?? $row->status ?? ''));
+                return str_contains($status, 'close') || str_contains($status, 'selesai') || str_contains($status, 'baik');
+            });
+            $pendingRecords = $records->reject(fn($row) => $completedRecords->contains($row));
+        @endphp
+
+        <div class="section-title">A. PC SELESAI DICEK &amp; DIPERBAIKI</div>
+        <table class="data-table">
+            <thead>
                 <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
-                    <td>{{ $row->kode_tiket }}</td>
-                    <td>{{ $row->nama_pemohon }}</td>
-                    <td>{{ $row->lokasi }}</td>
-                    <td>{{ $row->nama_teknisi ?? '-' }}</td>
-                    <td class="text-center">{{ $row->status_label }}</td>
-                    <td>{{ $row->waktu_mulai }}</td>
-                    <td>{{ $row->waktu_selesai }}</td>
+                    <th width="4%">No.</th>
+                    <th width="12%">Kode Tiket</th>
+                    <th width="15%">Pemohon</th>
+                    <th width="12%">Lokasi</th>
+                    <th width="12%">Tgl Masuk</th>
+                    <th width="12%">Tgl Selesai</th>
+                    <th width="21%">Keterangan</th>
+                    <th width="12%">Status</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @forelse($completedRecords as $index => $row)
+                    <tr>
+                        <td class="center">{{ $index + 1 }}</td>
+                        <td>{{ $row->kode_tiket ?? '-' }}</td>
+                        <td>{{ $row->nama_pemohon ?? '-' }}</td>
+                        <td>{{ $row->lokasi ?? '-' }}</td>
+                        <td class="center">{{ $row->waktu_mulai?->format('d/m/Y') ?? '-' }}</td>
+                        <td class="center">{{ $row->waktu_selesai?->format('d/m/Y') ?? '-' }}</td>
+                        <td>{{ $row->keluhan ?? $row->service_category ?? '-' }}</td>
+                        <td class="center">{{ $row->status_label ?? $row->status ?? '-' }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td class="empty-row" colspan="8">Tidak ada PC yang selesai diperbaiki.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
 
-    <table class="layout-table" style="margin-top: 40px; page-break-inside: avoid;">
-        <tr>
-            <td class="text-right" colspan="2" style="padding-bottom: 20px;">
-                Pekalongan, {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y') }}
-            </td>
-        </tr>
-        <tr>
-            <td width="50%" class="text-center font-bold">{{ $signatures[0]['title'] }}</td>
-            <td width="50%" class="text-center font-bold">{{ $signatures[1]['title'] }}</td>
-        </tr>
-        <tr>
-            <td colspan="2" style="height: 70px;"></td>
-        </tr>
-        <tr>
-            <td class="text-center font-bold" style="text-decoration: underline;">{{ $signatures[0]['name'] }}</td>
-            <td class="text-center font-bold" style="text-decoration: underline;">{{ $signatures[1]['name'] }}</td>
-        </tr>
-    </table>
-
+        <div class="section-title">B. PC MASIH DALAM PROSES / MENUNGGU</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th width="4%">No.</th>
+                    <th width="14%">Kode Tiket</th>
+                    <th width="17%">Pemohon</th>
+                    <th width="14%">Lokasi</th>
+                    <th width="14%">Tgl Masuk</th>
+                    <th width="23%">Kerusakan / Masalah</th>
+                    <th width="14%">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($pendingRecords as $index => $row)
+                    <tr>
+                        <td class="center">{{ $index + 1 }}</td>
+                        <td>{{ $row->kode_tiket ?? '-' }}</td>
+                        <td>{{ $row->nama_pemohon ?? '-' }}</td>
+                        <td>{{ $row->lokasi ?? '-' }}</td>
+                        <td class="center">{{ $row->waktu_mulai?->format('d/m/Y') ?? '-' }}</td>
+                        <td>{{ $row->keluhan ?? $row->service_category ?? '-' }}</td>
+                        <td class="center">{{ $row->status_label ?? $row->status ?? '-' }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td class="empty-row" colspan="7">Tidak ada PC yang masih dalam proses.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+        @include('laporan.pdf._signatures')
+    </main>
 </body>
 
 </html>

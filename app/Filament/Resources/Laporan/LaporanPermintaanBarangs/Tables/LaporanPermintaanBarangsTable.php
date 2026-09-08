@@ -49,13 +49,15 @@ class LaporanPermintaanBarangsTable
                     ->label('Hasil Persetujuan')
                     ->badge()
                     ->formatStateUsing(fn ($record) => $record->outcome_label)
-                    ->color(fn ($record) => $record->outcome_color),
+                    ->color(fn ($record) => $record->outcome_color)
+                    ->placeholder('Masih belum ada persetujuan'),
 
                 // 1. Kolom Waktu Mulai dengan deskripsi (misal: "2 hari yang lalu")
                 TextColumn::make('pengajuan.waktu_mulai')
                     ->label('Waktu Mulai')
                     ->dateTime('d M Y, H:i')
                     ->description(fn ($record) => $record->pengajuan?->waktu_mulai?->diffForHumans())
+                    ->placeholder('masih belum dimulai')
                     ->sortable()
                     ->toggleable(),
 
@@ -63,6 +65,7 @@ class LaporanPermintaanBarangsTable
                 TextColumn::make('pengajuan.waktu_selesai')
                     ->label('Waktu Selesai')
                     ->dateTime('d M Y, H:i')
+                    ->placeholder('masih belum dimulai')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
@@ -81,6 +84,7 @@ class LaporanPermintaanBarangsTable
                         // Memanggil helper getProcessCategoryAttribute()
                         return "Kategori: {$record->process_category}".$jam;
                     })
+                    ->placeholder('Masih dikerjakan')
                     ->toggleable(),
 
             ])
@@ -106,6 +110,7 @@ class LaporanPermintaanBarangsTable
                     ])
                     ->query(fn (Builder $query, array $data) => $query->status($data['value'])),
             ])
+
             ->actions([
                 // ViewAction::make(),
             ])

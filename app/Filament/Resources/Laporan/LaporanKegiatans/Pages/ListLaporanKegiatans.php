@@ -2,16 +2,15 @@
 
 namespace App\Filament\Resources\Laporan\LaporanKegiatans\Pages;
 
+use App\Exports\LaporanKegiatanExport;
 use App\Filament\Resources\Laporan\LaporanKegiatans\LaporanKegiatanResource;
-use Filament\Resources\Pages\ListRecords;
+use App\Services\Laporan\LaporanExportService;
+use App\Services\Laporan\Pdf\LaporanKegiatanPdf;
+use App\Services\Laporan\Word\LaporanKegiatanWord;
+// Import Class Exporter (Kita akan membuatnya setelah ini)
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
-use App\Services\Laporan\LaporanExportService;
-
-// Import Class Exporter (Kita akan membuatnya setelah ini)
-use App\Exports\LaporanKegiatanExport;
-use App\Services\Laporan\Word\LaporanKegiatanWord;
-use App\Services\Laporan\Pdf\LaporanKegiatanPdf;
+use Filament\Resources\Pages\ListRecords;
 
 class ListLaporanKegiatans extends ListRecords
 {
@@ -23,16 +22,14 @@ class ListLaporanKegiatans extends ListRecords
             ActionGroup::make([
                 // Tombol Export Excel
                 Action::make('excel')
-                    ->disabled()
-                    ->label('Excel (coming soon)')
+                    ->label('Excel')
                     ->icon('heroicon-o-document-chart-bar')
-                    // ->color('success')
-                    ->color('gray')
+                    ->color('success')
                     ->action(function () {
                         return app(LaporanExportService::class)->exportExcel(
                             $this->getFilteredTableQuery(),
                             LaporanKegiatanExport::class,
-                            'Laporan-Kegiatan-Teknisi-' . now()->format('(d-m-Y)') . '.xlsx'
+                            'Laporan-Kegiatan-Teknisi-'.now()->format('(d-m-Y)').'.xlsx'
                         );
                     }),
 
@@ -72,6 +69,7 @@ class ListLaporanKegiatans extends ListRecords
                             query: $this->getFilteredTableQuery(),
                             exportClass: LaporanKegiatanPdf::class,
                         );
+
                         return redirect($url);
                     }),
             ])

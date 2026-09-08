@@ -24,17 +24,15 @@ class ListLaporanPerbaikans extends ListRecords
             ActionGroup::make([
 
                 Action::make('excel')
-                    ->disabled()
-                    ->label('Excel (coming soon)')
+                    ->label('Excel')
                     ->icon('heroicon-o-document-chart-bar')
-                    // ->color('success')
-                    ->color('gray')
+                    ->color('success')
                     ->action(function () {
                         return app(LaporanExportService::class)
                             ->exportExcel(
                                 $this->getFilteredTableQuery(),
                                 LaporanPerbaikanExport::class,
-                                'Laporan-Perbaikan-' . now()->format('(d-m-Y)') . '.xlsx'
+                                'Laporan-Perbaikan-'.now()->format('(d-m-Y)').'.xlsx'
                             );
                     }),
 
@@ -48,9 +46,9 @@ class ListLaporanPerbaikans extends ListRecords
                         return app(
                             LaporanExportService::class
                         )->exportWord(
-                                query: $this->getFilteredTableQuery(),
-                                wordExporter: LaporanPerbaikanWord::class,
-                            );
+                            query: $this->getFilteredTableQuery(),
+                            wordExporter: LaporanPerbaikanWord::class,
+                        );
                     }),
 
                 Action::make('pdf')
