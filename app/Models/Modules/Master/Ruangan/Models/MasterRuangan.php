@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Models\Modules\Master\Models;
+namespace App\Models\Modules\Master\Ruangan\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Model;
 
 #[Fillable(['nama_ruangan', 'nama_gedung'])]
 class MasterRuangan extends Model
@@ -13,13 +13,11 @@ class MasterRuangan extends Model
 
     protected $fillable = [
         'nama_ruangan',
-        'nama_gedung'
+        'nama_gedung',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-
-    
 }

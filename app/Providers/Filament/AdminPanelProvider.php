@@ -50,7 +50,10 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->collapsedSidebarWidth('5rem')
             ->maxContentWidth('full')
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
+            ->discoverResources(
+                in: app_path('Filament/Resources'),
+                for: 'App\Filament\Resources'
+            )
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
@@ -73,7 +76,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make(),
             ])
-            ->homeUrl(fn() => match (auth()->user()?->getRoleNames()->first()) {
+            ->homeUrl(fn () => match (auth()->user()?->getRoleNames()->first()) {
                 default => '/admin',
             })
             ->authMiddleware([
@@ -82,7 +85,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn(): View => view('components.helpdesk-realtime-notification')
+                fn (): View => view('components.helpdesk-realtime-notification')
             )
             ->navigationGroups([
                 NavigationGroup::make('Service Desk')

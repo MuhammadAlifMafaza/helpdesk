@@ -2,18 +2,13 @@
 
 namespace App\Models\Modules\Laporan\Models;
 
-use App\Models\User;
-use App\Models\Modules\Master\Models\MasterRuangan;
 use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
-
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
-
+use Illuminate\Database\Eloquent\Model;
 
 class LaporanPerbaikan extends Model
 {
-
     /*
     |--------------------------------------------------------------------------
     | Configuration
@@ -21,9 +16,13 @@ class LaporanPerbaikan extends Model
     */
 
     protected $table = 'view_laporan_service';
+
     protected $primaryKey = 'no_tiket';
+
     public $incrementing = false;
+
     protected $keyType = 'int';
+
     public $timestamps = false;
 
     protected $guarded = [];
@@ -107,8 +106,7 @@ class LaporanPerbaikan extends Model
         return $query
             ->when(
                 $from,
-                fn(Builder $query) =>
-                $query->whereDate(
+                fn (Builder $query) => $query->whereDate(
                     'waktu_mulai',
                     '>=',
                     $from
@@ -116,8 +114,7 @@ class LaporanPerbaikan extends Model
             )
             ->when(
                 $until,
-                fn(Builder $query) =>
-                $query->whereDate(
+                fn (Builder $query) => $query->whereDate(
                     'waktu_mulai',
                     '<=',
                     $until
@@ -137,9 +134,7 @@ class LaporanPerbaikan extends Model
 
             filled($status),
 
-            fn(Builder $query) =>
-
-            $query->where(
+            fn (Builder $query) => $query->where(
                 'status',
                 $status
             )
@@ -155,8 +150,7 @@ class LaporanPerbaikan extends Model
     ): Builder {
         return $query->when(
             filled($teknisi),
-            fn(Builder $query) =>
-            $query->where(
+            fn (Builder $query) => $query->where(
                 'nama_teknisi',
                 $teknisi
             )
@@ -173,9 +167,7 @@ class LaporanPerbaikan extends Model
 
             filled($lokasi),
 
-            fn(Builder $query) =>
-
-            $query->where(
+            fn (Builder $query) => $query->where(
                 'lokasi',
                 $lokasi
             )
@@ -195,9 +187,7 @@ class LaporanPerbaikan extends Model
 
             filled($kepemilikan),
 
-            fn(Builder $query) =>
-
-            $query->where(
+            fn (Builder $query) => $query->where(
                 'kepemilikan',
                 $kepemilikan
             )
@@ -225,32 +215,27 @@ class LaporanPerbaikan extends Model
 
         return match ($kategori) {
 
-            'Cepat'
-            => $query->whereBetween(
+            'Cepat' => $query->whereBetween(
                 'durasi_pengerjaan_menit',
                 [1, 60]
             ),
 
-            'Normal'
-            => $query->whereBetween(
+            'Normal' => $query->whereBetween(
                 'durasi_pengerjaan_menit',
                 [61, 240]
             ),
 
-            'Lama'
-            => $query->where(
+            'Lama' => $query->where(
                 'durasi_pengerjaan_menit',
                 '>',
                 240
             ),
 
-            'Belum Selesai'
-            => $query->whereNull(
+            'Belum Selesai' => $query->whereNull(
                 'durasi_pengerjaan_menit'
             ),
 
-            default
-            => $query,
+            default => $query,
         };
 
     }
@@ -274,9 +259,7 @@ class LaporanPerbaikan extends Model
 
         return $query->whereHas(
             'tiket',
-            fn(Builder $query) =>
-
-            $query->whereRaw('1 = 1')
+            fn (Builder $query) => $query->whereRaw('1 = 1')
         );
 
     }
@@ -334,7 +317,7 @@ class LaporanPerbaikan extends Model
 
     public function getKodeTiketAttribute(): string
     {
-        if (!$this->waktu_mulai) {
+        if (! $this->waktu_mulai) {
             return "TK-{$this->no_tiket}";
         }
 
@@ -569,7 +552,7 @@ class LaporanPerbaikan extends Model
 
     public function getDurasiJamAttribute(): float
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 0;
         }
 
@@ -581,7 +564,7 @@ class LaporanPerbaikan extends Model
 
     public function getDurasiHariAttribute(): float
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 0;
         }
 
@@ -593,7 +576,7 @@ class LaporanPerbaikan extends Model
 
     public function getDurasiMingguAttribute(): float
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 0;
         }
 
@@ -605,7 +588,7 @@ class LaporanPerbaikan extends Model
 
     public function getDurasiBulanAttribute(): float
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 0;
         }
 
@@ -617,7 +600,7 @@ class LaporanPerbaikan extends Model
 
     public function getDurasiLevelAttribute(): string
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 'Belum Selesai';
         }
 
@@ -655,13 +638,13 @@ class LaporanPerbaikan extends Model
     public function getTanggalSelesaiAttribute(): ?string
     {
         return $this->waktu_selesai
-                ?->format('d M Y');
+            ?->format('d M Y');
     }
 
     public function getJamSelesaiAttribute(): ?string
     {
         return $this->waktu_selesai
-                ?->format('H:i:s');
+            ?->format('H:i:s');
     }
 
     /*
@@ -711,7 +694,7 @@ class LaporanPerbaikan extends Model
             ->count();
     }
 
-    /* Total Tiket Yang Telah di Tutup (Close)*/
+    /* Total Tiket Yang Telah di Tutup (Close) */
     public static function getTotalClose(
         ?Builder $query = null
     ): int {
@@ -785,7 +768,7 @@ class LaporanPerbaikan extends Model
             ->whereNotNull('durasi_pengerjaan_menit')
             ->avg('durasi_pengerjaan_menit');
 
-        if (!$minutes) {
+        if (! $minutes) {
             return 0;
         }
 
@@ -807,8 +790,8 @@ class LaporanPerbaikan extends Model
         $days = round($hours / 24, 2);
 
         return number_format($hours, 2)
-            . ' Jam'
-            . " ({$days} Hari)";
+            .' Jam'
+            ." ({$days} Hari)";
 
     }
 
@@ -823,7 +806,7 @@ class LaporanPerbaikan extends Model
             ->whereNotNull('durasi_pengerjaan_menit')
             ->avg('durasi_pengerjaan_menit');
 
-        if (!$minutes) {
+        if (! $minutes) {
             return '-';
         }
 
@@ -840,19 +823,16 @@ class LaporanPerbaikan extends Model
 
     public function getServiceCategoryAttribute(): string
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 'Belum Selesai';
         }
 
         return match (true) {
-            $this->durasi_pengerjaan_menit <= 60
-            => 'Cepat',
+            $this->durasi_pengerjaan_menit <= 60 => 'Cepat',
 
-            $this->durasi_pengerjaan_menit <= 240
-            => 'Normal',
+            $this->durasi_pengerjaan_menit <= 240 => 'Normal',
 
-            default
-            => 'Lama',
+            default => 'Lama',
         };
     }
 
@@ -956,5 +936,4 @@ class LaporanPerbaikan extends Model
     {
         return $this->nama_teknisi ?? '-';
     }
-
 }

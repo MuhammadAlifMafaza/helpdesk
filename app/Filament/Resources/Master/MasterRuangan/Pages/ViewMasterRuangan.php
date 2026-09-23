@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Resources\MasterRuangan\Pages;
+namespace App\Filament\Resources\Master\MasterRuangan\Pages;
 
-use App\Filament\Resources\MasterRuangan\MasterRuanganResource;
-use Filament\Actions\EditAction;
+use App\Filament\Resources\Master\MasterRuangan\MasterRuanganResource;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewMasterRuangan extends ViewRecord

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Filament\Resources\MasterRuangan\Tables;
+namespace App\Filament\Resources\Master\MasterRuangan\Tables;
 
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class MasterRuanganTable
 {

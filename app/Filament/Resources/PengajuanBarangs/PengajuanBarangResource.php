@@ -76,13 +76,17 @@ class PengajuanBarangResource extends Resource
                     ->required(),
 
                 Textarea::make('alasan')
-                    ->label('Alasan Permintaan')
+                    ->label('Alasan Pengajuan')
                     ->rows(4)
                     ->required(),
 
                 Select::make('status')
                     ->label('Status')
-                    ->options(self::statusOptions())
+                    ->options([
+                        'Open' => 'Open',
+                        'In Progress' => 'In Progress',
+                        'Close' => 'Close',
+                    ])
                     ->default('Open')
                     ->disabled()
                     ->dehydrated(false),
@@ -358,12 +362,12 @@ class PengajuanBarangResource extends Resource
                     ->icon('heroicon-o-arrow-path')
                     ->visible(
                         fn ($record) => $record->isClosed()
-                        &&
-                        (
-                            auth()->user()->hasRole('admin')
-                            ||
-                            auth()->user()->hasRole('super_admin')
-                        )
+                            &&
+                            (
+                                auth()->user()->hasRole('admin')
+                                ||
+                                auth()->user()->hasRole('super_admin')
+                            )
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -398,12 +402,12 @@ class PengajuanBarangResource extends Resource
                     ->tooltip('Soft Delete')
                     ->visible(
                         fn ($record) => $record->isClosed()
-                        &&
-                        (
-                            auth()->user()->hasRole('admin')
-                            ||
-                            auth()->user()->hasRole('super_admin')
-                        )
+                            &&
+                            (
+                                auth()->user()->hasRole('admin')
+                                ||
+                                auth()->user()->hasRole('super_admin')
+                            )
                     )
                     ->requiresConfirmation(),
 

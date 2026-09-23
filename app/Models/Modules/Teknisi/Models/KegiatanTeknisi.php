@@ -2,7 +2,7 @@
 
 namespace App\Models\Modules\Teknisi\Models;
 
-use App\Models\Modules\Master\Models\MasterRuangan;
+use App\Models\Modules\Master\Ruangan\Models\MasterRuangan;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;

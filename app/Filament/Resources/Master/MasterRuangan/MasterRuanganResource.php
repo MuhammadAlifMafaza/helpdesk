@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Filament\Resources\MasterRuangan;
+namespace App\Filament\Resources\Master\MasterRuangan;
 
-use App\Filament\Resources\MasterRuangan\Pages\CreateMasterRuangan;
-use App\Filament\Resources\MasterRuangan\Pages\EditMasterRuangan;
-use App\Filament\Resources\MasterRuangan\Pages\ListMasterRuangan;
-use App\Filament\Resources\MasterRuangan\Pages\ViewMasterRuangan;
-use App\Filament\Resources\MasterRuangan\Schemas\MasterRuanganInfolist;
-use App\Filament\Resources\MasterRuangan\Tables\MasterRuanganTable;
-use App\Models\Modules\Master\Models\MasterRuangan;
+use App\Filament\Resources\Master\MasterRuangan\Pages\CreateMasterRuangan;
+use App\Filament\Resources\Master\MasterRuangan\Pages\EditMasterRuangan;
+use App\Filament\Resources\Master\MasterRuangan\Pages\ListMasterRuangan;
+use App\Filament\Resources\Master\MasterRuangan\Pages\ViewMasterRuangan;
+use App\Filament\Resources\Master\MasterRuangan\Schemas\MasterRuanganInfolist;
+use App\Filament\Resources\Master\MasterRuangan\Tables\MasterRuanganTable;
+use App\Models\Modules\Master\Ruangan\Models\MasterRuangan;
 // import untuk enum data and form
 use BackedEnum;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -70,6 +70,7 @@ class MasterRuanganResource extends Resource
     {
         // return MasterRuanganTable::configure($table);
         return $table
+            ->defaultSort('nama_ruangan', 'asc')
             ->columns([
                 TextColumn::make('index')
                     ->label('#')
@@ -86,6 +87,9 @@ class MasterRuanganResource extends Resource
                     ->dateTime('d M Y H:i'),
             ])
             ->actions([
+                ViewAction::make()
+                    ->label('')
+                    ->tooltip('View'),
                 EditAction::make()
                     ->label('')
                     ->tooltip('Edit'),

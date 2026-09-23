@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Resources\MasterRuangan\Schemas;
+namespace App\Filament\Resources\Master\MasterBarangs\Schemas;
 
 use Filament\Schemas\Schema;
 
-class MasterRuanganForm
+class MasterBarangInfolist
 {
     public static function configure(Schema $schema): Schema
     {

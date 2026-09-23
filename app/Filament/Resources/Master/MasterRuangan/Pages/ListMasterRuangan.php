@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\MasterRuangan\Pages;
+namespace App\Filament\Resources\Master\MasterRuangan\Pages;
 
-use App\Filament\Resources\MasterRuangan\MasterRuanganResource;
+use App\Filament\Resources\Master\MasterRuangan\MasterRuanganResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 

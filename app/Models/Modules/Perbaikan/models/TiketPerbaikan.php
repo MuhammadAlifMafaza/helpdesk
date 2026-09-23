@@ -13,7 +13,7 @@ use App\Events\HelpdeskActivityCreated;
 
 // Imports necesery Files(Models)
 use App\Models\User;
-use App\Models\Modules\Master\Models\MasterRuangan;
+use App\Models\Modules\Master\Ruangan\Models\MasterRuangan;
 use App\Models\Modules\Perbaikan\Enums\TicketStatus;
 
 class TiketPerbaikan extends Model
