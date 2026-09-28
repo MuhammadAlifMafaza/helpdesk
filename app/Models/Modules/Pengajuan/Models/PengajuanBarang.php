@@ -8,6 +8,8 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Modules\Master\Barang\Models\MasterBarang;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 // Imports necesery Files(Models)
@@ -38,13 +40,16 @@ class PengajuanBarang extends Model
     |--------------------------------------------------------------------------
     */
     public const ALLOWED_UPDATE_FIELDS = [
-        'nama_barang' => 'Nama Barang',
+        'barang_id' => 'Barang',
         'jumlah' => 'Jumlah',
         'alasan' => 'Alasan',
     ];
 
     protected $fillable = [
         'user_id',
+        'barang_id',
+        'nama_barang_snapshot',
+        'keterangan_barang',
         'nama_barang',
         'jumlah',
         'alasan',
@@ -62,6 +67,14 @@ class PengajuanBarang extends Model
             User::class,
             'user_id'
         );
+    }
+
+    public function barang(): BelongsTo
+    {
+        return $this->belongsTo(
+            MasterBarang::class,
+            'barang_id'
+        )->withTrashed();
     }
 
     /*
@@ -135,6 +148,98 @@ class PengajuanBarang extends Model
             );
 
         });
+
+        static::saving(
+            function (self $pengajuan): void {
+                /*
+                 * Menentukan apakah ini transaksi baru.
+                 */
+                $isNew = !$pengajuan->exists;
+
+                /*
+                 * Menentukan apakah Master Barang berubah.
+                 */
+                $barangIdChanged = $pengajuan->isDirty('barang_id');
+
+                /*
+                 * ---------------------------------------------------------------
+                 * DATA LAMA
+                 * ---------------------------------------------------------------
+                 *
+                 * Pengajuan lama boleh tetap memiliki barang_id NULL.
+                 *
+                 * Selama barang_id tidak sedang diubah,
+                 * jangan memaksa migrasi data lama.
+                 */
+                if (!$isNew && !$barangIdChanged) {
+                    return;
+                }
+
+                /*
+                 * ---------------------------------------------------------------
+                 * TRANSAKSI BARU / PERUBAHAN BARANG
+                 * ---------------------------------------------------------------
+                 *
+                 * barang_id wajib tersedia.
+                 */
+                if (!$pengajuan->barang_id) {
+                    throw ValidationException::withMessages([
+                        'barang_id' =>
+                            'Barang wajib dipilih dari Master Barang.',
+                    ]);
+                }
+
+                /*
+                 * Ambil Master Barang termasuk data soft deleted
+                 * agar kita dapat memberikan validasi yang tepat.
+                 */
+                $barang = MasterBarang::query()
+                    ->withTrashed()
+                    ->with('kategoriBarang')
+                    ->find($pengajuan->barang_id);
+
+                /*
+                 * Master Barang tidak ditemukan.
+                 */
+                if (!$barang) {
+                    throw ValidationException::withMessages([
+                        'barang_id' =>
+                            'Master Barang yang dipilih tidak ditemukan.',
+                    ]);
+                }
+
+                /*
+                 * Master Barang harus memenuhi syarat transaksi baru.
+                 */
+                if (!$barang->canBeUsedForNewTransaction()) {
+                    throw ValidationException::withMessages([
+                        'barang_id' =>
+                            'Barang yang dipilih tidak aktif atau '
+                            . 'kategorinya tidak aktif.',
+                    ]);
+                }
+
+                /*
+                 * ---------------------------------------------------------------
+                 * SNAPSHOT
+                 * ---------------------------------------------------------------
+                 *
+                 * Simpan data Master Barang pada saat transaksi dibuat/diubah.
+                 */
+                $pengajuan->nama_barang_snapshot =
+                    $barang->nama_barang;
+
+                $pengajuan->keterangan_barang =
+                    $barang->keterangan;
+
+                /*
+                 * Tetap isi nama_barang untuk kompatibilitas
+                 * dengan data dan fungsi lama.
+                 */
+                $pengajuan->nama_barang =
+                    $barang->nama_barang;
+            }
+        );
     }
 
     /*
@@ -146,7 +251,7 @@ class PengajuanBarang extends Model
     {
         $user ??= auth()->user();
 
-        if (! $user) {
+        if (!$user) {
             return false;
         }
 
@@ -183,18 +288,18 @@ class PengajuanBarang extends Model
             return true;
         }
 
-        return ! $this->isClosed();
+        return !$this->isClosed();
     }
 
     public function canPemohonEdit(): bool
     {
         $user = auth()->user();
 
-        if (! $user) {
+        if (!$user) {
             return false;
         }
 
-        if (! $user->hasRole('pemohon')) {
+        if (!$user->hasRole('pemohon')) {
             return false;
         }
 
@@ -216,11 +321,11 @@ class PengajuanBarang extends Model
     {
         $user = auth()->user();
 
-        if (! $user) {
+        if (!$user) {
             return false;
         }
 
-        if (! $user->hasRole('pemohon')) {
+        if (!$user->hasRole('pemohon')) {
             return false;
         }
 
@@ -322,7 +427,7 @@ class PengajuanBarang extends Model
     ) {
         return $this->updateStatus(
             'In Progress',
-            '[REOPEN] '.
+            '[REOPEN] ' .
             ($catatan ?? 'Pengajuan dibuka kembali')
         );
     }
@@ -342,7 +447,7 @@ class PengajuanBarang extends Model
     ) {
         return $this->updateStatus(
             'Close',
-            '[SELESAI] '.($catatan ?? '')
+            '[SELESAI] ' . ($catatan ?? '')
         );
     }
 
@@ -351,7 +456,7 @@ class PengajuanBarang extends Model
     ) {
         return $this->updateStatus(
             'Close',
-            '[DITOLAK] '.($catatan ?? '')
+            '[DITOLAK] ' . ($catatan ?? '')
         );
     }
 
@@ -402,7 +507,7 @@ class PengajuanBarang extends Model
     */
     public function updateDataPemohon(array $data): bool
     {
-        if (! $this->canPemohonEdit()) {
+        if (!$this->canPemohonEdit()) {
             return false;
         }
 
@@ -410,7 +515,7 @@ class PengajuanBarang extends Model
 
         foreach (self::ALLOWED_UPDATE_FIELDS as $field => $label) {
 
-            if (! array_key_exists($field, $data)) {
+            if (!array_key_exists($field, $data)) {
                 continue;
             }
 
@@ -428,38 +533,64 @@ class PengajuanBarang extends Model
         mixed $valueBaru,
         ?string $catatan = null
     ): bool {
-
+        /*
+         * Pastikan field memang diperbolehkan.
+         */
         if (
-            ! array_key_exists(
+            !array_key_exists(
                 $field,
                 self::ALLOWED_UPDATE_FIELDS
             )
         ) {
             throw new \InvalidArgumentException(
-                "Field {$field} tidak boleh diubah."
+                "Field [{$field}] tidak dapat diperbarui."
             );
         }
 
-        $valueLama = $this->{$field};
+        /*
+         * Barang memiliki proses khusus.
+         */
+        if ($field === 'barang_id') {
+            return $this->updateBarang(
+                barangId: (int) $valueBaru,
+                catatan: $catatan
+            );
+        }
 
+        /*
+         * Ambil nilai lama.
+         */
+        $valueLama = $this->getAttribute($field);
+
+        /*
+         * Tidak ada perubahan.
+         */
         if ((string) $valueLama === (string) $valueBaru) {
             return false;
         }
 
+        /*
+         * Update field biasa.
+         */
         $this->update([
             $field => $valueBaru,
         ]);
 
-        $namaField = self::ALLOWED_UPDATE_FIELDS[$field];
-
+        /*
+         * Catat perubahan ke timeline/log.
+         */
         $log = $this->tambahLog(
             kategori: 'Update Data',
-            lama: (string) $valueLama,
-            baru: (string) $valueBaru,
+            lama: (string) ($valueLama ?? '-'),
+            baru: (string) ($valueBaru ?? '-'),
             keterangan: $catatan
-            ?? "{$namaField} diperbarui oleh ".(auth()->user()?->name ?? 'System')
+            ?? 'Data pengajuan diperbarui oleh '
+            . (auth()->user()?->name ?? 'System'),
         );
 
+        /*
+         * Dispatch activity.
+         */
         HelpdeskActivityCreated::dispatch(
             module: 'pengajuan',
             activity: 'updated',
@@ -468,10 +599,12 @@ class PengajuanBarang extends Model
             actorId: auth()->id(),
             data: [
                 'field' => $field,
-                'field_label' => $namaField,
+                'field_label' =>
+                    self::ALLOWED_UPDATE_FIELDS[$field],
                 'old_value' => $valueLama,
                 'new_value' => $valueBaru,
-                'message' => "Data {$this->kode_pengajuan} diperbarui.",
+                'message' =>
+                    "Data pada {$this->kode_pengajuan} diperbarui.",
                 'log_id' => $log->id,
             ],
         );
@@ -479,11 +612,113 @@ class PengajuanBarang extends Model
         return true;
     }
 
+    /**
+     * Mengganti Master Barang pada Pengajuan Barang.
+     *
+     * Method ini digunakan ketika barang pada transaksi
+     * perlu diganti melalui proses edit.
+     */
+    public function updateBarang(
+        int $barangId,
+        ?string $catatan = null
+    ): bool {
+        /*
+         * Simpan informasi barang lama
+         * sebelum model di-update.
+         */
+        $barangLama = $this->barang;
+
+        $namaLama =
+            $this->nama_barang_snapshot
+            ?: $barangLama?->nama_barang
+            ?: $this->nama_barang
+            ?: '-';
+
+        /*
+         * Tidak ada perubahan.
+         */
+        if ((int) $this->barang_id === $barangId) {
+            return false;
+        }
+
+        /*
+         * Ambil Master Barang baru.
+         */
+        $barangBaru = MasterBarang::query()
+            ->withTrashed()
+            ->with('kategoriBarang')
+            ->find($barangId);
+
+        if (!$barangBaru) {
+            throw ValidationException::withMessages([
+                'barang_id' =>
+                    'Master Barang yang dipilih tidak ditemukan.',
+            ]);
+        }
+
+        /*
+         * Pastikan barang baru valid untuk transaksi.
+         */
+        if (!$barangBaru->canBeUsedForNewTransaction()) {
+            throw ValidationException::withMessages([
+                'barang_id' =>
+                    'Barang yang dipilih tidak aktif atau '
+                    . 'kategorinya tidak aktif.',
+            ]);
+        }
+
+        /*
+         * Update barang.
+         *
+         * Event saving() akan mengisi snapshot.
+         */
+        $this->update([
+            'barang_id' => $barangId,
+        ]);
+
+        $namaBaru = $barangBaru->nama_barang;
+
+        /*
+         * Catat perubahan.
+         */
+        $log = $this->tambahLog(
+            kategori: 'Update Data',
+            lama: $namaLama,
+            baru: $namaBaru,
+            keterangan:
+            $catatan
+            ?? 'Barang pengajuan diperbarui oleh '
+            . (auth()->user()?->name ?? 'System'),
+        );
+
+        /*
+         * Kirim event aktivitas.
+         */
+        HelpdeskActivityCreated::dispatch(
+            module: 'pengajuan',
+            activity: 'updated',
+            referenceId: $this->id,
+            kode: $this->kode_pengajuan,
+            actorId: auth()->id(),
+            data: [
+                'field' => 'barang_id',
+                'field_label' => 'Barang',
+                'old_value' => $namaLama,
+                'new_value' => $namaBaru,
+                'message' =>
+                    "Barang pada {$this->kode_pengajuan} diperbarui.",
+                'log_id' => $log->id,
+            ],
+        );
+
+        return true;
+    }
+    
     public function cancelByPemohon(
         ?string $catatan = null
     ): bool {
 
-        if (! $this->canPemohonDelete()) {
+        if (!$this->canPemohonDelete()) {
             return false;
         }
 
@@ -535,8 +770,8 @@ class PengajuanBarang extends Model
     public function getDurasiPengerjaanAttribute(): ?string
     {
         if (
-            ! $this->waktu_mulai ||
-            ! $this->waktu_selesai
+            !$this->waktu_mulai ||
+            !$this->waktu_selesai
         ) {
             return null;
         }
@@ -584,7 +819,7 @@ class PengajuanBarang extends Model
     */
     public function getStatusOutcomeAttribute(): ?string
     {
-        if (! $this->isClosed()) {
+        if (!$this->isClosed()) {
             return null;
         }
 
@@ -594,7 +829,7 @@ class PengajuanBarang extends Model
             ->latest('created_at')
             ->first();
 
-        if (! $closeLog) {
+        if (!$closeLog) {
             return null;
         }
 
@@ -718,8 +953,8 @@ class PengajuanBarang extends Model
         $days = round($hours / 24, 2);
 
         return number_format($hours, 2)
-            .' Jam'
-            ." ({$days} Hari)";
+            . ' Jam'
+            . " ({$days} Hari)";
     }
 
     /**
@@ -756,13 +991,13 @@ class PengajuanBarang extends Model
             ->map(function (self $pengajuan): ?float {
                 $waktuMulai = $pengajuan->logs
                     ->firstWhere('data_baru', 'In Progress')
-                    ?->created_at;
+                        ?->created_at;
                 $waktuSelesai = $pengajuan->logs
                     ->where('data_baru', 'Close')
                     ->last()
-                    ?->created_at;
+                        ?->created_at;
 
-                if (! $waktuMulai || ! $waktuSelesai) {
+                if (!$waktuMulai || !$waktuSelesai) {
                     return null;
                 }
 

@@ -27,7 +27,9 @@ class MasterKategoriBarang extends Model
     ];
 
     /**
-     * Relasi kategori ke master barang.
+     * Relasi kategori ke Master Barang.
+     *
+     * Satu kategori dapat memiliki banyak barang.
      */
     public function barang(): HasMany
     {
@@ -40,8 +42,8 @@ class MasterKategoriBarang extends Model
     /**
      * Scope kategori aktif.
      *
-     * Hanya kategori aktif yang dapat digunakan
-     * untuk data baru.
+     * Digunakan ketika kategori diperlukan
+     * untuk transaksi/data baru.
      */
     public function scopeActive(Builder $query): Builder
     {
@@ -57,7 +59,7 @@ class MasterKategoriBarang extends Model
     }
 
     /**
-     * Apakah kategori aktif?
+     * Menentukan apakah kategori aktif.
      */
     public function isActive(): bool
     {
@@ -65,9 +67,7 @@ class MasterKategoriBarang extends Model
     }
 
     /**
-     * Apakah kategori memiliki barang?
-     *
-     * Jumlah tidak disimpan sebagai kolom.
+     * Menentukan apakah kategori memiliki Master Barang.
      */
     public function hasBarang(): bool
     {
@@ -75,7 +75,8 @@ class MasterKategoriBarang extends Model
     }
 
     /**
-     * Jumlah barang berdasarkan relasi.
+     * Mengambil jumlah Master Barang
+     * yang berada pada kategori ini.
      */
     public function getJumlahBarangAttribute(): int
     {
@@ -83,8 +84,8 @@ class MasterKategoriBarang extends Model
     }
 
     /**
-     * Apakah kategori dapat digunakan
-     * untuk data baru?
+     * Menentukan apakah kategori dapat digunakan
+     * untuk data Master Barang baru.
      */
     public function canBeUsedForNewBarang(): bool
     {
@@ -93,26 +94,33 @@ class MasterKategoriBarang extends Model
     }
 
     /**
-     * Proteksi physical delete.
+     * Menentukan apakah kategori aman
+     * untuk physical delete.
      *
-     * Soft delete tetap diperbolehkan.
+     * Kategori tidak boleh dihapus permanen
+     * apabila masih memiliki relasi barang.
      */
     public function canBeForceDeleted(): bool
     {
-        return ! $this->barang()
+        return !$this->barang()
             ->withTrashed()
             ->exists();
     }
 
+    /**
+     * Proteksi physical delete.
+     */
     protected static function booted(): void
     {
-        static::forceDeleting(function (MasterKategoriBarang $kategori): void {
-            if (! $kategori->canBeForceDeleted()) {
-                throw new \RuntimeException(
-                    'Kategori barang tidak dapat dihapus secara permanen '
-                    .'karena masih memiliki relasi barang.'
-                );
+        static::forceDeleting(
+            function (MasterKategoriBarang $kategori): void {
+                if (!$kategori->canBeForceDeleted()) {
+                    throw new \RuntimeException(
+                        'Kategori barang tidak dapat dihapus secara permanen '
+                        . 'karena masih memiliki relasi barang.'
+                    );
+                }
             }
-        });
+        );
     }
 }

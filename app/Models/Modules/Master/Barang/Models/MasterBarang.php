@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+
 #[Fillable([
     'kategori_barang_id',
     'nama_barang',
@@ -36,22 +37,19 @@ class MasterBarang extends Model
         'deleted_at' => 'datetime',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONSHIPS
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * Relasi ke Master Kategori Barang.
+     */
     public function kategoriBarang(): BelongsTo
     {
         return $this->belongsTo(
             MasterKategoriBarang::class,
             'kategori_barang_id'
-        );
+        )->withTrashed();
     }
 
     /**
-     * Alias relasi kategoriBarang().
+     * Alias relasi kategori.
      */
     public function kategori(): BelongsTo
     {
@@ -59,7 +57,10 @@ class MasterBarang extends Model
     }
 
     /**
-     * Seluruh pengajuan yang menggunakan master barang ini.
+     * Relasi ke Pengajuan Barang.
+     *
+     * Satu Master Barang dapat digunakan
+     * pada banyak transaksi pengajuan.
      */
     public function pengajuanBarang(): HasMany
     {
@@ -69,53 +70,85 @@ class MasterBarang extends Model
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | SCOPES
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * Scope barang aktif.
+     */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
+    /**
+     * Scope barang tidak aktif.
+     */
     public function scopeInactive(Builder $query): Builder
     {
         return $query->where('is_active', false);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | STATUS
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * Menentukan apakah barang aktif.
+     */
     public function isActive(): bool
     {
         return $this->is_active === true;
     }
 
     /**
-     * Barang dapat digunakan untuk transaksi baru
-     * hanya jika tidak dihapus dan statusnya aktif.
+     * Menentukan apakah barang dapat digunakan
+     * untuk transaksi baru.
+     *
+     * Syarat:
+     * - belum soft delete;
+     * - aktif;
+     * - memiliki kategori;
+     * - kategori aktif;
+     * - kategori belum soft delete.
+     */
+    public function canBeUsedForNewTransaction(): bool
+    {
+        $kategori = $this->kategoriBarang;
+
+        return $this->deleted_at === null
+            && $this->is_active === true
+            && $kategori !== null
+            && $kategori->deleted_at === null
+            && $kategori->isActive();
+    }
+
+    /**
+     * Alias khusus konteks Pengajuan Barang.
+     *
+     * Opsional, tetapi membuat pemanggilan dari
+     * modul Pengajuan lebih mudah dibaca.
      */
     public function canBeUsedForNewPengajuan(): bool
     {
-        return $this->deleted_at === null
-            && $this->is_active === true
-            && $this->kategoriBarang?->canBeUsedForNewBarang() === true;
+        return $this->canBeUsedForNewTransaction();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | FORCE DELETE PROTECTION
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Menentukan apakah kategori barang aktif.
+     */
+    public function kategoriIsActive(): bool
+    {
+        return $this->kategoriBarang?->isActive() ?? false;
+    }
 
     /**
-     * Master barang tidak boleh dihapus permanen
-     * apabila sudah pernah digunakan dalam pengajuan.
+     * Nama kategori barang.
+     */
+    public function getNamaKategoriAttribute(): ?string
+    {
+        return $this->kategoriBarang?->nama_kategori;
+    }
+
+    /**
+     * Menentukan apakah barang boleh dihapus
+     * secara permanen.
+     *
+     * Barang yang sudah pernah digunakan
+     * dalam transaksi tidak boleh di-force delete.
      */
     public function canBeForceDeleted(): bool
     {
@@ -124,21 +157,21 @@ class MasterBarang extends Model
             ->exists();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | MODEL EVENTS
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * Proteksi physical delete.
+     */
     protected static function booted(): void
     {
-        static::forceDeleting(function (MasterBarang $barang): void {
-            if (!$barang->canBeForceDeleted()) {
-                throw new \RuntimeException(
-                    'Barang tidak dapat dihapus secara permanen '
-                    . 'karena sudah digunakan pada transaksi pengajuan barang.'
-                );
+        static::forceDeleting(
+            function (MasterBarang $barang): void {
+                if (!$barang->canBeForceDeleted()) {
+                    throw new \RuntimeException(
+                        'Barang tidak dapat dihapus secara permanen '
+                        . 'karena sudah digunakan pada transaksi '
+                        . 'pengajuan barang.'
+                    );
+                }
             }
-        });
+        );
     }
 }
