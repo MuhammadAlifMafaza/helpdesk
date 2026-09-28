@@ -4,14 +4,17 @@ namespace App\Filament\Resources\Master\MasterBarangs\Tables;
 
 use App\Models\Modules\Master\Barang\Models\MasterBarang;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteAction;
+use Illuminate\Database\Eloquent\Collection;
+use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
-use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
@@ -21,7 +24,6 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
-
 class MasterBarangsTable
 {
     public static function configure(Table $table): Table
@@ -30,44 +32,46 @@ class MasterBarangsTable
             ->defaultSort('nama_barang')
 
             ->columns([
-                TextColumn::make('nama_barang')
-                    ->label('Nama Barang')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('medium'),
-
                 TextColumn::make('kategoriBarang.nama_kategori')
                     ->label('Kategori')
                     ->searchable()
                     ->sortable()
                     ->badge(),
 
+                TextColumn::make('nama_barang')
+                    ->label('Nama Barang')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('medium'),
+
                 TextColumn::make('keterangan')
                     ->label('Keterangan')
-                    ->limit(70)
+                    ->limit(50)
                     ->wrap()
                     ->toggleable(),
 
                 IconColumn::make('is_active')
                     ->label('Status')
                     ->boolean()
-                    ->alignCenter(),
+                    ->sortable(),
 
                 TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y H:i')
                     ->sortable()
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
+                    ->toggleable(),
 
                 TextColumn::make('updated_at')
                     ->label('Diperbarui')
                     ->dateTime('d M Y H:i')
                     ->sortable()
-                    ->toggleable(
-                        isToggledHiddenByDefault: true
-                    ),
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('deleted_at')
+                    ->label('Dihapus')
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
 
             ->filters([
@@ -146,12 +150,24 @@ class MasterBarangsTable
                 RestoreAction::make(),
 
                 ForceDeleteAction::make()
-                    ->requiresConfirmation()
-                    ->modalHeading('Hapus Barang Secara Permanen?')
-                    ->modalDescription(
-                        'Tindakan ini tidak dapat dibatalkan. Barang hanya dapat dihapus '
-                        . 'secara permanen apabila tidak memiliki referensi transaksi.'
-                    ),
+                    ->visible(
+                        fn(MasterBarang $record): bool =>
+                            $record->trashed()
+                    )
+                    ->before(function (MasterBarang $record, ForceDeleteAction $action): void {
+                        if (!$record->canBeForceDeleted()) {
+                            Notification::make()
+                                ->title('Barang tidak dapat dihapus permanen')
+                                ->body(
+                                    'Barang ini sudah digunakan pada transaksi pengajuan barang.'
+                                )
+                                ->danger()
+                                ->persistent()
+                                ->send();
+
+                            $action->halt();
+                        }
+                    }),
             ])
 
             ->toolbarActions([
@@ -160,52 +176,111 @@ class MasterBarangsTable
                         ->label('Hapus Terpilih')
                         ->requiresConfirmation(),
 
-                    BulkAction::make('force_delete')
+                    ForceDeleteBulkAction::make()
                         ->label('Hapus Permanen')
-                        ->icon('heroicon-o-trash')
-                        ->color('danger')
-                        ->requiresConfirmation()
                         ->modalHeading('Hapus Barang Secara Permanen?')
                         ->modalDescription(
-                            'Barang yang dipilih akan dihapus secara permanen. '
-                            . 'Barang yang masih digunakan dalam transaksi tidak akan dapat dihapus.'
+                            'Barang yang sudah digunakan pada pengajuan barang '
+                            . 'tidak akan dihapus.'
                         )
-                        ->action(function ($records): void {
-
-                            $berhasil = 0;
-                            $ditolak = 0;
+                        ->successNotification(null)
+                        ->action(function (Collection $records): void {
+                            $deletedCount = 0;
+                            $blocked = [];
 
                             foreach ($records as $record) {
-                                try {
-                                    $record->forceDelete();
+                                $jumlahPengajuan = $record->pengajuanBarang()
+                                    ->withTrashed()
+                                    ->count();
 
-                                    $berhasil++;
-                                } catch (\Throwable $exception) {
-                                    $ditolak++;
+                                if ($jumlahPengajuan > 0) {
+                                    $blocked[] = [
+                                        'nama' => $record->nama_barang,
+                                        'jumlah' => $jumlahPengajuan,
+                                    ];
+
+                                    continue;
                                 }
+
+                                $record->forceDelete();
+
+                                $deletedCount++;
                             }
 
-                            $notification = Notification::make()
-                                ->title('Proses hapus permanen selesai');
-
-                            if ($ditolak > 0) {
-                                $notification
-                                    ->warning()
+                            /*
+                             * Semua berhasil.
+                             */
+                            if (empty($blocked)) {
+                                Notification::make()
+                                    ->title('Penghapusan berhasil')
                                     ->body(
-                                        "{$berhasil} barang berhasil dihapus permanen. "
-                                        . "{$ditolak} barang tidak dapat dihapus karena masih memiliki referensi transaksi."
-                                    );
-                            } else {
-                                $notification
+                                        $deletedCount
+                                        . ' barang berhasil dihapus secara permanen.'
+                                    )
                                     ->success()
-                                    ->body(
-                                        "{$berhasil} barang berhasil dihapus permanen."
-                                    );
+                                    ->send();
+
+                                return;
                             }
 
-                            $notification->send();
-                        })
-                        ->deselectRecordsAfterCompletion(),
+                            /*
+                             * Tidak ada yang berhasil.
+                             */
+                            if ($deletedCount === 0) {
+                                $detail = collect($blocked)
+                                    ->map(
+                                        fn(array $item): string =>
+                                            $item['nama']
+                                            . ' ('
+                                            . $item['jumlah']
+                                            . ' pengajuan)'
+                                    )
+                                    ->implode(', ');
+
+                                Notification::make()
+                                    ->title('Tidak ada barang yang dihapus')
+                                    ->body(
+                                        count($blocked)
+                                        . ' barang tidak dapat dihapus secara permanen '
+                                        . 'karena masih memiliki transaksi pengajuan: '
+                                        . $detail
+                                        . '.'
+                                    )
+                                    ->danger()
+                                    ->persistent()
+                                    ->send();
+
+                                return;
+                            }
+
+                            /*
+                             * Sebagian berhasil.
+                             */
+                            $detail = collect($blocked)
+                                ->map(
+                                    fn(array $item): string =>
+                                        $item['nama']
+                                        . ' ('
+                                        . $item['jumlah']
+                                        . ' pengajuan)'
+                                )
+                                ->implode(', ');
+
+                            Notification::make()
+                                ->title('Penghapusan sebagian berhasil')
+                                ->body(
+                                    $deletedCount
+                                    . ' barang berhasil dihapus permanen. '
+                                    . count($blocked)
+                                    . ' barang tidak dapat dihapus karena masih '
+                                    . 'memiliki transaksi pengajuan: '
+                                    . $detail
+                                    . '.'
+                                )
+                                ->warning()
+                                ->persistent()
+                                ->send();
+                        }),
 
                     RestoreBulkAction::make()
                         ->label('Pulihkan Terpilih'),

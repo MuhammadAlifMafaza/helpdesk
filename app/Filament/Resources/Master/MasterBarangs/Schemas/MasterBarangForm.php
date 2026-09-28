@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Master\MasterBarangs\Schemas;
 
+use App\Models\Modules\Master\Barang\Models\MasterBarang;
 use App\Models\Modules\Master\Barang\Models\MasterKategoriBarang;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -9,7 +10,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Validation\Rule;
 
 class MasterBarangForm
 {
@@ -19,55 +20,50 @@ class MasterBarangForm
             ->components([
                 Section::make('Informasi Barang')
                     ->description(
-                        'Kelola data barang yang menjadi standar penamaan dalam sistem Helpdesk.'
+                        'Kelola data barang yang dapat digunakan dalam pengajuan barang.'
                     )
                     ->schema([
                         Select::make('kategori_barang_id')
                             ->label('Kategori Barang')
-                            ->required()
+                            ->relationship(
+                                name: 'kategoriBarang',
+                                titleAttribute: 'nama_kategori',
+                                modifyQueryUsing: fn($query) => $query
+                                    ->where('is_active', true)
+                                    ->whereNull('deleted_at')
+                            )
                             ->searchable()
                             ->preload()
-                            ->options(
-                                fn(): array =>
-                                    MasterKategoriBarang::query()
-                                        ->active()
-                                        ->orderBy('nama_kategori')
-                                        ->pluck(
-                                            'nama_kategori',
-                                            'id'
-                                        )
-                                        ->toArray()
-                            )
+                            ->required()
+                            ->native(false)
                             ->helperText(
-                                'Hanya kategori aktif yang dapat digunakan untuk barang baru.'
+                                'Hanya kategori barang yang aktif yang dapat dipilih.'
                             ),
 
                         TextInput::make('nama_barang')
                             ->label('Nama Barang')
                             ->required()
                             ->maxLength(255)
-                            ->unique(
-                                table: 'master_barang',
-                                column: 'nama_barang',
-                                ignoreRecord: true,
-                                modifyRuleUsing: function ($rule, $get) {
-                                    return $rule
-                                        ->whereNull('deleted_at')
-                                        ->where(
-                                            'kategori_barang_id',
-                                            $get('kategori_barang_id')
-                                        );
-                                },
-                            )
+                            ->live(onBlur: true)
+                            ->rules(function (?MasterBarang $record, callable $get) {
+                                return [
+                                    Rule::unique('master_barang', 'nama_barang')
+                                        ->where(function ($query) use ($get) {
+                                            $query
+                                                ->where(
+                                                    'kategori_barang_id',
+                                                    $get('kategori_barang_id')
+                                                )
+                                                ->whereNull('deleted_at');
+                                        })
+                                        ->ignore($record?->id),
+                                ];
+                            })
                             ->validationMessages([
-                                'unique' =>
-                                    'Nama barang sudah digunakan pada kategori tersebut.',
+                                'unique' => 'Nama barang pada kategori tersebut sudah digunakan.',
                             ])
-                            ->placeholder(
-                                'Contoh: SSD NVMe M.2 1TB'
-                            )
                             ->helperText(
-                                'Gunakan nama barang yang jelas dan konsisten.'
+                                'Nama barang harus unik dalam kategori yang dipilih.'
                             ),
 
                         Textarea::make('keterangan')
@@ -87,6 +83,7 @@ class MasterBarangForm
                             ->onIcon('heroicon-m-check-circle')
                             ->offIcon('heroicon-m-x-circle')
                             ->default(true)
+                            ->inline(false)
                             ->helperText(
                                 fn($state): string =>
                                     $state
