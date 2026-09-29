@@ -4,16 +4,16 @@ namespace App\Models\Modules\Pengajuan\Models;
 
 // Imports necesery Modules or Classes
 use App\Events\HelpdeskActivityCreated;
+use App\Models\Modules\Master\Barang\Models\MasterBarang;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Modules\Master\Barang\Models\MasterBarang;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-// Imports necesery Files(Models)
 use Illuminate\Database\Eloquent\SoftDeletes;
+// Imports necesery Files(Models)
+use Illuminate\Validation\ValidationException;
 
 class PengajuanBarang extends Model
 {
@@ -41,6 +41,7 @@ class PengajuanBarang extends Model
     */
     public const ALLOWED_UPDATE_FIELDS = [
         'barang_id' => 'Barang',
+        'spesifikasi_barang' => 'Spesifikasi Barang',
         'jumlah' => 'Jumlah',
         'alasan' => 'Alasan',
     ];
@@ -48,9 +49,8 @@ class PengajuanBarang extends Model
     protected $fillable = [
         'user_id',
         'barang_id',
-        'nama_barang_snapshot',
-        'keterangan_barang',
         'nama_barang',
+        'spesifikasi_barang',
         'jumlah',
         'alasan',
         'status',
@@ -107,6 +107,16 @@ class PengajuanBarang extends Model
     */
     protected static function booted(): void
     {
+        static::creating(function (self $pengajuan): void {
+            if (blank($pengajuan->user_id)) {
+                $pengajuan->user_id = auth()->id();
+            }
+
+            if (blank($pengajuan->status)) {
+                $pengajuan->status = 'Open';
+            }
+        });
+
         static::created(function (self $pengajuan): void {
 
             $pengajuan->tambahLog(
@@ -184,8 +194,7 @@ class PengajuanBarang extends Model
                  */
                 if (!$pengajuan->barang_id) {
                     throw ValidationException::withMessages([
-                        'barang_id' =>
-                            'Barang wajib dipilih dari Master Barang.',
+                        'barang_id' => 'Barang wajib dipilih dari Master Barang.',
                     ]);
                 }
 
@@ -203,8 +212,7 @@ class PengajuanBarang extends Model
                  */
                 if (!$barang) {
                     throw ValidationException::withMessages([
-                        'barang_id' =>
-                            'Master Barang yang dipilih tidak ditemukan.',
+                        'barang_id' => 'Master Barang yang dipilih tidak ditemukan.',
                     ]);
                 }
 
@@ -213,8 +221,7 @@ class PengajuanBarang extends Model
                  */
                 if (!$barang->canBeUsedForNewTransaction()) {
                     throw ValidationException::withMessages([
-                        'barang_id' =>
-                            'Barang yang dipilih tidak aktif atau '
+                        'barang_id' => 'Barang yang dipilih tidak aktif atau '
                             . 'kategorinya tidak aktif.',
                     ]);
                 }
@@ -224,20 +231,11 @@ class PengajuanBarang extends Model
                  * SNAPSHOT
                  * ---------------------------------------------------------------
                  *
-                 * Simpan data Master Barang pada saat transaksi dibuat/diubah.
+                 * Menyimpan data Master Barang pada saat transaksi dibuat/diubah.
                  */
-                $pengajuan->nama_barang_snapshot =
-                    $barang->nama_barang;
+                $pengajuan->spesifikasi_barang = $barang->keterangan;
 
-                $pengajuan->keterangan_barang =
-                    $barang->keterangan;
-
-                /*
-                 * Tetap isi nama_barang untuk kompatibilitas
-                 * dengan data dan fungsi lama.
-                 */
-                $pengajuan->nama_barang =
-                    $barang->nama_barang;
+                $pengajuan->nama_barang = $barang->nama_barang;
             }
         );
     }
@@ -569,6 +567,13 @@ class PengajuanBarang extends Model
             return false;
         }
 
+        if ($field === 'spesifikasi_barang') {
+            return $this->updateSpesifikasiBarang(
+                spesifikasiBaru: $valueBaru,
+                catatan: $catatan
+            );
+        }
+
         /*
          * Update field biasa.
          */
@@ -599,12 +604,10 @@ class PengajuanBarang extends Model
             actorId: auth()->id(),
             data: [
                 'field' => $field,
-                'field_label' =>
-                    self::ALLOWED_UPDATE_FIELDS[$field],
+                'field_label' => self::ALLOWED_UPDATE_FIELDS[$field],
                 'old_value' => $valueLama,
                 'new_value' => $valueBaru,
-                'message' =>
-                    "Data pada {$this->kode_pengajuan} diperbarui.",
+                'message' => "Data pada {$this->kode_pengajuan} diperbarui.",
                 'log_id' => $log->id,
             ],
         );
@@ -612,38 +615,21 @@ class PengajuanBarang extends Model
         return true;
     }
 
-    /**
-     * Mengganti Master Barang pada Pengajuan Barang.
-     *
-     * Method ini digunakan ketika barang pada transaksi
-     * perlu diganti melalui proses edit.
-     */
     public function updateBarang(
         int $barangId,
         ?string $catatan = null
     ): bool {
-        /*
-         * Simpan informasi barang lama
-         * sebelum model di-update.
-         */
         $barangLama = $this->barang;
 
         $namaLama =
-            $this->nama_barang_snapshot
+            $this->nama_barang
             ?: $barangLama?->nama_barang
-            ?: $this->nama_barang
             ?: '-';
 
-        /*
-         * Tidak ada perubahan.
-         */
         if ((int) $this->barang_id === $barangId) {
             return false;
         }
 
-        /*
-         * Ambil Master Barang baru.
-         */
         $barangBaru = MasterBarang::query()
             ->withTrashed()
             ->with('kategoriBarang')
@@ -656,9 +642,6 @@ class PengajuanBarang extends Model
             ]);
         }
 
-        /*
-         * Pastikan barang baru valid untuk transaksi.
-         */
         if (!$barangBaru->canBeUsedForNewTransaction()) {
             throw ValidationException::withMessages([
                 'barang_id' =>
@@ -667,20 +650,12 @@ class PengajuanBarang extends Model
             ]);
         }
 
-        /*
-         * Update barang.
-         *
-         * Event saving() akan mengisi snapshot.
-         */
         $this->update([
             'barang_id' => $barangId,
         ]);
 
         $namaBaru = $barangBaru->nama_barang;
 
-        /*
-         * Catat perubahan.
-         */
         $log = $this->tambahLog(
             kategori: 'Update Data',
             lama: $namaLama,
@@ -691,9 +666,6 @@ class PengajuanBarang extends Model
             . (auth()->user()?->name ?? 'System'),
         );
 
-        /*
-         * Kirim event aktivitas.
-         */
         HelpdeskActivityCreated::dispatch(
             module: 'pengajuan',
             activity: 'updated',
@@ -713,7 +685,55 @@ class PengajuanBarang extends Model
 
         return true;
     }
-    
+
+    public function updateSpesifikasiBarang(
+        ?string $spesifikasiBaru,
+        ?string $catatan = null
+    ): bool {
+        $spesifikasiLama = $this->spesifikasi_barang;
+
+        $spesifikasiBaru = $spesifikasiBaru !== null
+            ? trim($spesifikasiBaru)
+            : null;
+
+        if ($spesifikasiLama === $spesifikasiBaru) {
+            return false;
+        }
+
+        $this->update([
+            'spesifikasi_barang' => $spesifikasiBaru,
+        ]);
+
+        $log = $this->tambahLog(
+            kategori: 'Update Data',
+            lama: $spesifikasiLama ?: '-',
+            baru: $spesifikasiBaru ?: '-',
+            keterangan:
+            $catatan
+            ?? 'Spesifikasi barang diperbarui oleh '
+            . (auth()->user()?->name ?? 'System'),
+        );
+
+        HelpdeskActivityCreated::dispatch(
+            module: 'pengajuan',
+            activity: 'updated',
+            referenceId: $this->id,
+            kode: $this->kode_pengajuan,
+            actorId: auth()->id(),
+            data: [
+                'field' => 'spesifikasi_barang',
+                'field_label' => 'Spesifikasi Barang',
+                'old_value' => $spesifikasiLama,
+                'new_value' => $spesifikasiBaru,
+                'message' =>
+                    "Spesifikasi barang pada {$this->kode_pengajuan} diperbarui.",
+                'log_id' => $log->id,
+            ],
+        );
+
+        return true;
+    }
+
     public function cancelByPemohon(
         ?string $catatan = null
     ): bool {

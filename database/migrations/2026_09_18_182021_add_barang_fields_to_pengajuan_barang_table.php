@@ -19,13 +19,9 @@ return new class extends Migration
                 ->restrictOnDelete()
                 ->cascadeOnUpdate();
 
-            $table->string('nama_barang_snapshot', 255)
-                ->nullable()
-                ->after('barang_id');
-
             $table->text('deskripsi_barang')
                 ->nullable()
-                ->after('nama_barang_snapshot');
+                ->after('nama_barang');
 
             $table->index('barang_id');
         });

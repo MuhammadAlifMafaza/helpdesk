@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-
 #[Fillable([
     'kategori_barang_id',
     'nama_barang',
@@ -45,7 +44,7 @@ class MasterBarang extends Model
         return $this->belongsTo(
             MasterKategoriBarang::class,
             'kategori_barang_id'
-        )->withTrashed();
+        );
     }
 
     /**
@@ -152,7 +151,7 @@ class MasterBarang extends Model
      */
     public function canBeForceDeleted(): bool
     {
-        return !$this->pengajuanBarang()
+        return ! $this->pengajuanBarang()
             ->withTrashed()
             ->exists();
     }
@@ -164,11 +163,11 @@ class MasterBarang extends Model
     {
         static::forceDeleting(
             function (MasterBarang $barang): void {
-                if (!$barang->canBeForceDeleted()) {
+                if (! $barang->canBeForceDeleted()) {
                     throw new \RuntimeException(
                         'Barang tidak dapat dihapus secara permanen '
-                        . 'karena sudah digunakan pada transaksi '
-                        . 'pengajuan barang.'
+                        .'karena sudah digunakan pada transaksi '
+                        .'pengajuan barang.'
                     );
                 }
             }

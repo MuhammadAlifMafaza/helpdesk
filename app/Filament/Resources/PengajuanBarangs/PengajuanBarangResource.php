@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PengajuanBarangs;
 
+use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Schemas\PengajuanBarangForm;
 use App\Filament\Resources\PengajuanBarangs\Pages\CreatePengajuanBarang;
 use App\Filament\Resources\PengajuanBarangs\Pages\EditPengajuanBarang;
 use App\Filament\Resources\PengajuanBarangs\Pages\ListPengajuanBarangs;
@@ -14,9 +15,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
@@ -54,43 +53,7 @@ class PengajuanBarangResource extends Resource
     */
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('user_id')
-                    ->label('Pemohon')
-                    ->relationship('user', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-
-                TextInput::make('nama_barang')
-                    ->label('Nama Barang')
-                    ->required()
-                    ->maxLength(255),
-
-                TextInput::make('jumlah')
-                    ->label('Jumlah Barang')
-                    ->numeric()
-                    ->default(1)
-                    ->minValue(1)
-                    ->required(),
-
-                Textarea::make('alasan')
-                    ->label('Alasan Pengajuan')
-                    ->rows(4)
-                    ->required(),
-
-                Select::make('status')
-                    ->label('Status')
-                    ->options([
-                        'Open' => 'Open',
-                        'In Progress' => 'In Progress',
-                        'Close' => 'Close',
-                    ])
-                    ->default('Open')
-                    ->disabled()
-                    ->dehydrated(false),
-            ]);
+        return PengajuanBarangForm::configure($schema);
     }
 
     /*
