@@ -39,15 +39,18 @@ class PengajuanBarangForm
                 TextInput::make('pemohon')
                     ->label('Pemohon')
                     ->default(
-                        fn (): ?string => auth()->user()?->name
+                        fn(): ?string => auth()->user()?->name
                     )
                     ->afterStateHydrated(
                         function (Set $set, ?PengajuanBarang $record): void {
-                            if (! $record?->user_id) {
+                            if (!$record?->user_id) {
                                 return;
                             }
 
-                            $set('pemohon', $record->user?->name);
+                            $set(
+                                'pemohon',
+                                $record->user?->name
+                            );
                         }
                     )
                     ->disabled()
@@ -72,33 +75,46 @@ class PengajuanBarangForm
                              *
                              * Pengajuan lama:
                              * kategori yang sedang digunakan tetap
-                             * dapat ditampilkan agar data historis
-                             * tidak rusak ketika kategori menjadi
-                             * nonaktif.
+                             * dapat ditampilkan agar histori tidak rusak
+                             * ketika kategori menjadi nonaktif.
                              */
-
                             if (
                                 $record?->barang?->kategori_barang_id
                             ) {
                                 $currentKategoriId =
                                     $record->barang->kategori_barang_id;
 
-                                $query->where(function ($query) use ($currentKategoriId): void {
-                                    $query
-                                        ->where(function ($query): void {
-                                            $query
-                                                ->where('is_active', true)
-                                                ->whereNull('deleted_at');
-                                        })
-                                        ->orWhere(
-                                            $query->getModel()->getQualifiedKeyName(),
-                                            $currentKategoriId
-                                        );
-                                });
+                                $query->where(
+                                    function ($query) use ($currentKategoriId): void {
+                                        $query
+                                            ->where(
+                                                function ($query): void {
+                                                    $query
+                                                        ->where(
+                                                            'is_active',
+                                                            true
+                                                        )
+                                                        ->whereNull(
+                                                            'deleted_at'
+                                                        );
+                                                }
+                                            )
+                                            ->orWhere(
+                                                $query->getModel()
+                                                    ->getQualifiedKeyName(),
+                                                $currentKategoriId
+                                            );
+                                    }
+                                );
                             } else {
                                 $query
-                                    ->where('is_active', true)
-                                    ->whereNull('deleted_at');
+                                    ->where(
+                                        'is_active',
+                                        true
+                                    )
+                                    ->whereNull(
+                                        'deleted_at'
+                                    );
                             }
 
                             return $query
@@ -114,15 +130,15 @@ class PengajuanBarangForm
                     ->native(false)
                     ->live()
                     ->required(
-                        fn (
-                            ?PengajuanBarang $record
-                        ): bool => $record === null
+                        fn(
+                        ?PengajuanBarang $record
+                    ): bool => $record === null
                             || filled($record->barang_id)
                     )
                     ->dehydrated(false)
                     ->afterStateHydrated(
                         function (Set $set, ?PengajuanBarang $record): void {
-                            if (! $record?->barang_id) {
+                            if (!$record?->barang_id) {
                                 return;
                             }
 
@@ -135,16 +151,24 @@ class PengajuanBarangForm
                     ->afterStateUpdated(
                         function (Set $set): void {
                             /*
-                             * Ketika kategori berubah, barang lama
-                             * tidak boleh tetap terpilih.
+                             * Ketika kategori berubah,
+                             * barang sebelumnya tidak boleh
+                             * tetap terpilih.
                              */
-                            $set('barang_id', null);
+                            $set(
+                                'barang_id',
+                                null
+                            );
 
                             /*
-                             * Keterangan barang juga harus
-                             * mengikuti barang yang baru dipilih.
+                             * Spesifikasi terkait dengan barang
+                             * yang dipilih. Karena barang berubah,
+                             * spesifikasi harus diisi kembali.
                              */
-                            $set('spesifikasi_barang', null);
+                            $set(
+                                'spesifikasi_barang',
+                                null
+                            );
                         }
                     )
                     ->helperText(
@@ -164,7 +188,7 @@ class PengajuanBarangForm
                             $kategoriId =
                                 $get('kategori_barang_id');
 
-                            if (! $kategoriId) {
+                            if (!$kategoriId) {
                                 return [];
                             }
 
@@ -210,15 +234,14 @@ class PengajuanBarangForm
                                         );
 
                                         /*
-                                         * Jika sedang mengedit
-                                         * transaksi lama, barang yang
-                                         * sedang digunakan tetap
-                                         * ditampilkan untuk menjaga
-                                         * histori transaksi.
+                                         * Saat edit transaksi lama,
+                                         * barang yang sedang digunakan
+                                         * tetap ditampilkan.
                                          */
                                         if ($currentBarangId) {
                                             $query->orWhere(
-                                                $query->getModel()->getQualifiedKeyName(),
+                                                $query->getModel()
+                                                    ->getQualifiedKeyName(),
                                                 $currentBarangId
                                             );
                                         }
@@ -237,21 +260,19 @@ class PengajuanBarangForm
                     ->native(false)
                     ->live()
                     ->required(
-                        fn (
-                            ?PengajuanBarang $record
-                        ): bool => $record === null
+                        fn(
+                        ?PengajuanBarang $record
+                    ): bool => $record === null
                             || filled($record->barang_id)
                     )
                     ->disabled(
-                        fn (
-                            Get $get
-                        ): bool => blank(
+                        fn(Get $get): bool => blank(
                             $get('kategori_barang_id')
                         )
                     )
                     ->afterStateHydrated(
                         function (Set $set, ?PengajuanBarang $record): void {
-                            if (! $record) {
+                            if (!$record) {
                                 return;
                             }
 
@@ -260,54 +281,23 @@ class PengajuanBarangForm
                                 $record->barang_id
                             );
 
+                            /*
+                             * Spesifikasi adalah data transaksi.
+                             *
+                             * Ambil hanya dari record pengajuan.
+                             *
+                             * TIDAK mengambil:
+                             * $record->barang?->keterangan
+                             */
                             $set(
                                 'spesifikasi_barang',
                                 $record->spesifikasi_barang
-                                ?: $record->barang?->keterangan
-                            );
-                        }
-                    )
-                    ->afterStateUpdated(
-                        function (Set $set, ?int $state): void {
-                            if (! $state) {
-                                $set(
-                                    'spesifikasi_barang',
-                                    null
-                                );
-
-                                return;
-                            }
-
-                            $barang = MasterBarang::query()
-                                ->withTrashed()
-                                ->with('kategoriBarang')
-                                ->find($state);
-
-                            $set(
-                                'spesifikasi_barang',
-                                $barang?->keterangan
                             );
                         }
                     )
                     ->helperText(
                         'Nama barang dikelola melalui Master Barang.'
                     ),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Keterangan Barang
-                |--------------------------------------------------------------------------
-                */
-
-                Textarea::make('spesifikasi_barang')
-                    ->label('Keterangan Barang')
-                    ->disabled()
-                    ->dehydrated(false)
-                    ->rows(3)
-                    ->placeholder(
-                        'Keterangan akan terisi otomatis dari Master Barang.'
-                    )
-                    ->columnSpanFull(),
 
                 /*
                 |--------------------------------------------------------------------------
@@ -325,6 +315,23 @@ class PengajuanBarangForm
 
                 /*
                 |--------------------------------------------------------------------------
+                | Spesifikasi Barang
+                |--------------------------------------------------------------------------
+                */
+
+                Textarea::make('spesifikasi_barang')
+                    ->label('Spesifikasi Barang')
+                    ->placeholder(
+                        'Contoh: Kapasitas 2TB, NVMe M.2, PCIe Gen 4'
+                    )
+                    ->helperText(
+                        'Isi spesifikasi teknis barang yang diperlukan.'
+                    )
+                    ->rows(4)
+                    ->maxLength(2000),
+
+                /*
+                |--------------------------------------------------------------------------
                 | Alasan
                 |--------------------------------------------------------------------------
                 */
@@ -335,9 +342,8 @@ class PengajuanBarangForm
                     ->rows(4)
                     ->maxLength(1000)
                     ->placeholder(
-                        'Jelaskan alasan pengajuan barang'
-                    )
-                    ->columnSpanFull(),
+                        'Jelaskan alasan pengajuan barang atau tujuan dari penggunaannya'
+                    ),
             ]);
     }
 }

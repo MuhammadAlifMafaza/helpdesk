@@ -2,7 +2,6 @@
 
 namespace App\Models\Modules\Pengajuan\Models;
 
-// Imports necesery Modules or Classes
 use App\Events\HelpdeskActivityCreated;
 use App\Models\Modules\Master\Barang\Models\MasterBarang;
 use App\Models\User;
@@ -12,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-// Imports necesery Files(Models)
 use Illuminate\Validation\ValidationException;
 
 class PengajuanBarang extends Model
@@ -115,6 +113,20 @@ class PengajuanBarang extends Model
             if (blank($pengajuan->status)) {
                 $pengajuan->status = 'Open';
             }
+
+            $pengajuan->validateAndSyncBarang();
+        });
+
+        static::updating(function (self $pengajuan): void {
+            /*
+             * Hanya validasi dan sinkronisasi apabila Master Barang berubah.
+             *
+             * Data lama yang masih memiliki barang_id = NULL
+             * tetap dipertahankan dan tidak dipaksa untuk dimigrasikan.
+             */
+            if ($pengajuan->isDirty('barang_id')) {
+                $pengajuan->validateAndSyncBarang();
+            }
         });
 
         static::created(function (self $pengajuan): void {
@@ -159,85 +171,49 @@ class PengajuanBarang extends Model
 
         });
 
-        static::saving(
-            function (self $pengajuan): void {
-                /*
-                 * Menentukan apakah ini transaksi baru.
-                 */
-                $isNew = !$pengajuan->exists;
+    }
 
-                /*
-                 * Menentukan apakah Master Barang berubah.
-                 */
-                $barangIdChanged = $pengajuan->isDirty('barang_id');
+    /**
+     * Validasi Master Barang dan sinkronisasi nama barang.
+     *
+     * Method ini hanya bertanggung jawab terhadap:
+     * - validasi barang_id
+     * - validasi status Master Barang
+     * - validasi status kategori
+     * - sinkronisasi nama_barang
+     *
+     * Tidak mengubah spesifikasi_barang.
+     */
+    protected function validateAndSyncBarang(): void
+    {
+        if (!$this->barang_id) {
+            throw ValidationException::withMessages([
+                'barang_id' => 'Barang wajib dipilih dari Master Barang.',
+            ]);
+        }
 
-                /*
-                 * ---------------------------------------------------------------
-                 * DATA LAMA
-                 * ---------------------------------------------------------------
-                 *
-                 * Pengajuan lama boleh tetap memiliki barang_id NULL.
-                 *
-                 * Selama barang_id tidak sedang diubah,
-                 * jangan memaksa migrasi data lama.
-                 */
-                if (!$isNew && !$barangIdChanged) {
-                    return;
-                }
+        $barang = MasterBarang::query()
+            ->withTrashed()
+            ->with('kategoriBarang')
+            ->find($this->barang_id);
 
-                /*
-                 * ---------------------------------------------------------------
-                 * TRANSAKSI BARU / PERUBAHAN BARANG
-                 * ---------------------------------------------------------------
-                 *
-                 * barang_id wajib tersedia.
-                 */
-                if (!$pengajuan->barang_id) {
-                    throw ValidationException::withMessages([
-                        'barang_id' => 'Barang wajib dipilih dari Master Barang.',
-                    ]);
-                }
+        if (!$barang) {
+            throw ValidationException::withMessages([
+                'barang_id' => 'Master Barang yang dipilih tidak ditemukan.',
+            ]);
+        }
 
-                /*
-                 * Ambil Master Barang termasuk data soft deleted
-                 * agar kita dapat memberikan validasi yang tepat.
-                 */
-                $barang = MasterBarang::query()
-                    ->withTrashed()
-                    ->with('kategoriBarang')
-                    ->find($pengajuan->barang_id);
+        if (!$barang->canBeUsedForNewTransaction()) {
+            throw ValidationException::withMessages([
+                'barang_id' => 'Barang yang dipilih tidak aktif atau '
+                    . 'kategorinya tidak aktif.',
+            ]);
+        }
 
-                /*
-                 * Master Barang tidak ditemukan.
-                 */
-                if (!$barang) {
-                    throw ValidationException::withMessages([
-                        'barang_id' => 'Master Barang yang dipilih tidak ditemukan.',
-                    ]);
-                }
-
-                /*
-                 * Master Barang harus memenuhi syarat transaksi baru.
-                 */
-                if (!$barang->canBeUsedForNewTransaction()) {
-                    throw ValidationException::withMessages([
-                        'barang_id' => 'Barang yang dipilih tidak aktif atau '
-                            . 'kategorinya tidak aktif.',
-                    ]);
-                }
-
-                /*
-                 * ---------------------------------------------------------------
-                 * SNAPSHOT
-                 * ---------------------------------------------------------------
-                 *
-                 * Menyimpan data Master Barang pada saat transaksi dibuat/diubah.
-                 */
-                $pengajuan->spesifikasi_barang = $barang->keterangan;
-
-                $pengajuan->nama_barang = $barang->nama_barang;
-            }
-        );
+        /*
+         * Nama barang disimpan sebagai snapshot transaksi.
+         */
+        $this->nama_barang = $barang->nama_barang;
     }
 
     /*
@@ -653,6 +629,12 @@ class PengajuanBarang extends Model
         $this->update([
             'barang_id' => $barangId,
         ]);
+
+        /*
+         * saving() akan melakukan sinkronisasi:
+         *
+         * nama_barang = MasterBarang.nama_barang
+         */
 
         $namaBaru = $barangBaru->nama_barang;
 

@@ -7,6 +7,7 @@ use App\Filament\Resources\PengajuanBarangs\Pages\CreatePengajuanBarang;
 use App\Filament\Resources\PengajuanBarangs\Pages\EditPengajuanBarang;
 use App\Filament\Resources\PengajuanBarangs\Pages\ListPengajuanBarangs;
 use App\Filament\Resources\PengajuanBarangs\Pages\ViewPengajuanBarang;
+use App\Filament\Resources\PengajuanBarangs\Schemas\PengajuanBarangInfolist;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -63,96 +64,7 @@ class PengajuanBarangResource extends Resource
     */
     public static function infolist(Schema $schema): Schema
     {
-        return $schema
-            ->columns(2)
-            ->schema([
-
-                Section::make('Informasi Pengajuan')
-                    ->columns(2)
-                    ->columnSpanFull()
-                    ->schema([
-
-                        TextEntry::make('kode_pengajuan')
-                            ->label('Nomor Pengajuan'),
-
-                        TextEntry::make('user.name')
-                            ->label('Nama Pemohon'),
-
-                        TextEntry::make('status')
-                            ->badge()
-                            ->icon(fn (string $state) => match ($state) {
-                                'Open' => 'heroicon-o-folder-open',
-                                'In Progress' => 'heroicon-o-arrow-path',
-                                'Close' => 'heroicon-o-check-circle',
-                                default => 'heroicon-o-question-mark-circle',
-                            })
-                            ->color(fn (string $state) => match ($state) {
-                                'Open' => 'info',
-                                'In Progress' => 'warning',
-                                'Close' => 'success',
-                                default => 'gray',
-                            }),
-
-                        TextEntry::make('nama_barang'),
-
-                        TextEntry::make('status_outcome')
-                            ->badge()
-                            ->icon(fn (?string $state) => match ($state) {
-                                'Completed' => 'heroicon-o-check-circle',
-                                'Rejected' => 'heroicon-o-x-circle',
-                                'Reopen' => 'heroicon-o-arrow-path',
-                                default => 'heroicon-o-question-mark-circle',
-                            })
-                            ->color(fn (?string $state): string => match ($state) {
-                                'Completed' => 'success',
-                                'Rejected' => 'danger',
-                                'Reopen' => 'warning',
-                                default => 'gray',
-                            }),
-
-                        TextEntry::make('jumlah')
-                            ->label('Jumlah Barang'),
-
-                        TextEntry::make('created_at')
-                            ->dateTime(),
-
-                        // TextEntry::make('alasan'),
-
-                        TextEntry::make('updated_at')
-                            ->dateTime(),
-
-                    ]),
-
-                Section::make('Alasan Permintaan')
-                    ->columnSpanFull()
-                    ->schema([
-
-                        TextEntry::make('alasan')
-                            ->hiddenLabel()
-                            ->columnSpanFull(),
-
-                    ]),
-
-                Section::make('Timeline Aktivitas')
-                    ->columnSpan(1)
-                    ->schema([
-
-                        ViewEntry::make('id')
-                            ->view('filament.pages.tiket.timeline'),
-
-                    ]),
-
-                Section::make('Diskusi')
-                    ->columnSpan(1)
-                    ->schema([
-
-                        ViewEntry::make('id')
-                            ->view(
-                                'filament.pages.tiket.chat'
-                            ),
-
-                    ]),
-            ]);
+        return PengajuanBarangInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
@@ -182,13 +94,13 @@ class PengajuanBarangResource extends Resource
 
                 TextColumn::make('status')
                     ->badge()
-                    ->icon(fn (string $state) => match ($state) {
+                    ->icon(fn(string $state) => match ($state) {
                         'Open' => 'heroicon-o-folder-open',
                         'In Progress' => 'heroicon-o-arrow-path',
                         'Close' => 'heroicon-o-check-circle',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn (string $state) => match ($state) {
+                    ->color(fn(string $state) => match ($state) {
                         'Open' => 'info',
                         'In Progress' => 'warning',
                         'Close' => 'success',
@@ -197,13 +109,13 @@ class PengajuanBarangResource extends Resource
 
                 TextColumn::make('status_outcome')
                     ->badge()
-                    ->icon(fn (?string $state) => match ($state) {
+                    ->icon(fn(?string $state) => match ($state) {
                         'Completed' => 'heroicon-o-check-circle',
                         'Rejected' => 'heroicon-o-x-circle',
                         'Reopen' => 'heroicon-o-arrow-path',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn (?string $state): string => match ($state) {
+                    ->color(fn(?string $state): string => match ($state) {
                         'Completed' => 'success',
                         'Rejected' => 'danger',
                         'Reopen' => 'warning',
@@ -215,7 +127,7 @@ class PengajuanBarangResource extends Resource
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn ($record) => $record->created_at->format('H:i:s')
+                        fn($record) => $record->created_at->format('H:i:s')
                     ),
 
                 TextColumn::make('waktu_mulai')
@@ -223,7 +135,7 @@ class PengajuanBarangResource extends Resource
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn ($record) => $record->waktu_mulai?->format('H:i:s')
+                        fn($record) => $record->waktu_mulai?->format('H:i:s')
                     ),
 
                 TextColumn::make('waktu_selesai')
@@ -231,7 +143,7 @@ class PengajuanBarangResource extends Resource
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn ($record) => $record->waktu_selesai?->format('H:i:s')
+                        fn($record) => $record->waktu_selesai?->format('H:i:s')
                     ),
 
                 TextColumn::make('durasi_pengerjaan')
@@ -251,20 +163,20 @@ class PengajuanBarangResource extends Resource
                     ->label('')
                     ->icon('heroicon-o-wrench-screwdriver')
                     ->visible(
-                        fn ($record) => $record->status === 'Open'
+                        fn($record) => $record->status === 'Open'
                     )
                     ->action(function ($record) {
 
                         $record->updateStatus(
                             'In Progress',
                             'Tiket mulai dikerjakan oleh '
-                            .auth()->user()->name
+                            . auth()->user()->name
                         );
 
                         $record->sendMessage(
                             'Teknisi '
-                            .auth()->user()->name
-                            .' mengambil tiket ini.'
+                            . auth()->user()->name
+                            . ' mengambil tiket ini.'
                         );
                     }),
 
@@ -274,7 +186,7 @@ class PengajuanBarangResource extends Resource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(
-                        fn ($record) => $record->status === 'In Progress'
+                        fn($record) => $record->status === 'In Progress'
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -299,7 +211,7 @@ class PengajuanBarangResource extends Resource
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
                     ->visible(
-                        fn ($record) => $record->status === 'In Progress'
+                        fn($record) => $record->status === 'In Progress'
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -324,7 +236,7 @@ class PengajuanBarangResource extends Resource
                     ->color('primary')
                     ->icon('heroicon-o-arrow-path')
                     ->visible(
-                        fn ($record) => $record->isClosed()
+                        fn($record) => $record->isClosed()
                             &&
                             (
                                 auth()->user()->hasRole('admin')
@@ -352,19 +264,19 @@ class PengajuanBarangResource extends Resource
 
                 RestoreAction::make()
                     ->label('')
-                    ->visible(fn ($record) => $record->trashed()),
+                    ->visible(fn($record) => $record->trashed()),
 
                 EditAction::make()
                     ->label('')
                     ->visible(
-                        fn ($record) => $record->canStaffEdit()
+                        fn($record) => $record->canStaffEdit()
                     ),
 
                 DeleteAction::make()
                     ->label('')
                     ->tooltip('Soft Delete')
                     ->visible(
-                        fn ($record) => $record->isClosed()
+                        fn($record) => $record->isClosed()
                             &&
                             (
                                 auth()->user()->hasRole('admin')
@@ -378,7 +290,7 @@ class PengajuanBarangResource extends Resource
                     ->label('')
                     ->tooltip('Force Delete')
                     ->visible(
-                        fn () => auth()->user()->hasRole('super_admin')
+                        fn() => auth()->user()->hasRole('super_admin')
                     ),
 
             ])
