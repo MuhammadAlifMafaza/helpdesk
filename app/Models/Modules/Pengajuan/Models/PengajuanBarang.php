@@ -22,6 +22,7 @@ class PengajuanBarang extends Model
     | Model Configuration
     |--------------------------------------------------------------------------
     */
+    protected bool $cancelledByPemohon = false;
     protected $table = 'pengajuan_barang';
 
     protected $appends = [
@@ -118,19 +119,12 @@ class PengajuanBarang extends Model
         });
 
         static::updating(function (self $pengajuan): void {
-            /*
-             * Hanya validasi dan sinkronisasi apabila Master Barang berubah.
-             *
-             * Data lama yang masih memiliki barang_id = NULL
-             * tetap dipertahankan dan tidak dipaksa untuk dimigrasikan.
-             */
             if ($pengajuan->isDirty('barang_id')) {
                 $pengajuan->validateAndSyncBarang();
             }
         });
 
         static::created(function (self $pengajuan): void {
-
             $pengajuan->tambahLog(
                 kategori: 'Status',
                 lama: null,
@@ -157,6 +151,10 @@ class PengajuanBarang extends Model
         static::deleting(function (self $pengajuan): void {
 
             if ($pengajuan->isForceDeleting()) {
+                return;
+            }
+
+            if ($pengajuan->cancelledByPemohon) {
                 return;
             }
 
@@ -707,8 +705,7 @@ class PengajuanBarang extends Model
                 'field_label' => 'Spesifikasi Barang',
                 'old_value' => $spesifikasiLama,
                 'new_value' => $spesifikasiBaru,
-                'message' =>
-                    "Spesifikasi barang pada {$this->kode_pengajuan} diperbarui.",
+                'message' => "Spesifikasi barang pada {$this->kode_pengajuan} telah diperbarui oleh {$this->namaUser}.",
                 'log_id' => $log->id,
             ],
         );
@@ -716,24 +713,47 @@ class PengajuanBarang extends Model
         return true;
     }
 
-    public function cancelByPemohon(
-        ?string $catatan = null
-    ): bool {
-
+    public function cancelByPemohon(?string $catatan = null): bool
+    {
         if (!$this->canPemohonDelete()) {
             return false;
         }
 
+        $user = auth()->user();
+
+        $namaUser = $user?->name ?? 'System';
+
+        $keterangan = filled($catatan)
+            ? $catatan
+            : "Pengajuan barang telah dibatalkan oleh {$namaUser}";
+
+        $this->cancelledByPemohon = true;
+
         $this->tambahLog(
-            kategori: 'Delete Data',
+            kategori: 'Status',
             lama: $this->status,
             baru: 'Cancelled',
-            keterangan: $catatan ?? 'Pengajuan barang dibatalkan oleh pemohon'
+            keterangan: $keterangan
+        );
+
+        HelpdeskActivityCreated::dispatch(
+            module: 'pengajuan',
+            activity: 'cancelled',
+            referenceId: $this->id,
+            kode: $this->kode_pengajuan,
+            actorId: $user?->id ?? $this->user_id,
+            data: [
+                'message' => "Pengajuan {$this->kode_pengajuan} dibatalkan.",
+                'user_id' => $this->user_id,
+                'user_name' => $user?->name,
+                'nama_barang' => $this->nama_barang,
+                'jumlah' => $this->jumlah,
+                'catatan' => $keterangan,
+            ],
         );
 
         return $this->delete();
     }
-
     /*
     |--------------------------------------------------------------------------
     | Timeline

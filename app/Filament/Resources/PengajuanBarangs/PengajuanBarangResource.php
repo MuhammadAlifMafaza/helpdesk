@@ -8,22 +8,11 @@ use App\Filament\Resources\PengajuanBarangs\Pages\EditPengajuanBarang;
 use App\Filament\Resources\PengajuanBarangs\Pages\ListPengajuanBarangs;
 use App\Filament\Resources\PengajuanBarangs\Pages\ViewPengajuanBarang;
 use App\Filament\Resources\PengajuanBarangs\Schemas\PengajuanBarangInfolist;
+use App\Filament\Resources\PengajuanBarangs\Tables\PengajuanBarangsTable;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use BackedEnum;
-use Filament\Actions\Action;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreAction;
-use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Textarea;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -52,9 +41,9 @@ class PengajuanBarangResource extends Resource
     | Form
     |--------------------------------------------------------------------------
     */
-    public static function form(Schema $schema): Schema
+    public static function form(Schema $form): Schema
     {
-        return PengajuanBarangForm::configure($schema);
+        return PengajuanBarangForm::configure($form);
     }
 
     /*
@@ -62,239 +51,14 @@ class PengajuanBarangResource extends Resource
     | Infolist
     |--------------------------------------------------------------------------
     */
-    public static function infolist(Schema $schema): Schema
+    public static function infolist(Schema $infolist): Schema
     {
-        return PengajuanBarangInfolist::configure($schema);
+        return PengajuanBarangInfolist::configure($infolist);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->defaultSort('created_at', 'desc')
-            ->columns([
-                TextColumn::make('index')
-                    ->label('No')
-                    ->rowIndex(),
-
-                TextColumn::make('kode_pengajuan')
-                    ->label('Kode Pengajuan')
-                    ->searchable()
-                    ->copyable()
-                    ->weight('bold'),
-
-                TextColumn::make('user.name')
-                    ->label('Pemohon')
-                    ->searchable(),
-
-                TextColumn::make('nama_barang')
-                    ->searchable(),
-
-                TextColumn::make('jumlah')
-                    ->sortable(),
-
-                TextColumn::make('status')
-                    ->badge()
-                    ->icon(fn(string $state) => match ($state) {
-                        'Open' => 'heroicon-o-folder-open',
-                        'In Progress' => 'heroicon-o-arrow-path',
-                        'Close' => 'heroicon-o-check-circle',
-                        default => 'heroicon-o-question-mark-circle',
-                    })
-                    ->color(fn(string $state) => match ($state) {
-                        'Open' => 'info',
-                        'In Progress' => 'warning',
-                        'Close' => 'success',
-                        default => 'gray',
-                    }),
-
-                TextColumn::make('status_outcome')
-                    ->badge()
-                    ->icon(fn(?string $state) => match ($state) {
-                        'Completed' => 'heroicon-o-check-circle',
-                        'Rejected' => 'heroicon-o-x-circle',
-                        'Reopen' => 'heroicon-o-arrow-path',
-                        default => 'heroicon-o-question-mark-circle',
-                    })
-                    ->color(fn(?string $state): string => match ($state) {
-                        'Completed' => 'success',
-                        'Rejected' => 'danger',
-                        'Reopen' => 'warning',
-                        default => 'gray',
-                    }),
-
-                TextColumn::make('created_at')
-                    ->label('Waktu Permintaan Dibuat')
-                    ->dateTime('d M Y')
-                    ->timezone('Asia/Jakarta')
-                    ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
-                    ),
-
-                TextColumn::make('waktu_mulai')
-                    ->label('Waktu Permintaan Diterima')
-                    ->dateTime('d M Y')
-                    ->timezone('Asia/Jakarta')
-                    ->description(
-                        fn($record) => $record->waktu_mulai?->format('H:i:s')
-                    ),
-
-                TextColumn::make('waktu_selesai')
-                    ->label('Waktu Permintaan Selesai')
-                    ->dateTime('d M Y')
-                    ->timezone('Asia/Jakarta')
-                    ->description(
-                        fn($record) => $record->waktu_selesai?->format('H:i:s')
-                    ),
-
-                TextColumn::make('durasi_pengerjaan')
-                    ->timezone('Asia/Jakarta'),
-
-            ])
-
-            ->filters([
-                TrashedFilter::make(),
-
-            ])
-
-            ->actions([
-
-                Action::make('ambil_tiket')
-                    ->tooltip('Ambil Tiket')
-                    ->label('')
-                    ->icon('heroicon-o-wrench-screwdriver')
-                    ->visible(
-                        fn($record) => $record->status === 'Open'
-                    )
-                    ->action(function ($record) {
-
-                        $record->updateStatus(
-                            'In Progress',
-                            'Tiket mulai dikerjakan oleh '
-                            . auth()->user()->name
-                        );
-
-                        $record->sendMessage(
-                            'Teknisi '
-                            . auth()->user()->name
-                            . ' mengambil tiket ini.'
-                        );
-                    }),
-
-                Action::make('selesai')
-                    ->tooltip('Selesai')
-                    ->label('')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->visible(
-                        fn($record) => $record->status === 'In Progress'
-                    )
-                    ->requiresConfirmation()
-                    ->form([
-                        Textarea::make('catatan')
-                            ->required(),
-                    ])
-                    ->action(function ($record, array $data) {
-
-                        $record->closeAsCompleted(
-                            $data['catatan']
-                        );
-
-                    })
-                    ->modalHeading('Konfirmasi Penyelesaian')
-                    ->modalDescription(
-                        'Tindakan ini akan menutup tiket.'
-                    ),
-
-                Action::make('tolak')
-                    ->tooltip('Tolak')
-                    ->label('')
-                    ->color('danger')
-                    ->icon('heroicon-o-x-circle')
-                    ->visible(
-                        fn($record) => $record->status === 'In Progress'
-                    )
-                    ->requiresConfirmation()
-                    ->form([
-                        Textarea::make('catatan')
-                            ->required(),
-                    ])
-                    ->action(function ($record, array $data) {
-
-                        $record->closeAsRejected(
-                            $data['catatan']
-                        );
-
-                    })
-                    ->modalHeading('Konfirmasi Penyelesaian')
-                    ->modalDescription(
-                        'Tindakan ini akan menutup tiket.'
-                    ),
-
-                Action::make('reopen')
-                    ->label('')
-                    ->tooltip('Reopen Ticket')
-                    ->color('primary')
-                    ->icon('heroicon-o-arrow-path')
-                    ->visible(
-                        fn($record) => $record->isClosed()
-                            &&
-                            (
-                                auth()->user()->hasRole('admin')
-                                ||
-                                auth()->user()->hasRole('super_admin')
-                            )
-                    )
-                    ->requiresConfirmation()
-                    ->form([
-                        Textarea::make('catatan')
-                            ->label('Alasan Reopen')
-                            ->required(),
-                    ])
-                    ->action(function ($record, array $data) {
-
-                        $record->reopen(
-                            $data['catatan']
-                        );
-
-                    }),
-
-                ViewAction::make()
-                    ->label('')
-                    ->tooltip('View Detail'),
-
-                RestoreAction::make()
-                    ->label('')
-                    ->visible(fn($record) => $record->trashed()),
-
-                EditAction::make()
-                    ->label('')
-                    ->visible(
-                        fn($record) => $record->canStaffEdit()
-                    ),
-
-                DeleteAction::make()
-                    ->label('')
-                    ->tooltip('Soft Delete')
-                    ->visible(
-                        fn($record) => $record->isClosed()
-                            &&
-                            (
-                                auth()->user()->hasRole('admin')
-                                ||
-                                auth()->user()->hasRole('super_admin')
-                            )
-                    )
-                    ->requiresConfirmation(),
-
-                ForceDeleteAction::make()
-                    ->label('')
-                    ->tooltip('Force Delete')
-                    ->visible(
-                        fn() => auth()->user()->hasRole('super_admin')
-                    ),
-
-            ])
-            ->actionsColumnLabel('Action Button');
+        return PengajuanBarangsTable::configure($table);
     }
 
     public static function getEloquentQuery(): Builder
