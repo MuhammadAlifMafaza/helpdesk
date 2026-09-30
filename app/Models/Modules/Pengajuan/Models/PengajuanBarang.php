@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class PengajuanBarang extends Model
@@ -22,7 +23,9 @@ class PengajuanBarang extends Model
     | Model Configuration
     |--------------------------------------------------------------------------
     */
+
     protected bool $cancelledByPemohon = false;
+
     protected $table = 'pengajuan_barang';
 
     protected $appends = [
@@ -38,6 +41,7 @@ class PengajuanBarang extends Model
     | Model Fillable Fields
     |--------------------------------------------------------------------------
     */
+
     public const ALLOWED_UPDATE_FIELDS = [
         'barang_id' => 'Barang',
         'spesifikasi_barang' => 'Spesifikasi Barang',
@@ -60,6 +64,7 @@ class PengajuanBarang extends Model
     | Relationships
     |--------------------------------------------------------------------------
     */
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(
@@ -78,12 +83,13 @@ class PengajuanBarang extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Ticket Identity (Kodes pengajuan) Generation
+    | Ticket Identity
     |--------------------------------------------------------------------------
     */
+
     public function getKodePengajuanAttribute(): string
     {
-        $firstIdToday = self::query()
+        $firstIdToday = self::withTrashed()
             ->whereDate(
                 'created_at',
                 $this->created_at->toDateString()
@@ -104,9 +110,14 @@ class PengajuanBarang extends Model
     | Model Lifecycle
     |--------------------------------------------------------------------------
     */
+
     protected static function booted(): void
     {
+        /*
+         * CREATE
+         */
         static::creating(function (self $pengajuan): void {
+
             if (blank($pengajuan->user_id)) {
                 $pengajuan->user_id = auth()->id();
             }
@@ -118,13 +129,21 @@ class PengajuanBarang extends Model
             $pengajuan->validateAndSyncBarang();
         });
 
+        /*
+         * UPDATE
+         */
         static::updating(function (self $pengajuan): void {
+
             if ($pengajuan->isDirty('barang_id')) {
                 $pengajuan->validateAndSyncBarang();
             }
         });
 
+        /*
+         * CREATED
+         */
         static::created(function (self $pengajuan): void {
+
             $pengajuan->tambahLog(
                 kategori: 'Status',
                 lama: null,
@@ -140,53 +159,68 @@ class PengajuanBarang extends Model
                 actorId: $pengajuan->user_id,
                 data: [
                     'message' => "Pengajuan {$pengajuan->kode_pengajuan} baru telah dibuat.",
+
                     'user_id' => $pengajuan->user_id,
+
                     'user_name' => $pengajuan->user?->name,
+
                     'nama_barang' => $pengajuan->nama_barang,
+
                     'jumlah' => $pengajuan->jumlah,
                 ],
             );
         });
 
+        /*
+         * DELETE
+         *
+         * Delete normal dari sistem harus tercatat.
+         *
+         * Namun cancelByPemohon() sudah membuat lifecycle
+         * khusus sehingga tidak boleh membuat log Deleted lagi.
+         */
         static::deleting(function (self $pengajuan): void {
 
+            /*
+             * Physical (permanent) delete: tidak membuat audit log.
+             */
             if ($pengajuan->isForceDeleting()) {
                 return;
             }
 
+            /*
+             * Delete / Cancel Pemohon: audit sudah dibuat oleh cancelByPemohon().
+             */
             if ($pengajuan->cancelledByPemohon) {
                 return;
             }
 
-            $namaUser = auth()->user()?->name ?? 'System';
+            $namaUser =
+                auth()->user()?->name
+                ?? 'System';
 
             $pengajuan->tambahLog(
                 kategori: 'Delete Data',
                 lama: $pengajuan->status,
                 baru: 'Deleted',
-                keterangan: "Pengajuan barang telah dihapus oleh {$namaUser}"
+                keterangan:
+                "Pengajuan barang telah dihapus oleh {$namaUser}"
             );
-
         });
-
     }
 
-    /**
-     * Validasi Master Barang dan sinkronisasi nama barang.
-     *
-     * Method ini hanya bertanggung jawab terhadap:
-     * - validasi barang_id
-     * - validasi status Master Barang
-     * - validasi status kategori
-     * - sinkronisasi nama_barang
-     *
-     * Tidak mengubah spesifikasi_barang.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Master Barang Validation
+    |--------------------------------------------------------------------------
+    */
+
     protected function validateAndSyncBarang(): void
     {
         if (!$this->barang_id) {
             throw ValidationException::withMessages([
-                'barang_id' => 'Barang wajib dipilih dari Master Barang.',
+                'barang_id' =>
+                    'Barang wajib dipilih dari Master Barang.',
             ]);
         }
 
@@ -197,21 +231,24 @@ class PengajuanBarang extends Model
 
         if (!$barang) {
             throw ValidationException::withMessages([
-                'barang_id' => 'Master Barang yang dipilih tidak ditemukan.',
+                'barang_id' =>
+                    'Master Barang yang dipilih tidak ditemukan.',
             ]);
         }
 
         if (!$barang->canBeUsedForNewTransaction()) {
             throw ValidationException::withMessages([
-                'barang_id' => 'Barang yang dipilih tidak aktif atau '
+                'barang_id' =>
+                    'Barang yang dipilih tidak aktif atau '
                     . 'kategorinya tidak aktif.',
             ]);
         }
 
         /*
-         * Nama barang disimpan sebagai snapshot transaksi.
+         * Snapshot nama barang.
          */
-        $this->nama_barang = $barang->nama_barang;
+        $this->nama_barang =
+            $barang->nama_barang;
     }
 
     /*
@@ -219,8 +256,10 @@ class PengajuanBarang extends Model
     | Permission / Access Control
     |--------------------------------------------------------------------------
     */
-    public function canBeAccessedBy(?User $user = null): bool
-    {
+
+    public function canBeAccessedBy(
+        ?User $user = null
+    ): bool {
         $user ??= auth()->user();
 
         if (!$user) {
@@ -242,10 +281,12 @@ class PengajuanBarang extends Model
         }
 
         /*
-         * Pemohon hanya dapat mengakses pengajuan barang miliknya.
+         * Pemohon hanya dapat mengakses
+         * pengajuan miliknya sendiri.
          */
         if ($user->hasRole('pemohon')) {
-            return (int) $this->user_id === (int) $user->id;
+            return (int) $this->user_id ===
+                (int) $user->id;
         }
 
         return false;
@@ -253,9 +294,17 @@ class PengajuanBarang extends Model
 
     public function canStaffEdit(): bool
     {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
         if (
-            auth()->user()->hasRole('admin')
-            || auth()->user()->hasRole('super_admin')
+            $user->hasAnyRole([
+                'admin',
+                'super_admin',
+            ])
         ) {
             return true;
         }
@@ -275,20 +324,22 @@ class PengajuanBarang extends Model
             return false;
         }
 
-        /* Pemohon hanya boleh mengubah pengajuan barang miliknya sendiri */
-
-        if ((int) $this->user_id !== (int) $user->id) {
+        if (
+            (int) $this->user_id !==
+            (int) $user->id
+        ) {
             return false;
         }
-
-        /* Hanya pengajuan barang dengan status Open yang dapat diedit */
 
         return $this->isOpen();
     }
 
-    /**
-     * Apakah pengajuan barang dapat dibatalkan oleh Pemohon?
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Pemohon Cancellation Permission
+    |--------------------------------------------------------------------------
+    */
+
     public function canPemohonDelete(): bool
     {
         $user = auth()->user();
@@ -301,21 +352,36 @@ class PengajuanBarang extends Model
             return false;
         }
 
-        /* Hanya pemilik pengajuan barang */
-        if ((int) $this->user_id !== (int) $user->id) {
+        /*
+         * Hanya pemilik pengajuan.
+         */
+        if (
+            (int) $this->user_id !==
+            (int) $user->id
+        ) {
             return false;
         }
 
-        /* Pengajuan barang hanya dapat dibatalkan apabila status pengajuan barang masih Open */
+        /*
+         * Record yang sudah soft deleted
+         * tidak dapat dibatalkan kembali.
+         */
+        if ($this->trashed()) {
+            return false;
+        }
+
+        /* Pemohon hanya dapat membatalkan pengajuan yang masih Open.
+         */
         return $this->isOpen();
     }
 
     /*
     |--------------------------------------------------------------------------
-    | Log Configuration
+    | Logs
     |--------------------------------------------------------------------------
     */
-    public function logs()
+
+    public function logs(): HasMany
     {
         return $this->hasMany(
             LogPengajuan::class,
@@ -323,25 +389,31 @@ class PengajuanBarang extends Model
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Audit Logs
-    |--------------------------------------------------------------------------
-    */
     public function tambahLog(
         string $kategori,
         ?string $lama = null,
         ?string $baru = null,
         ?string $keterangan = null
     ): LogPengajuan {
-
         return $this->logs()->create([
-            'user_id' => auth()->id() ?? $this->user_id,
-            'kategori_log' => $kategori,
-            'data_lama' => $lama,
-            'data_baru' => $baru,
-            'keterangan' => $keterangan,
-            'created_at' => now(),
+            'user_id' =>
+                auth()->id()
+                ?? $this->user_id,
+
+            'kategori_log' =>
+                $kategori,
+
+            'data_lama' =>
+                $lama,
+
+            'data_baru' =>
+                $baru,
+
+            'keterangan' =>
+                $keterangan,
+
+            'created_at' =>
+                now(),
         ]);
     }
 
@@ -350,16 +422,16 @@ class PengajuanBarang extends Model
     | Status Management
     |--------------------------------------------------------------------------
     */
+
     public function isLocked(): bool
     {
-        return $this->status === 'Close';
+        return $this->isClosed();
     }
 
     public function updateStatus(
         string $statusBaru,
         ?string $catatan = null
     ): bool {
-
         $statusLama = $this->status;
 
         if ($statusLama === $statusBaru) {
@@ -384,10 +456,19 @@ class PengajuanBarang extends Model
             kode: $this->kode_pengajuan,
             actorId: auth()->id(),
             data: [
-                'old_status' => $statusLama,
-                'new_status' => $statusBaru,
-                'message' => "Status {$this->kode_pengajuan} berubah dari {$statusLama} menjadi {$statusBaru}.",
-                'log_id' => $log->id,
+                'old_status' =>
+                    $statusLama,
+
+                'new_status' =>
+                    $statusBaru,
+
+                'message' =>
+                    "Status {$this->kode_pengajuan} "
+                    . "berubah dari {$statusLama} "
+                    . "menjadi {$statusBaru}.",
+
+                'log_id' =>
+                    $log->id,
             ],
         );
 
@@ -396,16 +477,20 @@ class PengajuanBarang extends Model
 
     public function reopen(
         ?string $catatan = null
-    ) {
+    ): bool {
         return $this->updateStatus(
             'In Progress',
-            '[REOPEN] ' .
-            ($catatan ?? 'Pengajuan dibuka kembali')
+            '[REOPEN] '
+            . (
+                $catatan
+                ?? 'Pengajuan dibuka kembali'
+            )
         );
     }
 
-    public function pending(string $catatan)
-    {
+    public function pending(
+        string $catatan
+    ): LogPengajuan {
         return $this->tambahLog(
             'Pending',
             null,
@@ -416,20 +501,120 @@ class PengajuanBarang extends Model
 
     public function closeAsCompleted(
         ?string $catatan = null
-    ) {
+    ): bool {
         return $this->updateStatus(
             'Close',
-            '[SELESAI] ' . ($catatan ?? '')
+            '[SELESAI] '
+            . ($catatan ?? '')
         );
     }
 
     public function closeAsRejected(
         ?string $catatan = null
-    ) {
+    ): bool {
         return $this->updateStatus(
             'Close',
-            '[DITOLAK] ' . ($catatan ?? '')
+            '[DITOLAK] '
+            . ($catatan ?? '')
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pemohon Cancellation Lifecycle
+    |--------------------------------------------------------------------------
+    */
+
+    public function cancelByPemohon(
+        ?string $catatan = null
+    ): bool {
+
+        /*
+         * Validasi hak akses dan status.
+         */
+        if (!$this->canPemohonDelete()) {
+            return false;
+        }
+
+        $user = auth()->user();
+
+        $namaUser =
+            $user?->name
+            ?? 'System';
+
+        $keterangan = filled($catatan)
+            ? trim($catatan)
+            : "Pengajuan barang telah dibatalkan oleh {$namaUser}";
+
+        return DB::transaction(
+            function () use ($user, $namaUser, $keterangan): bool {
+
+                /*
+                 * Tandai bahwa delete ini berasal
+                 * dari lifecycle Cancel Pemohon.
+                 */
+                $this->cancelledByPemohon = true;
+
+                /*
+                 * Audit Trail.
+                 */
+                $log = $this->tambahLog(
+                    kategori: 'Status',
+                    lama: $this->status,
+                    baru: 'Cancelled',
+                    keterangan: $keterangan
+                );
+
+                /*
+                 * Activity Notification.
+                 */
+                HelpdeskActivityCreated::dispatch(
+                    module: 'pengajuan',
+                    activity: 'cancelled',
+                    referenceId: $this->id,
+                    kode: $this->kode_pengajuan,
+                    actorId:
+                    $user?->id
+                    ?? $this->user_id,
+
+                    data: [
+                        'message' =>
+                            "Pengajuan {$this->kode_pengajuan} "
+                            . "dibatalkan oleh {$namaUser}.",
+
+                        'user_id' => $this->user_id,
+                        'user_name' => $user?->name,
+                        'nama_barang' => $this->nama_barang,
+                        'jumlah' => $this->jumlah,
+                        'catatan' => $keterangan,
+                        'log_id' => $log->id,
+                    ],
+                );
+
+                /*
+                 * Soft Delete.
+                 */
+                return $this->delete();
+            }
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cancellation State
+    |--------------------------------------------------------------------------
+    */
+
+    public function isCancelled(): bool
+    {
+        if (!$this->trashed()) {
+            return false;
+        }
+
+        return $this->logs()
+            ->where('kategori_log', 'Status')
+            ->where('data_baru', 'Cancelled')
+            ->exists();
     }
 
     /*
@@ -477,24 +662,32 @@ class PengajuanBarang extends Model
     | Data Management
     |--------------------------------------------------------------------------
     */
-    public function updateDataPemohon(array $data): bool
-    {
+
+    public function updateDataPemohon(
+        array $data
+    ): bool {
+
         if (!$this->canPemohonEdit()) {
             return false;
         }
 
         $updated = false;
 
-        foreach (self::ALLOWED_UPDATE_FIELDS as $field => $label) {
+        foreach (
+            self::ALLOWED_UPDATE_FIELDS
+            as $field => $label
+        ) {
 
             if (!array_key_exists($field, $data)) {
                 continue;
             }
 
-            $updated = $this->updateField(
-                field: $field,
-                valueBaru: $data[$field]
-            ) || $updated;
+            $updated =
+                $this->updateField(
+                    field: $field,
+                    valueBaru: $data[$field]
+                )
+                || $updated;
         }
 
         return $updated;
@@ -505,9 +698,7 @@ class PengajuanBarang extends Model
         mixed $valueBaru,
         ?string $catatan = null
     ): bool {
-        /*
-         * Pastikan field memang diperbolehkan.
-         */
+
         if (
             !array_key_exists(
                 $field,
@@ -519,9 +710,6 @@ class PengajuanBarang extends Model
             );
         }
 
-        /*
-         * Barang memiliki proses khusus.
-         */
         if ($field === 'barang_id') {
             return $this->updateBarang(
                 barangId: (int) $valueBaru,
@@ -529,47 +717,42 @@ class PengajuanBarang extends Model
             );
         }
 
-        /*
-         * Ambil nilai lama.
-         */
-        $valueLama = $this->getAttribute($field);
+        $valueLama =
+            $this->getAttribute($field);
 
-        /*
-         * Tidak ada perubahan.
-         */
-        if ((string) $valueLama === (string) $valueBaru) {
+        if (
+            (string) $valueLama ===
+            (string) $valueBaru
+        ) {
             return false;
         }
 
-        if ($field === 'spesifikasi_barang') {
+        if (
+            $field ===
+            'spesifikasi_barang'
+        ) {
             return $this->updateSpesifikasiBarang(
                 spesifikasiBaru: $valueBaru,
                 catatan: $catatan
             );
         }
 
-        /*
-         * Update field biasa.
-         */
         $this->update([
             $field => $valueBaru,
         ]);
 
-        /*
-         * Catat perubahan ke timeline/log.
-         */
         $log = $this->tambahLog(
             kategori: 'Update Data',
             lama: (string) ($valueLama ?? '-'),
             baru: (string) ($valueBaru ?? '-'),
             keterangan: $catatan
             ?? 'Data pengajuan diperbarui oleh '
-            . (auth()->user()?->name ?? 'System'),
+            . (
+                auth()->user()?->name
+                ?? 'System'
+            ),
         );
 
-        /*
-         * Dispatch activity.
-         */
         HelpdeskActivityCreated::dispatch(
             module: 'pengajuan',
             activity: 'updated',
@@ -589,10 +772,17 @@ class PengajuanBarang extends Model
         return true;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Update Barang
+    |--------------------------------------------------------------------------
+    */
+
     public function updateBarang(
         int $barangId,
         ?string $catatan = null
     ): bool {
+
         $barangLama = $this->barang;
 
         $namaLama =
@@ -612,15 +802,16 @@ class PengajuanBarang extends Model
         if (!$barangBaru) {
             throw ValidationException::withMessages([
                 'barang_id' =>
-                    'Master Barang yang dipilih tidak ditemukan.',
+                    'Master Barang yang dipilih '
+                    . 'tidak ditemukan.',
             ]);
         }
 
         if (!$barangBaru->canBeUsedForNewTransaction()) {
             throw ValidationException::withMessages([
                 'barang_id' =>
-                    'Barang yang dipilih tidak aktif atau '
-                    . 'kategorinya tidak aktif.',
+                    'Barang yang dipilih tidak aktif '
+                    . 'atau kategorinya tidak aktif.',
             ]);
         }
 
@@ -628,13 +819,8 @@ class PengajuanBarang extends Model
             'barang_id' => $barangId,
         ]);
 
-        /*
-         * saving() akan melakukan sinkronisasi:
-         *
-         * nama_barang = MasterBarang.nama_barang
-         */
-
-        $namaBaru = $barangBaru->nama_barang;
+        $namaBaru =
+            $barangBaru->nama_barang;
 
         $log = $this->tambahLog(
             kategori: 'Update Data',
@@ -643,7 +829,10 @@ class PengajuanBarang extends Model
             keterangan:
             $catatan
             ?? 'Barang pengajuan diperbarui oleh '
-            . (auth()->user()?->name ?? 'System'),
+            . (
+                auth()->user()?->name
+                ?? 'System'
+            ),
         );
 
         HelpdeskActivityCreated::dispatch(
@@ -657,8 +846,7 @@ class PengajuanBarang extends Model
                 'field_label' => 'Barang',
                 'old_value' => $namaLama,
                 'new_value' => $namaBaru,
-                'message' =>
-                    "Barang pada {$this->kode_pengajuan} diperbarui.",
+                'message' => "Barang pada {$this->kode_pengajuan} diperbarui.",
                 'log_id' => $log->id,
             ],
         );
@@ -666,13 +854,21 @@ class PengajuanBarang extends Model
         return true;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Update Spesifikasi Barang
+    |--------------------------------------------------------------------------
+    */
+
     public function updateSpesifikasiBarang(
         ?string $spesifikasiBaru,
         ?string $catatan = null
     ): bool {
+
         $spesifikasiLama = $this->spesifikasi_barang;
 
-        $spesifikasiBaru = $spesifikasiBaru !== null
+        $spesifikasiBaru =
+            $spesifikasiBaru !== null
             ? trim($spesifikasiBaru)
             : null;
 
@@ -688,10 +884,11 @@ class PengajuanBarang extends Model
             kategori: 'Update Data',
             lama: $spesifikasiLama ?: '-',
             baru: $spesifikasiBaru ?: '-',
-            keterangan:
-            $catatan
-            ?? 'Spesifikasi barang diperbarui oleh '
-            . (auth()->user()?->name ?? 'System'),
+            keterangan: $catatan ?? 'Spesifikasi barang diperbarui oleh '
+            . (
+                auth()->user()?->name
+                ?? 'System'
+            ),
         );
 
         HelpdeskActivityCreated::dispatch(
@@ -705,7 +902,10 @@ class PengajuanBarang extends Model
                 'field_label' => 'Spesifikasi Barang',
                 'old_value' => $spesifikasiLama,
                 'new_value' => $spesifikasiBaru,
-                'message' => "Spesifikasi barang pada {$this->kode_pengajuan} telah diperbarui oleh {$this->namaUser}.",
+                'message' =>
+                    "Spesifikasi barang pada "
+                    . "{$this->kode_pengajuan} "
+                    . "telah diperbarui.",
                 'log_id' => $log->id,
             ],
         );
@@ -713,52 +913,12 @@ class PengajuanBarang extends Model
         return true;
     }
 
-    public function cancelByPemohon(?string $catatan = null): bool
-    {
-        if (!$this->canPemohonDelete()) {
-            return false;
-        }
-
-        $user = auth()->user();
-
-        $namaUser = $user?->name ?? 'System';
-
-        $keterangan = filled($catatan)
-            ? $catatan
-            : "Pengajuan barang telah dibatalkan oleh {$namaUser}";
-
-        $this->cancelledByPemohon = true;
-
-        $this->tambahLog(
-            kategori: 'Status',
-            lama: $this->status,
-            baru: 'Cancelled',
-            keterangan: $keterangan
-        );
-
-        HelpdeskActivityCreated::dispatch(
-            module: 'pengajuan',
-            activity: 'cancelled',
-            referenceId: $this->id,
-            kode: $this->kode_pengajuan,
-            actorId: $user?->id ?? $this->user_id,
-            data: [
-                'message' => "Pengajuan {$this->kode_pengajuan} dibatalkan.",
-                'user_id' => $this->user_id,
-                'user_name' => $user?->name,
-                'nama_barang' => $this->nama_barang,
-                'jumlah' => $this->jumlah,
-                'catatan' => $keterangan,
-            ],
-        );
-
-        return $this->delete();
-    }
     /*
     |--------------------------------------------------------------------------
     | Timeline
     |--------------------------------------------------------------------------
     */
+
     public function timeline(): HasMany
     {
         return $this->logs()
@@ -771,11 +931,15 @@ class PengajuanBarang extends Model
     | Reporting / Time Attributes
     |--------------------------------------------------------------------------
     */
+
     public function getWaktuMulaiAttribute(): ?Carbon
     {
         return $this->logs()
             ->where('kategori_log', 'Status')
-            ->where('data_baru', 'In Progress')
+            ->where(
+                'data_baru',
+                'In Progress'
+            )
             ->orderBy('created_at')
             ->value('created_at');
     }
@@ -784,7 +948,10 @@ class PengajuanBarang extends Model
     {
         return $this->logs()
             ->where('kategori_log', 'Status')
-            ->where('data_baru', 'Close')
+            ->where(
+                'data_baru',
+                'Close'
+            )
             ->latest('created_at')
             ->value('created_at');
     }
@@ -792,8 +959,8 @@ class PengajuanBarang extends Model
     public function getDurasiPengerjaanAttribute(): ?string
     {
         if (
-            !$this->waktu_mulai ||
-            !$this->waktu_selesai
+            !$this->waktu_mulai
+            || !$this->waktu_selesai
         ) {
             return null;
         }
@@ -809,6 +976,7 @@ class PengajuanBarang extends Model
     | Status Helpers
     |--------------------------------------------------------------------------
     */
+
     public function isOpen(): bool
     {
         return $this->status === 'Open';
@@ -839,6 +1007,7 @@ class PengajuanBarang extends Model
     | Outcome Helpers
     |--------------------------------------------------------------------------
     */
+
     public function getStatusOutcomeAttribute(): ?string
     {
         if (!$this->isClosed()) {
@@ -846,8 +1015,14 @@ class PengajuanBarang extends Model
         }
 
         $closeLog = $this->logs()
-            ->where('kategori_log', 'Status')
-            ->where('data_baru', 'Close')
+            ->where(
+                'kategori_log',
+                'Status'
+            )
+            ->where(
+                'data_baru',
+                'Close'
+            )
             ->latest('created_at')
             ->first();
 
@@ -882,9 +1057,6 @@ class PengajuanBarang extends Model
     |--------------------------------------------------------------------------
     */
 
-    /**
-     * Total jumlah pengajuan barang.
-     */
     public static function getTotalPengajuan(
         ?Builder $query = null
     ): int {
@@ -893,9 +1065,6 @@ class PengajuanBarang extends Model
         return (clone $query)->count();
     }
 
-    /**
-     * Total pengajuan yang belum diproses.
-     */
     public static function getTotalOpen(
         ?Builder $query = null
     ): int {
@@ -906,22 +1075,19 @@ class PengajuanBarang extends Model
             ->count();
     }
 
-    /**
-     * Total pengajuan yang sedang diproses.
-     */
     public static function getTotalInProgress(
         ?Builder $query = null
     ): int {
         $query ??= static::query();
 
         return (clone $query)
-            ->where('status', 'In Progress')
+            ->where(
+                'status',
+                'In Progress'
+            )
             ->count();
     }
 
-    /**
-     * Total pengajuan yang telah ditutup.
-     */
     public static function getTotalClose(
         ?Builder $query = null
     ): int {
@@ -932,9 +1098,6 @@ class PengajuanBarang extends Model
             ->count();
     }
 
-    /**
-     * Jumlah pengajuan yang belum selesai.
-     */
     public static function getTotalBelumSelesai(
         ?Builder $query = null
     ): int {
@@ -945,53 +1108,70 @@ class PengajuanBarang extends Model
             ->count();
     }
 
-    /**
-     * Rata-rata durasi pengerjaan dalam jam.
-     */
     public static function getAverageDuration(
         ?Builder $query = null
     ): float {
-        $minutes = static::getAverageDurationMinutes($query);
+
+        $minutes =
+            static::getAverageDurationMinutes(
+                $query
+            );
 
         if ($minutes === null) {
             return 0;
         }
 
-        return round($minutes / 60, 2);
+        return round(
+            $minutes / 60,
+            2
+        );
     }
 
-    /**
-     * Rata-rata durasi pengerjaan human readable.
-     */
     public static function getAverageDurationHuman(
         ?Builder $query = null
     ): string {
-        $hours = static::getAverageDuration($query);
+
+        $hours =
+            static::getAverageDuration(
+                $query
+            );
 
         if ($hours <= 0) {
             return '-';
         }
 
-        $days = round($hours / 24, 2);
+        $days =
+            round(
+                $hours / 24,
+                2
+            );
 
-        return number_format($hours, 2)
+        return number_format(
+            $hours,
+            2
+        )
             . ' Jam'
             . " ({$days} Hari)";
     }
 
-    /**
-     * Deskripsi rata-rata durasi pengerjaan.
-     */
     public static function getAverageDurationDescription(
         ?Builder $query = null
     ): string {
-        $minutes = static::getAverageDurationMinutes($query);
+
+        $minutes =
+            static::getAverageDurationMinutes(
+                $query
+            );
 
         if ($minutes === null) {
             return '-';
         }
 
-        $days = round($minutes / 1440, 2);
+        $days =
+            round(
+                $minutes / 1440,
+                2
+            );
 
         return "≈ {$days} Hari";
     }
@@ -999,32 +1179,60 @@ class PengajuanBarang extends Model
     private static function getAverageDurationMinutes(
         ?Builder $query = null
     ): ?float {
+
         $query ??= static::query();
 
         $durations = (clone $query)
             ->with([
                 'logs' => function (HasMany $query): void {
                     $query
-                        ->where('kategori_log', 'Status')
-                        ->orderBy('created_at');
+                        ->where(
+                            'kategori_log',
+                            'Status'
+                        )
+                        ->orderBy(
+                            'created_at'
+                        );
                 },
             ])
             ->get()
-            ->map(function (self $pengajuan): ?float {
-                $waktuMulai = $pengajuan->logs
-                    ->firstWhere('data_baru', 'In Progress')
-                        ?->created_at;
-                $waktuSelesai = $pengajuan->logs
-                    ->where('data_baru', 'Close')
-                    ->last()
-                        ?->created_at;
+            ->map(
+                function (self $pengajuan): ?float {
 
-                if (!$waktuMulai || !$waktuSelesai) {
-                    return null;
+                    $waktuMulai =
+                        $pengajuan
+                            ->logs
+                            ->firstWhere(
+                                'data_baru',
+                                'In Progress'
+                            )
+                                ?->created_at;
+
+                    $waktuSelesai =
+                        $pengajuan
+                            ->logs
+                            ->where(
+                                'data_baru',
+                                'Close'
+                            )
+                            ->last()
+                                ?->created_at;
+
+                    if (
+                        !$waktuMulai
+                        || !$waktuSelesai
+                    ) {
+                        return null;
+                    }
+
+                    return abs(
+                        $waktuMulai
+                            ->diffInMinutes(
+                                $waktuSelesai
+                            )
+                    );
                 }
-
-                return abs($waktuMulai->diffInMinutes($waktuSelesai));
-            })
+            )
             ->filter();
 
         return $durations->isEmpty()
