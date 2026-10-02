@@ -159,26 +159,14 @@ class PengajuanBarang extends Model
                 actorId: $pengajuan->user_id,
                 data: [
                     'message' => "Pengajuan {$pengajuan->kode_pengajuan} baru telah dibuat.",
-
                     'user_id' => $pengajuan->user_id,
-
                     'user_name' => $pengajuan->user?->name,
-
                     'nama_barang' => $pengajuan->nama_barang,
-
                     'jumlah' => $pengajuan->jumlah,
                 ],
             );
         });
 
-        /*
-         * DELETE
-         *
-         * Delete normal dari sistem harus tercatat.
-         *
-         * Namun cancelByPemohon() sudah membuat lifecycle
-         * khusus sehingga tidak boleh membuat log Deleted lagi.
-         */
         static::deleting(function (self $pengajuan): void {
 
             /*
@@ -285,7 +273,8 @@ class PengajuanBarang extends Model
          * pengajuan miliknya sendiri.
          */
         if ($user->hasRole('pemohon')) {
-            return (int) $this->user_id ===
+            return
+                (int) $this->user_id ===
                 (int) $user->id;
         }
 
@@ -396,24 +385,12 @@ class PengajuanBarang extends Model
         ?string $keterangan = null
     ): LogPengajuan {
         return $this->logs()->create([
-            'user_id' =>
-                auth()->id()
-                ?? $this->user_id,
-
-            'kategori_log' =>
-                $kategori,
-
-            'data_lama' =>
-                $lama,
-
-            'data_baru' =>
-                $baru,
-
-            'keterangan' =>
-                $keterangan,
-
-            'created_at' =>
-                now(),
+            'user_id' => auth()->id() ?? $this->user_id,
+            'kategori_log' => $kategori,
+            'data_lama' => $lama,
+            'data_baru' => $baru,
+            'keterangan' => $keterangan,
+            'created_at' => now(),
         ]);
     }
 
@@ -456,19 +433,13 @@ class PengajuanBarang extends Model
             kode: $this->kode_pengajuan,
             actorId: auth()->id(),
             data: [
-                'old_status' =>
-                    $statusLama,
-
-                'new_status' =>
-                    $statusBaru,
-
+                'old_status' => $statusLama,
+                'new_status' => $statusBaru,
                 'message' =>
                     "Status {$this->kode_pengajuan} "
                     . "berubah dari {$statusLama} "
                     . "menjadi {$statusBaru}.",
-
-                'log_id' =>
-                    $log->id,
+                'log_id' => $log->id,
             ],
         );
 
@@ -482,8 +453,7 @@ class PengajuanBarang extends Model
             'In Progress',
             '[REOPEN] '
             . (
-                $catatan
-                ?? 'Pengajuan dibuka kembali'
+                $catatan ?? 'Pengajuan telah dibuka kembali oleh {$}'
             )
         );
     }
@@ -578,10 +548,7 @@ class PengajuanBarang extends Model
                     ?? $this->user_id,
 
                     data: [
-                        'message' =>
-                            "Pengajuan {$this->kode_pengajuan} "
-                            . "dibatalkan oleh {$namaUser}.",
-
+                        'message' => "Pengajuan {$this->kode_pengajuan} dibatalkan oleh {$namaUser}.",
                         'user_id' => $this->user_id,
                         'user_name' => $user?->name,
                         'nama_barang' => $this->nama_barang,
@@ -591,9 +558,6 @@ class PengajuanBarang extends Model
                     ],
                 );
 
-                /*
-                 * Soft Delete.
-                 */
                 return $this->delete();
             }
         );
@@ -891,6 +855,8 @@ class PengajuanBarang extends Model
             ),
         );
 
+        $userName = auth()->user()?->name ?? 'System';
+
         HelpdeskActivityCreated::dispatch(
             module: 'pengajuan',
             activity: 'updated',
@@ -903,9 +869,8 @@ class PengajuanBarang extends Model
                 'old_value' => $spesifikasiLama,
                 'new_value' => $spesifikasiBaru,
                 'message' =>
-                    "Spesifikasi barang pada "
-                    . "{$this->kode_pengajuan} "
-                    . "telah diperbarui.",
+                    "Spesifikasi barang pada {$this->kode_pengajuan} "
+                    . "telah diperbarui oleh {$userName}.",
                 'log_id' => $log->id,
             ],
         );

@@ -60,7 +60,6 @@ class User extends Authenticatable implements FilamentUser
                 'super_admin',
             ]),
             'pemohon' => $this->hasRole('pemohon'),
-            // 'teknisi' => $this->hasRole('teknisi'),F
             default => false,
         };
     }

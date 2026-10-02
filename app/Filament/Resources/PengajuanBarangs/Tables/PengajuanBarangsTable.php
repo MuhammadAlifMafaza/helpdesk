@@ -7,16 +7,18 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\BulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
-use Illuminate\Database\Eloquent\Collection;
+use Filament\Notifications\Notification;
+use Filament\Support\Exceptions\Halt;
 use Filament\Tables\Table;
 
 class PengajuanBarangsTable
@@ -27,21 +29,10 @@ class PengajuanBarangsTable
             ->defaultSort('created_at', 'desc')
 
             ->columns([
-                /*
-                |--------------------------------------------------------------------------
-                | Nomor
-                |--------------------------------------------------------------------------
-                */
 
                 TextColumn::make('index')
                     ->label('No.')
                     ->rowIndex(),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Identitas Pengajuan
-                |--------------------------------------------------------------------------
-                */
 
                 TextColumn::make('kode_pengajuan')
                     ->label('Kode Pengajuan')
@@ -49,72 +40,52 @@ class PengajuanBarangsTable
                     ->copyable()
                     ->copyMessage('Kode pengajuan disalin')
                     ->copyMessageDuration(1500)
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->sortable(),
 
                 TextColumn::make('user.name')
                     ->label('Pemohon')
-                    ->searchable(),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Master Barang
-                |--------------------------------------------------------------------------
-                */
+                    ->searchable()
+                    ->sortable(),
 
                 TextColumn::make('barang.kategoriBarang.nama_kategori')
                     ->label('Kategori Barang')
-                    ->badge()
                     ->searchable()
-                    ->placeholder('Tidak tersedia'),
+                    ->sortable()
+                    ->placeholder('Tidak tersedia')
+                    ->wrap(),
 
                 TextColumn::make('nama_barang')
                     ->label('Nama Barang')
                     ->searchable()
-                    ->wrap()
-                    ->weight('medium'),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Detail Pengajuan
-                |--------------------------------------------------------------------------
-                */
-
-                TextColumn::make('spesifikasi_barang')
-                    ->label('Spesifikasi Barang')
-                    ->wrap()
-                    ->limit(60)
-                    ->tooltip(
-                        fn(?string $state): ?string => filled($state)
-                            ? $state
-                            : null
-                    )
-                    ->placeholder('-')
-                    ->toggleable(),
+                    ->sortable()
+                    ->wrap(),
 
                 TextColumn::make('jumlah')
                     ->label('Jumlah')
                     ->numeric()
                     ->sortable(),
 
-                /*
-                |--------------------------------------------------------------------------
-                | Status
-                |--------------------------------------------------------------------------
-                */
-
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
                     ->icon(
-                        fn(?string $state): string => match ($state) {
-                            'Open' => 'heroicon-o-folder-open',
-                            'In Progress' => 'heroicon-o-arrow-path',
-                            'Close' => 'heroicon-o-check-circle',
-                            default => 'heroicon-o-question-mark-circle',
+                        fn(string $state): string => match ($state) {
+                            'Open' =>
+                                'heroicon-o-folder-open',
+
+                            'In Progress' =>
+                                'heroicon-o-arrow-path',
+
+                            'Close' =>
+                                'heroicon-o-check-circle',
+
+                            default =>
+                                'heroicon-o-question-mark-circle',
                         }
                     )
                     ->color(
-                        fn(?string $state): string => match ($state) {
+                        fn(string $state): string => match ($state) {
                             'Open' => 'info',
                             'In Progress' => 'warning',
                             'Close' => 'success',
@@ -130,35 +101,30 @@ class PengajuanBarangsTable
                         fn(?string $state): string => match ($state) {
                             'Completed' => 'heroicon-o-check-circle',
                             'Rejected' => 'heroicon-o-x-circle',
-                            'Reopen' => 'heroicon-o-arrow-path',
-                            default => 'heroicon-o-question-mark-circle',
+                            default => 'heroicon-o-minus-circle',
                         }
                     )
                     ->color(
                         fn(?string $state): string => match ($state) {
                             'Completed' => 'success',
                             'Rejected' => 'danger',
-                            'Reopen' => 'warning',
                             default => 'gray',
                         }
                     )
-                    ->placeholder('-')
+                    ->placeholder('Belum ditentukan')
                     ->sortable(),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Waktu Proses
-                |--------------------------------------------------------------------------
-                */
 
                 TextColumn::make('created_at')
                     ->label('Waktu Pengajuan')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record): ?string => $record->created_at
-                                ?->timezone('Asia/Jakarta')
-                            ->format('H:i:s')
+                        fn(
+                        PengajuanBarang $record
+                    ): ?string =>
+                            $record->created_at
+                                    ?->timezone('Asia/Jakarta')
+                                ->format('H:i:s')
                     )
                     ->sortable(),
 
@@ -167,9 +133,12 @@ class PengajuanBarangsTable
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record): ?string => $record->waktu_mulai
-                                ?->timezone('Asia/Jakarta')
-                            ->format('H:i:s')
+                        fn(
+                        PengajuanBarang $record
+                    ): ?string =>
+                            $record->waktu_mulai
+                                    ?->timezone('Asia/Jakarta')
+                                ->format('H:i:s')
                     )
                     ->placeholder('-')
                     ->sortable(),
@@ -179,78 +148,146 @@ class PengajuanBarangsTable
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record): ?string => $record->waktu_selesai
-                                ?->timezone('Asia/Jakarta')
-                            ->format('H:i:s')
+                        fn(
+                        PengajuanBarang $record
+                    ): ?string =>
+                            $record->waktu_selesai
+                                    ?->timezone('Asia/Jakarta')
+                                ->format('H:i:s')
                     )
                     ->placeholder('-')
                     ->sortable(),
 
                 TextColumn::make('durasi_pengerjaan')
                     ->label('Durasi')
-                    ->placeholder('-'),
+                    ->placeholder('-')
+                    ->sortable(),
             ])
-
-            /*
-            |--------------------------------------------------------------------------
-            | Filters
-            |--------------------------------------------------------------------------
-            */
 
             ->filters([
-                TrashedFilter::make(),
+
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'Open' => 'Open',
+                        'In Progress' => 'In Progress',
+                        'Close' => 'Close',
+                    ]),
+
+                SelectFilter::make('status_outcome')
+                    ->label('Hasil Pengajuan')
+                    ->options([
+                        'Completed' => 'Selesai',
+                        'Rejected' => 'Ditolak',
+                    ])
+                    ->query(
+                        function ($query, array $data) {
+
+                            if (blank($data['value'] ?? null)) {
+                                return $query;
+                            }
+
+                            $outcome = $data['value'];
+
+                            return $query->whereHas(
+                                'logs',
+                                function ($query) use ($outcome) {
+
+                                    $query
+                                        ->where(
+                                            'kategori_log',
+                                            'Status'
+                                        )
+                                        ->where(
+                                            'data_baru',
+                                            'Close'
+                                        )
+                                        ->when(
+                                            $outcome === 'Completed',
+                                            fn($query) =>
+                                                $query->where(
+                                                    'keterangan',
+                                                    'like',
+                                                    '%[SELESAI]%'
+                                                )
+                                        )
+                                        ->when(
+                                            $outcome === 'Rejected',
+                                            fn($query) =>
+                                                $query->where(
+                                                    'keterangan',
+                                                    'like',
+                                                    '%[DITOLAK]%'
+                                                )
+                                        );
+                                }
+                            );
+                        }
+                    ),
+
+                TrashedFilter::make()
+                    ->label('Data Terhapus'),
             ])
 
-            /*
-            |--------------------------------------------------------------------------
-            | Actions
-            |--------------------------------------------------------------------------
-            */
+            ->recordActions([
 
-            ->actions([
                 /*
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 | Ambil Tiket
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 */
 
                 Action::make('ambil_tiket')
-                    ->tooltip('Ambil Tiket')
+                    ->tooltip('Ambil Pengajuan')
                     ->label('')
                     ->icon('heroicon-o-wrench-screwdriver')
+                    ->color('warning')
                     ->visible(
-                        fn(PengajuanBarang $record): bool =>
-                            $record->status === 'Open'
+                        fn(
+                        PengajuanBarang $record
+                    ): bool =>
+                            $record->isOpen()
                     )
+                    ->requiresConfirmation()
+                    ->modalHeading('Ambil Pengajuan')
+                    ->modalDescription(
+                        'Pengajuan akan dipindahkan ke status In Progress.'
+                    )
+                    ->modalSubmitActionLabel('Ya, Ambil Pengajuan')
                     ->action(
                         function (PengajuanBarang $record): void {
+
+                            $namaUser =
+                                auth()->user()?->name
+                                ?? 'System';
+
                             $record->updateStatus(
                                 'In Progress',
-                                'Tiket mulai dikerjakan oleh '
-                                . auth()->user()->name
+                                "Pengajuan mulai diproses oleh {$namaUser}"
                             );
 
                             $record->sendMessage(
-                                'Teknisi '
-                                . auth()->user()->name
-                                . ' mengambil tiket ini.'
+                                "Pengajuan diambil oleh {$namaUser}."
                             );
                         }
                     ),
 
                 /*
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 | Selesai
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 */
+
                 Action::make('selesai')
-                    ->tooltip('Selesai')
+                    ->tooltip('Selesaikan Pengajuan')
                     ->label('')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(
-                        fn(PengajuanBarang $record): bool =>
-                            $record->status === 'In Progress'
+                        fn(
+                        PengajuanBarang $record
+                    ): bool =>
+                            $record->isInProgress()
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -259,32 +296,36 @@ class PengajuanBarangsTable
                             ->required()
                             ->rows(4),
                     ])
+                    ->modalHeading('Konfirmasi Penyelesaian')
+                    ->modalDescription(
+                        'Pengajuan akan ditutup sebagai pengajuan yang selesai.'
+                    )
+                    ->modalSubmitActionLabel('Selesaikan')
                     ->action(
                         function (PengajuanBarang $record, array $data): void {
+
                             $record->closeAsCompleted(
                                 $data['catatan']
                             );
                         }
-                    )
-                    ->modalHeading('Konfirmasi Penyelesaian')
-                    ->modalDescription(
-                        'Tindakan ini akan menutup pengajuan dan mencatat '
-                        . 'hasil penyelesaiannya.'
                     ),
 
                 /*
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 | Tolak
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 */
+
                 Action::make('tolak')
-                    ->tooltip('Tolak')
+                    ->tooltip('Tolak Pengajuan')
                     ->label('')
-                    ->color('danger')
                     ->icon('heroicon-o-x-circle')
+                    ->color('danger')
                     ->visible(
-                        fn(PengajuanBarang $record): bool =>
-                            $record->status === 'In Progress'
+                        fn(
+                        PengajuanBarang $record
+                    ): bool =>
+                            $record->isInProgress()
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -293,36 +334,40 @@ class PengajuanBarangsTable
                             ->required()
                             ->rows(4),
                     ])
+                    ->modalHeading('Konfirmasi Penolakan')
+                    ->modalDescription(
+                        'Pengajuan akan ditutup sebagai pengajuan yang ditolak.'
+                    )
+                    ->modalSubmitActionLabel('Tolak Pengajuan')
                     ->action(
                         function (PengajuanBarang $record, array $data): void {
+
                             $record->closeAsRejected(
                                 $data['catatan']
                             );
                         }
-                    )
-                    ->modalHeading('Konfirmasi Penolakan')
-                    ->modalDescription(
-                        'Tindakan ini akan menutup pengajuan sebagai '
-                        . 'pengajuan yang ditolak.'
                     ),
 
                 /*
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 | Reopen
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 */
+
                 Action::make('reopen')
-                    ->label('')
                     ->tooltip('Buka Kembali')
-                    ->color('primary')
+                    ->label('')
                     ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
                     ->visible(
-                        fn(PengajuanBarang $record): bool =>
+                        fn(
+                        PengajuanBarang $record
+                    ): bool =>
                             $record->isClosed()
-                            && (
-                                auth()->user()->hasRole('admin')
-                                || auth()->user()->hasRole('super_admin')
-                            )
+                            && auth()->user()->hasAnyRole([
+                                'admin',
+                                'super_admin',
+                            ])
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -331,8 +376,13 @@ class PengajuanBarangsTable
                             ->required()
                             ->rows(4),
                     ])
+                    ->modalHeading('Buka Kembali Pengajuan')
+                    ->modalDescription(
+                        'Status pengajuan akan dikembalikan menjadi In Progress.'
+                    )
                     ->action(
                         function (PengajuanBarang $record, array $data): void {
+
                             $record->reopen(
                                 $data['catatan']
                             );
@@ -340,112 +390,166 @@ class PengajuanBarangsTable
                     ),
 
                 /*
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 | View
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 */
+
                 ViewAction::make()
                     ->label('')
                     ->tooltip('Lihat Detail'),
 
                 /*
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 | Restore
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 */
+
                 RestoreAction::make()
                     ->label('')
+                    ->tooltip('Pulihkan Data')
                     ->visible(
-                        fn(PengajuanBarang $record): bool =>
+                        fn(
+                        PengajuanBarang $record
+                    ): bool =>
                             $record->trashed()
                     ),
 
                 /*
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 | Edit
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 */
+
                 EditAction::make()
                     ->label('')
+                    ->tooltip('Edit Pengajuan')
                     ->visible(
-                        fn(PengajuanBarang $record): bool =>
+                        fn(
+                        PengajuanBarang $record
+                    ): bool =>
                             $record->canStaffEdit()
                     ),
 
                 /*
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 | Soft Delete
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 */
+
                 DeleteAction::make()
                     ->label('')
-                    ->tooltip('Batalkan / Soft Delete')
+                    ->tooltip('Hapus Data')
                     ->visible(
                         fn(PengajuanBarang $record): bool =>
                             $record->isClosed()
-                            && (
-                                auth()->user()->hasRole('admin')
-                                || auth()->user()->hasRole('super_admin')
-                            )
+                            && auth()->user()->hasAnyRole([
+                                'admin',
+                                'super_admin',
+                            ])
                     )
                     ->requiresConfirmation(),
 
                 /*
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 | Force Delete
-                |----------------------------------------------------------------------
+                |--------------------------------------------------------------------------
                 */
+
                 ForceDeleteAction::make()
                     ->label('')
                     ->tooltip('Hapus Permanen')
                     ->visible(
-                        fn(): bool =>
+                        fn($record): bool =>
                             auth()->user()->hasRole('super_admin')
+                            && $record->trashed()
                     ),
             ])
-            ->actionsColumnLabel('Action Button')
 
-            ->BulkActions([
+            /*
+            |--------------------------------------------------------------------------
+            | Bulk Actions
+            |--------------------------------------------------------------------------
+            */
+
+            ->toolbarActions([
                 BulkActionGroup::make([
 
                     RestoreBulkAction::make()
-                        ->label('Pulihkan Data'),
+                        ->label('Pulihkan Data')
+                        ->visible(
+                            fn(): bool =>
+                                auth()->user()->hasAnyRole([
+                                    'admin',
+                                    'super_admin',
+                                ])
+                        ),
 
-                    BulkAction::make('delete_selected')
-                        ->label('Hapus Data')
-                        ->icon('heroicon-o-trash')
-                        ->color('danger')
+                    DeleteBulkAction::make()
+                        ->label('Hapus Terpilih')
                         ->requiresConfirmation()
                         ->modalHeading('Hapus Pengajuan Barang')
                         ->modalDescription(
-                            'Pengajuan yang dipilih dan memenuhi syarat akan dipindahkan '
-                            . 'ke tempat sampah.'
+                            'Pengajuan dengan status closed akan dipindahkan ke tempat sampah. '
+                            . 'Pengajuan yang belum closed akan dilewati.'
                         )
                         ->modalSubmitActionLabel('Ya, Hapus')
-                        ->action(
-                            function (Collection $records): void {
+                        ->visible(
+                            fn(): bool => auth()->user()->hasAnyRole([
+                                'admin',
+                                'super_admin',
+                            ])
+                        )
+                        ->action(function ($records) {
+                            $closedRecords = $records->filter(
+                                fn(PengajuanBarang $record): bool => $record->isClosed()
+                            );
 
-                                foreach ($records as $record) {
+                            $skippedCount = $records->count() - $closedRecords->count();
 
-                                    if (!$record->isClosed()) {
-                                        continue;
-                                    }
+                            $closedRecords->each(
+                                fn(PengajuanBarang $record) => $record->delete()
+                            );
 
-                                    if (
-                                        !auth()->user()->hasAnyRole([
-                                            'admin',
-                                            'super_admin',
-                                        ])
-                                    ) {
-                                        abort(403);
-                                    }
-
-                                    $record->delete();
-                                }
+                            if ($closedRecords->isNotEmpty()) {
+                                Notification::make()
+                                    ->success()
+                                    ->title('Pengajuan berhasil dihapus')
+                                    ->body(
+                                        $closedRecords->count()
+                                        . ' pengajuan berstatus closed telah dipindahkan ke tempat sampah.'
+                                        . (
+                                            $skippedCount > 0
+                                            ? ' '
+                                            . $skippedCount
+                                            . ' pengajuan yang belum closed dilewati.'
+                                            : ''
+                                        )
+                                    )
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->warning()
+                                    ->title('Tidak ada pengajuan yang dihapus')
+                                    ->body(
+                                        'Semua pengajuan yang dipilih belum berstatus closed.'
+                                    )
+                                    ->send();
                             }
-                        ),
-                ])
-            ]);
+                        }),
 
+                    ForceDeleteBulkAction::make()
+                        ->label('Hapus Permanen')
+                        ->requiresConfirmation()
+                        ->modalHeading('Hapus Permanen')
+                        ->modalDescription(
+                            'Pengajuan yang dipilih akan dihapus secara permanen dari database.'
+                        )
+                        ->visible(
+                            fn(): bool =>
+                                auth()->user()->hasRole('super_admin')
+                        ),
+                ]),
+            ]);
     }
 }

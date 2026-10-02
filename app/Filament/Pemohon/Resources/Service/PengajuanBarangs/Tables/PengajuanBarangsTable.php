@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Textarea;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class PengajuanBarangsTable
@@ -16,23 +17,11 @@ class PengajuanBarangsTable
     {
         return $table
             ->defaultSort('created_at', 'desc')
-
             ->columns([
-                /*
-                |--------------------------------------------------------------------------
-                | Nomor
-                |--------------------------------------------------------------------------
-                */
 
                 TextColumn::make('index')
                     ->label('No.')
                     ->rowIndex(),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Identitas Pengajuan
-                |--------------------------------------------------------------------------
-                */
 
                 TextColumn::make('kode_pengajuan')
                     ->label('Kode Pengajuan')
@@ -46,12 +35,6 @@ class PengajuanBarangsTable
                     ->label('Pemohon')
                     ->searchable(),
 
-                /*
-                |--------------------------------------------------------------------------
-                | Master Barang
-                |--------------------------------------------------------------------------
-                */
-
                 TextColumn::make('barang.kategoriBarang.nama_kategori')
                     ->label('Kategori Barang')
                     ->badge()
@@ -64,11 +47,6 @@ class PengajuanBarangsTable
                     ->wrap()
                     ->weight('medium'),
 
-                /*
-                |--------------------------------------------------------------------------
-                | Detail Pengajuan
-                |--------------------------------------------------------------------------
-                */
 
                 TextColumn::make('spesifikasi_barang')
                     ->label('Spesifikasi Barang')
@@ -85,12 +63,6 @@ class PengajuanBarangsTable
                 TextColumn::make('jumlah')
                     ->label('Jumlah')
                     ->sortable(),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Status
-                |--------------------------------------------------------------------------
-                */
 
                 TextColumn::make('status')
                     ->label('Status')
@@ -133,12 +105,6 @@ class PengajuanBarangsTable
                     )
                     ->placeholder('-'),
 
-                /*
-                |--------------------------------------------------------------------------
-                | Waktu Proses
-                |--------------------------------------------------------------------------
-                */
-
                 TextColumn::make('created_at')
                     ->label('Waktu Pengajuan')
                     ->dateTime('d M Y')
@@ -180,27 +146,80 @@ class PengajuanBarangsTable
             ])
 
             ->filters([
-                //
+
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'Open' => 'Open',
+                        'In Progress' => 'In Progress',
+                        'Close' => 'Close',
+                    ]),
+
+                SelectFilter::make('status_outcome')
+                    ->label('Hasil')
+                    ->options([
+                        'Completed' => 'Selesai',
+                        'Rejected' => 'Ditolak',
+                    ])
+                    ->query(
+                        function ($query, array $data) {
+
+                            if (blank($data['value'] ?? null)) {
+                                return $query;
+                            }
+
+                            $outcome = $data['value'];
+
+                            return $query->whereHas(
+                                'logs',
+                                function ($query) use ($outcome) {
+
+                                    $query
+                                        ->where(
+                                            'kategori_log',
+                                            'Status'
+                                        )
+                                        ->where(
+                                            'data_baru',
+                                            'Close'
+                                        )
+                                        ->when(
+                                            $outcome === 'Completed',
+                                            fn($query) =>
+                                                $query->where(
+                                                    'keterangan',
+                                                    'like',
+                                                    '%[SELESAI]%'
+                                                )
+                                        )
+                                        ->when(
+                                            $outcome === 'Rejected',
+                                            fn($query) =>
+                                                $query->where(
+                                                    'keterangan',
+                                                    'like',
+                                                    '%[DITOLAK]%'
+                                                )
+                                        );
+                                }
+                            );
+                        }
+                    ),
             ])
 
             ->recordActions([
-                /*
-                |--------------------------------------------------------------------------
-                | View
-                |--------------------------------------------------------------------------
-                */
 
-                ViewAction::make(),
-
-                /*
-                |--------------------------------------------------------------------------
-                | Edit
-                |--------------------------------------------------------------------------
-                */
+                ViewAction::make()
+                    ->label('')
+                    ->tooltip('Lihat Detail'),
 
                 EditAction::make()
+                    ->label('')
+                    ->tooltip('Edit Pengajuan')
                     ->visible(
-                        fn(PengajuanBarang $record): bool =>
+                        fn(
+                        PengajuanBarang $record
+                    ): bool =>
                             $record->canPemohonEdit()
                     ),
 
