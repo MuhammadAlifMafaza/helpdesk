@@ -366,6 +366,144 @@ class PengajuanBarang extends Model
 
     /*
     |--------------------------------------------------------------------------
+    | Staff Action Permission
+    |--------------------------------------------------------------------------
+    */
+
+    public function canStaffTake(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (
+            !$user->hasAnyRole([
+                'admin',
+                'super_admin',
+            ])
+        ) {
+            return false;
+        }
+
+        return $this->isOpen();
+    }
+
+    public function canStaffComplete(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (
+            !$user->hasAnyRole([
+                'admin',
+                'super_admin',
+            ])
+        ) {
+            return false;
+        }
+
+        return $this->isInProgress();
+    }
+
+    public function canStaffReject(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (
+            !$user->hasAnyRole([
+                'admin',
+                'super_admin',
+            ])
+        ) {
+            return false;
+        }
+
+        return $this->isInProgress();
+    }
+
+    public function canStaffReopen(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (
+            !$user->hasAnyRole([
+                'admin',
+                'super_admin',
+            ])
+        ) {
+            return false;
+        }
+
+        return $this->isClosed();
+    }
+
+    public function canStaffDelete(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (
+            !$user->hasAnyRole([
+                'admin',
+                'super_admin',
+            ])
+        ) {
+            return false;
+        }
+
+        return $this->isClosed() && !$this->trashed();
+    }
+
+    public function canStaffRestore(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if (
+            !$user->hasAnyRole([
+                'admin',
+                'super_admin',
+            ])
+        ) {
+            return false;
+        }
+
+        return $this->trashed();
+    }
+
+    public function canStaffForceDelete(): bool
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        return $user->hasRole('super_admin')
+            && $this->trashed();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Logs
     |--------------------------------------------------------------------------
     */

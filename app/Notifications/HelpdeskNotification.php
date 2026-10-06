@@ -21,7 +21,8 @@ class HelpdeskNotification extends Notification implements ShouldQueue
         public ?string $color = null,
         public ?string $referenceId = null,
         public array $data = [],
-    ) {}
+    ) {
+    }
 
     /* ========================================================================
      * Notification channels.
@@ -77,6 +78,7 @@ class HelpdeskNotification extends Notification implements ShouldQueue
             'reference_id' => $this->referenceId,
             'data' => array_merge($this->data, [
                 'module' => explode('.', $this->type)[0] ?? null,
+                'activity' => explode('.', $this->type)[1] ?? null,
             ]),
         ]);
     }
