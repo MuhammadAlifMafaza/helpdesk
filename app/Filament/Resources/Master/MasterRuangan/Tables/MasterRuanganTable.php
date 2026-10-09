@@ -13,6 +13,9 @@ class MasterRuanganTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('nama_ruangan')
+            ->paginated([10, 25, 50, 100])
+            ->defaultPaginationPageOption(25)
             ->columns([
                 //
                 TextColumn::make('index')

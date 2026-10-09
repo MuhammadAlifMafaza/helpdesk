@@ -28,6 +28,8 @@ class MasterKategoriBarangsTable
     {
         return $table
             ->defaultSort('nama_kategori')
+            ->paginated([10, 25, 50, 100])
+            ->defaultPaginationPageOption(25)
 
             ->columns([
                 TextColumn::make('nama_kategori')
@@ -51,6 +53,7 @@ class MasterKategoriBarangsTable
                 IconColumn::make('is_active')
                     ->label('Status')
                     ->boolean()
+                    ->sortable()
                     ->alignCenter(),
 
                 TextColumn::make('created_at')
@@ -203,6 +206,17 @@ class MasterKategoriBarangsTable
                             $blocked = [];
 
                             foreach ($records as $record) {
+                                // Hapus permanen hanya berlaku untuk kategori yang sudah di-soft-delete.
+                                if (!$record->trashed()) {
+                                    $blocked[] = [
+                                        'nama' => $record->nama_kategori,
+                                        'jumlah' => 0,
+                                        'alasan' => 'data belum berada di tempat sampah',
+                                    ];
+
+                                    continue;
+                                }
+
                                 $jumlahBarang = $record->barang()
                                     ->withTrashed()
                                     ->count();
@@ -211,13 +225,13 @@ class MasterKategoriBarangsTable
                                     $blocked[] = [
                                         'nama' => $record->nama_kategori,
                                         'jumlah' => $jumlahBarang,
+                                        'alasan' => 'masih memiliki barang terkait',
                                     ];
 
                                     continue;
                                 }
 
                                 $record->forceDelete();
-
                                 $deletedCount++;
                             }
 
@@ -245,8 +259,10 @@ class MasterKategoriBarangsTable
                                     ->map(
                                         fn(array $item): string => $item['nama']
                                             . ' ('
-                                            . $item['jumlah']
-                                            . ' barang)'
+                                            . ($item['jumlah'] > 0
+                                                ? $item['jumlah'] . ' barang'
+                                                : $item['alasan'])
+                                            . ')'
                                     )
                                     ->implode(', ');
 
@@ -255,7 +271,7 @@ class MasterKategoriBarangsTable
                                     ->body(
                                         count($blocked)
                                         . ' kategori tidak dapat dihapus secara permanen '
-                                        . 'karena masih memiliki barang terkait: '
+                                        . 'karena belum berada di tempat sampah atau masih memiliki barang terkait: '
                                         . $detail
                                         . '.'
                                     )
@@ -284,8 +300,8 @@ class MasterKategoriBarangsTable
                                     $deletedCount
                                     . ' kategori berhasil dihapus permanen. '
                                     . count($blocked)
-                                    . ' kategori tidak dapat dihapus karena masih '
-                                    . 'memiliki barang terkait: '
+                                    . ' kategori tidak dapat dihapus karena belum berada '
+                                    . 'di tempat sampah atau masih memiliki barang terkait: '
                                     . $detail
                                     . '.'
                                 )

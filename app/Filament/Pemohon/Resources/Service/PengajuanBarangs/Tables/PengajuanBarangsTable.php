@@ -6,17 +6,31 @@ use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class PengajuanBarangsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            /*
+            |--------------------------------------------------------------------------
+            | Tabel Configuration
+            |--------------------------------------------------------------------------
+            */
             ->defaultSort('created_at', 'desc')
+            ->paginated([10, 25, 50, 100])
+            ->defaultPaginationPageOption(25)
+
+            /*
+            |--------------------------------------------------------------------------
+            | Columns
+            |--------------------------------------------------------------------------
+            */
             ->columns([
 
                 TextColumn::make('index')
@@ -25,28 +39,24 @@ class PengajuanBarangsTable
 
                 TextColumn::make('kode_pengajuan')
                     ->label('Kode Pengajuan')
-                    ->searchable()
                     ->copyable()
                     ->copyMessage('Kode pengajuan disalin')
                     ->copyMessageDuration(1500)
                     ->weight('bold'),
 
-                TextColumn::make('user.name')
-                    ->label('Pemohon')
-                    ->searchable(),
-
                 TextColumn::make('barang.kategoriBarang.nama_kategori')
                     ->label('Kategori Barang')
                     ->badge()
                     ->searchable()
-                    ->placeholder('Tidak tersedia'),
+                    ->placeholder('Tidak tersedia')
+                    ->wrap(),
 
                 TextColumn::make('nama_barang')
                     ->label('Nama Barang')
                     ->searchable()
+                    ->sortable()
                     ->wrap()
                     ->weight('medium'),
-
 
                 TextColumn::make('spesifikasi_barang')
                     ->label('Spesifikasi Barang')
@@ -62,13 +72,14 @@ class PengajuanBarangsTable
 
                 TextColumn::make('jumlah')
                     ->label('Jumlah')
+                    ->numeric()
                     ->sortable(),
 
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
                     ->icon(
-                        fn(string $state): string => match ($state) {
+                        fn(?string $state): string => match ($state) {
                             'Open' => 'heroicon-o-folder-open',
                             'In Progress' => 'heroicon-o-arrow-path',
                             'Close' => 'heroicon-o-check-circle',
@@ -76,13 +87,14 @@ class PengajuanBarangsTable
                         }
                     )
                     ->color(
-                        fn(string $state): string => match ($state) {
+                        fn(?string $state): string => match ($state) {
                             'Open' => 'info',
                             'In Progress' => 'warning',
                             'Close' => 'success',
                             default => 'gray',
                         }
-                    ),
+                    )
+                    ->sortable(),
 
                 TextColumn::make('status_outcome')
                     ->label('Hasil')
@@ -91,28 +103,25 @@ class PengajuanBarangsTable
                         fn(?string $state): string => match ($state) {
                             'Completed' => 'heroicon-o-check-circle',
                             'Rejected' => 'heroicon-o-x-circle',
-                            'Reopen' => 'heroicon-o-arrow-path',
-                            default => 'heroicon-o-question-mark-circle',
+                            default => 'heroicon-o-minus-circle',
                         }
                     )
                     ->color(
                         fn(?string $state): string => match ($state) {
                             'Completed' => 'success',
                             'Rejected' => 'danger',
-                            'Reopen' => 'warning',
                             default => 'gray',
                         }
                     )
-                    ->placeholder('-'),
+                    ->placeholder('Belum ditentukan'),
 
                 TextColumn::make('created_at')
                     ->label('Waktu Pengajuan')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record): ?string => $record->created_at
-                                ?->timezone('Asia/Jakarta')
-                            ->format('H:i:s')
+                        fn(PengajuanBarang $record): ?string =>
+                            $record->created_at?->timezone('Asia/Jakarta')->format('H:i:s')
                     )
                     ->sortable(),
 
@@ -121,30 +130,31 @@ class PengajuanBarangsTable
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record): ?string => $record->waktu_mulai
-                                ?->timezone('Asia/Jakarta')
-                            ->format('H:i:s')
+                        fn(PengajuanBarang $record): ?string =>
+                            $record->waktu_mulai?->timezone('Asia/Jakarta')->format('H:i:s')
                     )
-                    ->placeholder('-')
-                    ->sortable(),
+                    ->placeholder('-'),
 
                 TextColumn::make('waktu_selesai')
                     ->label('Waktu Selesai')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record): ?string => $record->waktu_selesai
-                                ?->timezone('Asia/Jakarta')
-                            ->format('H:i:s')
+                        fn(PengajuanBarang $record): ?string =>
+                            $record->waktu_selesai?->timezone('Asia/Jakarta')->format('H:i:s')
                     )
-                    ->placeholder('-')
-                    ->sortable(),
+                    ->placeholder('-'),
 
                 TextColumn::make('durasi_pengerjaan')
                     ->label('Durasi')
                     ->placeholder('-'),
             ])
 
+            /*
+            |--------------------------------------------------------------------------
+            | Filters
+            |--------------------------------------------------------------------------
+            */
             ->filters([
 
                 SelectFilter::make('status')
@@ -162,30 +172,35 @@ class PengajuanBarangsTable
                         'Rejected' => 'Ditolak',
                     ])
                     ->query(
-                        function ($query, array $data) {
+                        function (Builder $query, array $data): Builder {
 
-                            if (blank($data['value'] ?? null)) {
+                            $outcome = $data['value'] ?? null;
+
+                            if (blank($outcome)) {
                                 return $query;
                             }
 
-                            $outcome = $data['value'];
-
                             return $query->whereHas(
                                 'logs',
-                                function ($query) use ($outcome) {
+                                function (Builder $query) use ($outcome): void {
 
                                     $query
-                                        ->where(
-                                            'kategori_log',
-                                            'Status'
-                                        )
-                                        ->where(
-                                            'data_baru',
-                                            'Close'
+                                        ->where('kategori_log', 'Status')
+                                        ->when(
+                                            in_array(
+                                                $outcome,
+                                                ['Completed', 'Rejected'],
+                                                true
+                                            ),
+                                            fn(Builder $query) =>
+                                                $query->where(
+                                                    'data_baru',
+                                                    'Close'
+                                                )
                                         )
                                         ->when(
                                             $outcome === 'Completed',
-                                            fn($query) =>
+                                            fn(Builder $query) =>
                                                 $query->where(
                                                     'keterangan',
                                                     'like',
@@ -194,7 +209,7 @@ class PengajuanBarangsTable
                                         )
                                         ->when(
                                             $outcome === 'Rejected',
-                                            fn($query) =>
+                                            fn (Builder $query) =>
                                                 $query->where(
                                                     'keterangan',
                                                     'like',
@@ -207,6 +222,11 @@ class PengajuanBarangsTable
                     ),
             ])
 
+            /*
+            |--------------------------------------------------------------------------
+            | Record Actions
+            |--------------------------------------------------------------------------
+            */
             ->recordActions([
 
                 ViewAction::make()
@@ -217,17 +237,10 @@ class PengajuanBarangsTable
                     ->label('')
                     ->tooltip('Edit Pengajuan')
                     ->visible(
-                        fn(
-                        PengajuanBarang $record
-                    ): bool =>
+                        fn(PengajuanBarang $record): bool =>
                             $record->canPemohonEdit()
                     ),
 
-                /*
-                |--------------------------------------------------------------------------
-                | Batalkan
-                |--------------------------------------------------------------------------
-                */
                 DeleteAction::make()
                     ->label('Batalkan')
                     ->tooltip('Batalkan Pengajuan')

@@ -30,6 +30,8 @@ class MasterBarangsTable
     {
         return $table
             ->defaultSort('nama_barang')
+            ->paginated([10, 25, 50, 100])
+            ->defaultPaginationPageOption(25)
 
             ->columns([
                 TextColumn::make('kategoriBarang.nama_kategori')
@@ -189,6 +191,17 @@ class MasterBarangsTable
                             $blocked = [];
 
                             foreach ($records as $record) {
+                                // Hapus permanen hanya berlaku untuk data yang sudah di-soft-delete.
+                                if (!$record->trashed()) {
+                                    $blocked[] = [
+                                        'nama' => $record->nama_barang,
+                                        'jumlah' => 0,
+                                        'alasan' => 'data belum berada di tempat sampah',
+                                    ];
+
+                                    continue;
+                                }
+
                                 $jumlahPengajuan = $record->pengajuanBarang()
                                     ->withTrashed()
                                     ->count();
@@ -197,13 +210,13 @@ class MasterBarangsTable
                                     $blocked[] = [
                                         'nama' => $record->nama_barang,
                                         'jumlah' => $jumlahPengajuan,
+                                        'alasan' => 'masih memiliki transaksi pengajuan',
                                     ];
 
                                     continue;
                                 }
 
                                 $record->forceDelete();
-
                                 $deletedCount++;
                             }
 
@@ -232,8 +245,10 @@ class MasterBarangsTable
                                         fn(array $item): string =>
                                             $item['nama']
                                             . ' ('
-                                            . $item['jumlah']
-                                            . ' pengajuan)'
+                                            . ($item['jumlah'] > 0
+                                                ? $item['jumlah'] . ' pengajuan'
+                                                : $item['alasan'])
+                                            . ')'
                                     )
                                     ->implode(', ');
 
@@ -242,7 +257,7 @@ class MasterBarangsTable
                                     ->body(
                                         count($blocked)
                                         . ' barang tidak dapat dihapus secara permanen '
-                                        . 'karena masih memiliki transaksi pengajuan: '
+                                        . 'karena belum berada di tempat sampah atau masih memiliki transaksi: '
                                         . $detail
                                         . '.'
                                     )
@@ -272,8 +287,8 @@ class MasterBarangsTable
                                     $deletedCount
                                     . ' barang berhasil dihapus permanen. '
                                     . count($blocked)
-                                    . ' barang tidak dapat dihapus karena masih '
-                                    . 'memiliki transaksi pengajuan: '
+                                    . ' barang tidak dapat dihapus karena belum berada '
+                                    . 'di tempat sampah atau masih memiliki transaksi: '
                                     . $detail
                                     . '.'
                                 )
