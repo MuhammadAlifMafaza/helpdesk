@@ -8,10 +8,8 @@ use App\Filament\Pemohon\Resources\Monitoring\LogTiketPerbaikans\Pages\ListLogTi
 use App\Filament\Pemohon\Resources\Monitoring\LogTiketPerbaikans\Schemas\LogTiketPerbaikanForm;
 use App\Filament\Pemohon\Resources\Monitoring\LogTiketPerbaikans\Tables\LogTiketPerbaikansTable;
 use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
-
 use BackedEnum;
 use UnitEnum;
-
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -56,6 +54,11 @@ class LogTiketPerbaikanResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('user_id', auth()->id());
+            ->with(['user', 'tiket' => fn($query) => $query->withTrashed(), 'tiket.user', 'tiket.ruangan'])
+            // Tampilkan seluruh riwayat tiket milik pemohon,
+            // termasuk aktivitas yang dilakukan teknisi/admin.
+            ->whereHas('tiket', fn(Builder $query) => $query
+                ->withTrashed()
+                ->where('user_id', auth()->id()));
     }
 }

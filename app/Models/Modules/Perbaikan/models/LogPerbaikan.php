@@ -10,33 +10,19 @@ use Illuminate\Database\Eloquent\Model;
 class LogPerbaikan extends Model
 {
     protected $table = 'log_data_tiket_perbaikan';
-
     const STATUS = 'Status';
-
     const CHAT = 'Chat';
-
     const UPDATE_DATA = 'Update Data';
-
     public const EVENT_CREATE = 'CREATE';
-
     public const EVENT_ASSIGN = 'ASSIGN';
-
     public const EVENT_PENDING = 'PENDING';
-
     public const EVENT_COMPLETE = 'COMPLETE';
-
     public const EVENT_REJECT = 'REJECT';
-
     public const EVENT_REOPEN = 'REOPEN';
-
     public const EVENT_CHAT = 'CHAT';
-
     public const EVENT_UPDATE = 'UPDATE';
-
     public const EVENT_DELETE = 'DELETE';
-
     public const EVENT_STATUS = 'STATUS';
-
     public const EVENT_SYSTEM = 'SYSTEM';
 
     public $timestamps = false;
@@ -359,20 +345,20 @@ class LogPerbaikan extends Model
 
     public function getCurrentStageAttribute(): string
     {
-        return match ($this->tiket->status) {
+        return match ($this->tiket?->status) {
 
             'Open' => 'Menunggu Teknisi',
 
             'In Progress' => 'Sedang Dikerjakan',
 
-            'Close' => match ($this->tiket->status_outcome) {
+            'Close' => match ($this->tiket?->status_outcome) {
 
-                'Completed' => 'Selesai',
+                    'Completed' => 'Selesai',
 
-                'Rejected' => 'Ditolak',
+                    'Rejected' => 'Ditolak',
 
-                default => 'Close',
-            },
+                    default => 'Close',
+                },
 
             default => '-',
         };
@@ -520,25 +506,25 @@ class LogPerbaikan extends Model
 
             'Status' => match (true) {
 
-                blank($this->data_lama)
-                && $this->data_baru === 'Open' => self::EVENT_CREATE,
+                    blank($this->data_lama)
+                    && $this->data_baru === 'Open' => self::EVENT_CREATE,
 
-                $this->data_lama === 'Open'
-                && $this->data_baru === 'In Progress' => self::EVENT_ASSIGN,
+                    $this->data_lama === 'Open'
+                    && $this->data_baru === 'In Progress' => self::EVENT_ASSIGN,
 
-                $this->data_lama === 'In Progress'
-                && $this->data_baru === 'Close'
-                && str_contains($this->keterangan ?? '', '[SELESAI]') => self::EVENT_COMPLETE,
+                    $this->data_lama === 'In Progress'
+                    && $this->data_baru === 'Close'
+                    && str_contains($this->keterangan ?? '', '[SELESAI]') => self::EVENT_COMPLETE,
 
-                $this->data_lama === 'In Progress'
-                && $this->data_baru === 'Close'
-                && str_contains($this->keterangan ?? '', '[DITOLAK]') => self::EVENT_REJECT,
+                    $this->data_lama === 'In Progress'
+                    && $this->data_baru === 'Close'
+                    && str_contains($this->keterangan ?? '', '[DITOLAK]') => self::EVENT_REJECT,
 
-                $this->data_lama === 'Close'
-                && $this->data_baru === 'In Progress' => self::EVENT_REOPEN,
+                    $this->data_lama === 'Close'
+                    && $this->data_baru === 'In Progress' => self::EVENT_REOPEN,
 
-                default => self::EVENT_STATUS,
-            },
+                    default => self::EVENT_STATUS,
+                },
 
             'Pending' => self::EVENT_PENDING,
 
@@ -601,7 +587,7 @@ class LogPerbaikan extends Model
     {
         return match ($this->event_type) {
 
-            self::EVENT_CREATE => "Tiket {$this->tiket->kode_tiket} dibuat.",
+            self::EVENT_CREATE => "Tiket {$this->tiket?->kode_tiket} dibuat.",
 
             self::EVENT_ASSIGN => "{$this->user?->name} mulai menangani tiket.",
 
@@ -619,36 +605,36 @@ class LogPerbaikan extends Model
     {
         return match ($this->event_type) {
 
-            'CREATE' => "{$this->user->name} membuat tiket.",
+            'CREATE' => "{$this->user?->name} membuat tiket.",
 
-            'ASSIGN' => "{$this->user->name} mengambil tiket.",
+            'ASSIGN' => "{$this->user?->name} mengambil tiket.",
 
-            'CHAT' => "{$this->user->name} mengirim pesan.",
+            'CHAT' => "{$this->user?->name} mengirim pesan.",
 
-            'UPDATE' => "{$this->user->name} memperbarui data.",
+            'UPDATE' => "{$this->user?->name} memperbarui data.",
 
-            'PENDING' => "{$this->user->name} menunda pengerjaan.",
+            'PENDING' => "{$this->user?->name} menunda pengerjaan.",
 
-            'COMPLETE' => "{$this->user->name} menyelesaikan tiket.",
+            'COMPLETE' => "{$this->user?->name} menyelesaikan tiket.",
 
-            'REJECT' => "{$this->user->name} menolak tiket.",
+            'REJECT' => "{$this->user?->name} menolak tiket.",
 
-            'DELETE' => "{$this->user->name} menghapus tiket.",
+            'DELETE' => "{$this->user?->name} menghapus tiket.",
 
-            default => "{$this->user->name} melakukan aktivitas.",
+            default => "{$this->user?->name} melakukan aktivitas.",
         };
     }
 
     public function getHumanTimeAttribute(): string
     {
-        return $this->created_at->diffForHumans();
+        return $this->created_at?->diffForHumans() ?? '-';
     }
 
     public function getWorkingMinutesAttribute()
     {
         if (
-            ! $this->waktu_mulai ||
-            ! $this->waktu_selesai
+            !$this->waktu_mulai ||
+            !$this->waktu_selesai
         ) {
             return null;
         }
@@ -668,8 +654,8 @@ class LogPerbaikan extends Model
             ->assign()
             ->first();
         if (
-            ! $created ||
-            ! $assigned
+            !$created ||
+            !$assigned
         ) {
             return null;
         }

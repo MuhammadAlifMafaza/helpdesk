@@ -296,8 +296,6 @@ class PengajuanBarangForm
                         'Nama barang dikelola melalui Master Barang.'
                     ),
 
-
-
                 /*
                 |--------------------------------------------------------------------------
                 | Jumlah
@@ -311,7 +309,6 @@ class PengajuanBarangForm
                     ->minValue(1)
                     ->default(1)
                     ->required(),
-
                 /*
                 |--------------------------------------------------------------------------
                 | Spesifikasi Barang
@@ -321,14 +318,13 @@ class PengajuanBarangForm
                 Textarea::make('spesifikasi_barang')
                     ->label('Spesifikasi Barang')
                     ->placeholder(
-                        'Contoh: Kapasitas 2TB, NVMe M.2, PCIe Gen 4'
+                        'Contoh: tipe/model, ukuran atau kapasitas, spesifikasi teknis, dan kompatibilitas yang dibutuhkan.'
                     )
                     ->helperText(
-                        'Isi atau sesuaikan spesifikasi teknis barang yang diperlukan.'
+                        'Opsional. Isi spesifikasi atau kebutuhan teknis khusus sesuai barang yang dipilih.'
                     )
                     ->rows(4)
-                    ->maxLength(2000)
-                    ->columnSpanFull(),
+                    ->maxLength(2000),
 
                 /*
                 |--------------------------------------------------------------------------

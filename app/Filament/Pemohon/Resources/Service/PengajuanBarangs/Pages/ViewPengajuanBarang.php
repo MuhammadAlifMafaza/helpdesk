@@ -3,6 +3,8 @@
 namespace App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Pages;
 
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\PengajuanBarangResource;
+use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Livewire\Attributes\On;
@@ -95,6 +97,38 @@ class ViewPengajuanBarang extends ViewRecord
                 ->color('edit')
                 ->visible(
                     fn ($record): bool => $record->canPemohonEdit()
+                ),
+
+
+            DeleteAction::make()
+                ->label('Batalkan Permintaan')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->visible(
+                    fn (PengajuanBarang $record): bool => $record->canPemohonDelete()
+                )
+                ->modalHeading('Batalkan Pengajuan Barang')
+                ->modalDescription(
+                    'Pengajuan barang yang dibatalkan tidak akan ditampilkan lagi pada daftar pengajuan aktif.'
+                )
+                ->modalSubmitActionLabel('Ya, Batalkan')
+                ->successNotificationTitle(
+                    'Pengajuan barang berhasil dibatalkan'
+                )
+                ->before(
+                    function (PengajuanBarang $record): void {
+                        abort_unless(
+                            $record->canPemohonDelete(),
+                            403,
+                            'Pengajuan barang tidak dapat dibatalkan pada status saat ini.'
+                        );
+                    }
+                )
+                ->using(
+                    function (PengajuanBarang $record): bool {
+                        return $record->cancelByPemohon();
+                    }
                 ),
         ];
     }

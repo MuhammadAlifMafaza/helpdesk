@@ -117,6 +117,7 @@ class TiketPerbaikanInfolist
                     ->schema([
 
                         ViewEntry::make('id')
+                            ->hiddenLabel()
                             ->view('filament.pages.tiket.timeline'),
 
                     ]),

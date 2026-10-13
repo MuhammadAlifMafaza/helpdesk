@@ -36,9 +36,6 @@ class LogPengajuanBarangsTable
             ])
             ->filters([
                 //
-            ])
-            ->recordActions([
-                ViewAction::make(),
             ]);
     }
 }

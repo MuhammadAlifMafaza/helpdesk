@@ -2,20 +2,13 @@
 
 namespace App\Filament\Resources\LogPengajuanBarang;
 
-use App\Filament\Resources\LogPengajuanBarang\Pages\CreateLogPengajuanBarang;
-use App\Filament\Resources\LogPengajuanBarang\Pages\EditLogPengajuanBarang;
 use App\Filament\Resources\LogPengajuanBarang\Pages\ListLogPengajuanBarang;
-use App\Filament\Resources\LogPengajuanBarang\Pages\ViewLogPengajuanBarang;
 use App\Filament\Resources\LogPengajuanBarang\Schemas\LogPengajuanBarangForm;
 use App\Filament\Resources\LogPengajuanBarang\Schemas\LogPengajuanBarangInfolist;
 use App\Models\Modules\Pengajuan\Models\LogPengajuan;
-use BackedEnum;
 use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
-// Filament Forms imports
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
-// Filament Tables(Data) imports
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -68,7 +61,7 @@ class LogPengajuanBarangResource extends Resource
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn ($record) => $record->created_at->format('H:i:s')
+                        fn($record) => $record->created_at?->copy()->timezone('Asia/Jakarta')->format('H:i:s') ?? '-'
                     )
                     ->sortable(),
 
@@ -76,10 +69,10 @@ class LogPengajuanBarangResource extends Resource
                     ->label('Kode Pengajuan')
                     ->copyable()
                     ->searchable(
-                        query: fn (
-                            Builder $query,
-                            string $search
-                        ) => $query->searchTimeline($search)
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
                     )
                     ->weight('bold'),
 
@@ -87,30 +80,30 @@ class LogPengajuanBarangResource extends Resource
                     ->label('Nama Barang')
                     ->placeholder('-')
                     ->searchable(
-                        query: fn (
-                            Builder $query,
-                            string $search
-                        ) => $query->searchTimeline($search)
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
                     ),
 
                 TextColumn::make('pengajuan.user.name')
                     ->label('Pemohon')
                     ->placeholder('-')
                     ->searchable(
-                        query: fn (
-                            Builder $query,
-                            string $search
-                        ) => $query->searchTimeline($search)
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
                     ),
 
                 TextColumn::make('user.name')
                     ->label('Admin')
                     ->placeholder('-')
                     ->searchable(
-                        query: fn (
-                            Builder $query,
-                            string $search
-                        ) => $query->searchTimeline($search)
+                        query: fn(
+                        Builder $query,
+                        string $search
+                    ) => $query->searchTimeline($search)
                     ),
 
                 TextColumn::make('pengajuan.status')
@@ -125,16 +118,20 @@ class LogPengajuanBarangResource extends Resource
                 TextColumn::make('event_name')
                     ->label('Aktivitas')
                     ->badge()
-                    ->icon(fn ($record) => $record->event_icon)
-                    ->color(fn ($record) => $record->event_color)
-                    ->searchable(),
+                    ->icon(fn($record) => $record->event_icon)
+                    ->color(fn($record) => $record->event_color)
+                    ->searchable(
+                        query: fn(Builder $query, string $search) => $query->searchTimeline($search)
+                    ),
 
                 TextColumn::make('event_description')
                     ->label('Deskripsi')
                     ->wrap()
                     ->limit(70)
-                    ->tooltip(fn ($record) => $record->event_description)
-                    ->searchable(),
+                    ->tooltip(fn($record) => $record->event_description)
+                    ->searchable(
+                        query: fn(Builder $query, string $search) => $query->searchTimeline($search)
+                    ),
 
             ])
 
@@ -168,9 +165,9 @@ class LogPengajuanBarangResource extends Resource
 
                         return $query->when(
                             filled($data['value']),
-                            fn ($q) => $q->whereHas(
+                            fn($q) => $q->whereHas(
                                 'pengajuan',
-                                fn ($q2) => $q2->where(
+                                fn($q2) => $q2->where(
                                     'status',
                                     $data['value']
                                 )
@@ -193,7 +190,6 @@ class LogPengajuanBarangResource extends Resource
 
                         LogPengajuan::EVENT_REOPEN => 'Dibuka Kembali',
 
-                        LogPengajuan::EVENT_PENDING => 'Pending',
 
                         LogPengajuan::EVENT_CHAT => 'Pesan',
 
@@ -221,15 +217,13 @@ class LogPengajuanBarangResource extends Resource
 
                             LogPengajuan::EVENT_REOPEN => $query->reopen(),
 
-                            LogPengajuan::EVENT_PENDING => $query->pending(),
-
                             LogPengajuan::EVENT_CHAT => $query->chat(),
 
                             LogPengajuan::EVENT_UPDATE => $query->updateData(),
 
                             LogPengajuan::EVENT_DELETE => $query->deleteData(),
 
-                            default => $query,
+                            default => $query->whereRaw('1 = 0'),
                         };
 
                     }),
@@ -250,7 +244,7 @@ class LogPengajuanBarangResource extends Resource
                         return $query
                             ->when(
                                 $data['from'],
-                                fn ($q, $date) => $q->whereDate(
+                                fn($q, $date) => $q->whereDate(
                                     'created_at',
                                     '>=',
                                     $date
@@ -258,7 +252,7 @@ class LogPengajuanBarangResource extends Resource
                             )
                             ->when(
                                 $data['until'],
-                                fn ($q, $date) => $q->whereDate(
+                                fn($q, $date) => $q->whereDate(
                                     'created_at',
                                     '<=',
                                     $date
@@ -267,7 +261,7 @@ class LogPengajuanBarangResource extends Resource
 
                     }),
 
-            ], layout: FiltersLayout::AboveContentCollapsible);
+            ]);
     }
 
     public static function getRelations(): array

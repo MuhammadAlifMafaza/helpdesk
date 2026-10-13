@@ -133,6 +133,7 @@ class PengajuanBarangsTable
                         fn(PengajuanBarang $record): ?string =>
                             $record->waktu_mulai?->timezone('Asia/Jakarta')->format('H:i:s')
                     )
+                    ->toggleable()
                     ->placeholder('-'),
 
                 TextColumn::make('waktu_selesai')
@@ -143,10 +144,12 @@ class PengajuanBarangsTable
                         fn(PengajuanBarang $record): ?string =>
                             $record->waktu_selesai?->timezone('Asia/Jakarta')->format('H:i:s')
                     )
+                    ->toggleable()
                     ->placeholder('-'),
 
                 TextColumn::make('durasi_pengerjaan')
                     ->label('Durasi')
+                    ->toggleable()
                     ->placeholder('-'),
             ])
 
@@ -209,7 +212,7 @@ class PengajuanBarangsTable
                                         )
                                         ->when(
                                             $outcome === 'Rejected',
-                                            fn (Builder $query) =>
+                                            fn(Builder $query) =>
                                                 $query->where(
                                                     'keterangan',
                                                     'like',

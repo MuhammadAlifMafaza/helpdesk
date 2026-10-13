@@ -31,37 +31,18 @@ class HelpdeskRecipientResolver
         string $activity = 'created',
         array $data = [],
     ): Collection {
-        $record = $this->resolveRecord(
-            module: $module,
-            referenceId: $referenceId,
-        );
+        $record = $this->resolveRecord($module, $referenceId);
 
         if (!$record) {
             return collect();
         }
 
         return match ($activity) {
-            'created' => $this->resolveCreatedRecipients(
-                record: $record,
-                actorId: $actorId,
-            ),
-
-            'status' => $this->resolveStatusRecipients(
-                record: $record,
-                actorId: $actorId,
-            ),
-
-            'updated' => $this->resolveUpdatedRecipients(
-                record: $record,
-                actorId: $actorId,
-            ),
-
-            'chat' => $this->resolveChatRecipients(
-                record: $record,
-                actorId: $actorId,
-                data: $data,
-            ),
-
+            // A newly created record is announced to staff, not its creator.
+            'created' => $this->staffRecipients($actorId),
+            'status', 'updated' => $this->resolveChangedRecipients($record, $actorId),
+            'cancelled' => $this->resolveCancelledRecipients($record, $actorId),
+            'chat' => $this->resolveChatRecipients($record, $actorId, $data),
             default => collect(),
         };
     }
@@ -72,7 +53,7 @@ class HelpdeskRecipientResolver
      */
     protected function resolveRecord(
         string $module,
-        int|string $referenceId,
+        int|string $referenceId
     ): ?Model {
         return match ($module) {
             'perbaikan' => TiketPerbaikan::query()
@@ -87,273 +68,145 @@ class HelpdeskRecipientResolver
         };
     }
 
-    /* ========================================================================
-     * CREATED
-     * ========================================================================
-     */
-
     /**
-     * Aktivitas tiket/pengajuan baru.
-     *
-     * Penerima:
-     * - Pemohon / owner record
-     * - Seluruh staff Helpdesk
-     *
-     * Actor tetap dikecualikan.
+     * Notify only the party affected by the change:
+     * - staff action -> record owner;
+     * - owner action -> staff;
+     * - system/unknown actor -> owner and staff.
      */
-    protected function resolveCreatedRecipients(
+    protected function resolveChangedRecipients(
         Model $record,
-        ?int $actorId,
+        ?int $actorId
     ): Collection {
-        return $this->baseRecipients(
-            record: $record,
-            includeOwner: true,
-            includeStaff: true,
-            actorId: $actorId,
+        if (
+            $actorId !== null &&
+            (int) $record->user_id === $actorId
+        ) {
+            return $this->staffRecipients($actorId);
+        }
+
+        if ($actorId !== null && $this->isStaff($actorId)) {
+            return $this->ownerRecipients($record, $actorId);
+        }
+
+        return $this->mergeRecipients(
+            $this->ownerRecipients($record, $actorId),
+            $this->staffRecipients($actorId),
         );
     }
 
-    /* ========================================================================
-     * STATUS
-     * ========================================================================
-     */
+    protected function resolveCancelledRecipients(Model $record, ?int $actorId): Collection
+    {
+        // A cancellation by the owner should notify staff. If staff/system cancels,
+        // notify the owner where possible. The event is dispatched before soft delete.
+        if (
+            $actorId !== null &&
+            (int) $record->user_id === $actorId
+        ) {
+            return $this->staffRecipients($actorId);
+        }
 
-    /**
-     * Perubahan status.
-     *
-     * Penerima:
-     * - Pemohon / owner record
-     * - Seluruh staff Helpdesk
-     *
-     * Actor tetap dikecualikan.
-     */
-    protected function resolveStatusRecipients(
-        Model $record,
-        ?int $actorId,
-    ): Collection {
-        return $this->baseRecipients(
-            record: $record,
-            includeOwner: true,
-            includeStaff: true,
-            actorId: $actorId,
-        );
-    }
-
-    /* ========================================================================
-     * UPDATED
-     * ========================================================================
-     */
-
-    /**
-     * Perubahan data.
-     *
-     * Penerima:
-     * - Pemohon / owner record
-     * - Seluruh staff Helpdesk
-     *
-     * Actor tetap dikecualikan.
-     */
-    protected function resolveUpdatedRecipients(
-        Model $record,
-        ?int $actorId,
-    ): Collection {
-        return $this->baseRecipients(
-            record: $record,
-            includeOwner: true,
-            includeStaff: true,
-            actorId: $actorId,
-        );
+        return $this->ownerRecipients($record, $actorId);
     }
 
     /* ========================================================================
      * CHAT
      * ========================================================================
      */
-
-    /**
-     * Aktivitas chat.
-     *
-     * Prioritas:
-     *
-     * 1. Jika event membawa recipient_ids:
-     *    gunakan recipient tersebut.
-     *
-     * 2. Jika actor adalah pemohon:
-     *    kirim ke seluruh staff Helpdesk.
-     *
-     * 3. Jika actor adalah staff:
-     *    kirim hanya ke pemohon / owner record.
-     *
-     * 4. Actor selalu dikecualikan.
-     */
     protected function resolveChatRecipients(
         Model $record,
         ?int $actorId,
-        array $data,
+        array $data
     ): Collection {
-        /*
-         * --------------------------------------------------------------------
-         * 1. Explicit recipient_ids
-         * --------------------------------------------------------------------
-         */
-        $recipientIds = collect(
+        $ownerId = (int) ($record->user_id ?? 0);
+        $explicitIds = collect(
             $data['recipient_ids'] ?? []
         )
-            ->filter()
+            ->filter(fn($id) => is_numeric($id) && (int) $id > 0)
             ->map(fn($id) => (int) $id)
             ->unique()
+            ->reject(fn(int $id) => $id === $actorId)
             ->values();
 
-        if ($recipientIds->isNotEmpty()) {
+        if ($explicitIds->isNotEmpty()) {
+            // Never trust recipient_ids alone: recipients must be the owner or
+            // authorized Helpdesk staff associated with this service workflow.
             return User::query()
-                ->whereIn('id', $recipientIds)
-                ->when(
-                    $actorId !== null,
-                    fn($query) => $query->where(
-                        'id',
-                        '!=',
-                        $actorId,
-                    ),
+                ->whereIn('
+                id', $explicitIds)
+                ->where(
+                    function ($query) use ($ownerId) {
+                        $query->whereKey($ownerId)
+                            ->orWhereHas(
+                                'roles',
+                                fn($roles) => $roles->whereIn('name', self::STAFF_ROLES)
+                            );
+                    }
                 )
-                ->get();
+                ->get()
+                ->unique('id')
+                ->values();
         }
 
-        /*
-         * --------------------------------------------------------------------
-         * 2. Identifikasi actor
-         * --------------------------------------------------------------------
-         */
-        $actor = $actorId
-            ? User::find($actorId)
-            : null;
-
-        /*
-         * --------------------------------------------------------------------
-         * 3. Chat dari pemohon -> seluruh staff Helpdesk
-         * --------------------------------------------------------------------
-         */
-        if ($actor?->hasRole('pemohon')) {
-            return $this->staffRecipients(
-                actorId: $actorId,
-            );
+        if ($actorId !== null && $actorId === $ownerId) {
+            return $this->staffRecipients($actorId);
         }
 
-        /*
-         * --------------------------------------------------------------------
-         * 4. Chat dari staff -> pemohon / owner record
-         * --------------------------------------------------------------------
-         */
-        if ($record->user_id) {
-            return User::query()
-                ->whereKey($record->user_id)
-                ->when(
-                    $actorId !== null,
-                    fn($query) => $query->where(
-                        'id',
-                        '!=',
-                        $actorId,
-                    ),
-                )
-                ->get();
+        if ($actorId !== null && $this->isStaff($actorId)) {
+            return $this->ownerRecipients($record, $actorId);
         }
 
-        /*
-         * Tidak ada owner dan tidak ada recipient eksplisit.
-         */
+        // Unknown actor: fail closed rather than broadcasting a message widely.
         return collect();
     }
 
-    /* ========================================================================
-     * BASE RECIPIENTS
-     * ========================================================================
-     */
-
-    /**
-     * Recipient umum untuk created/status/updated.
-     */
-    protected function baseRecipients(
+    protected function ownerRecipients(
         Model $record,
-        bool $includeOwner,
-        bool $includeStaff,
-        ?int $actorId,
+        ?int $actorId
     ): Collection {
-        $recipients = collect();
-
-        /*
-         * --------------------------------------------------------------------
-         * Pemohon / owner record
-         * --------------------------------------------------------------------
-         */
-        if (
-            $includeOwner &&
-            $record->relationLoaded('user') &&
-            $record->user
-        ) {
-            $recipients->push($record->user);
+        if (!$record->user_id) {
+            return collect();
         }
 
-        /*
-         * --------------------------------------------------------------------
-         * Staff Helpdesk
-         * --------------------------------------------------------------------
-         */
-        if ($includeStaff) {
-            $recipients = $recipients->merge(
-                $this->staffRecipients(
-                    actorId: null,
-                )
-            );
-        }
+        return User::query()
+            ->whereKey($record->user_id)
+            ->when(
+                $actorId !== null,
+                fn($query) => $query->where('id', '!=', $actorId)
+            )
+            ->get();
+    }
 
-        /*
-         * --------------------------------------------------------------------
-         * Jangan kirim kembali kepada actor
-         * --------------------------------------------------------------------
-         */
-        if ($actorId !== null) {
-            $recipients = $recipients->reject(
-                fn(User $user) =>
-                (int) $user->id === (int) $actorId
-            );
-        }
-
-        /*
-         * --------------------------------------------------------------------
-         * Hindari duplicate user
-         * --------------------------------------------------------------------
-         */
-        return $recipients
+    protected function staffRecipients(?int $actorId = null): Collection
+    {
+        return User::query()
+            ->whereHas('roles', fn($query) => $query->whereIn('name', self::STAFF_ROLES))
+            ->when(
+                $actorId !== null,
+                fn($query) => $query->where('id', '!=', $actorId)
+            )
+            ->get()
             ->unique('id')
             ->values();
     }
 
-    /* ========================================================================
-     * STAFF RECIPIENTS
-     * ========================================================================
-     */
-
-    /**
-     * Mengambil seluruh user yang memiliki role staff Helpdesk.
-     */
-    protected function staffRecipients(
-        ?int $actorId = null,
-    ): Collection {
+    protected function isStaff(int $userId): bool
+    {
         return User::query()
+            ->whereKey($userId)
             ->whereHas(
                 'roles',
-                fn($query) => $query->whereIn(
-                    'name',
-                    self::STAFF_ROLES,
-                ),
+                fn($query) => $query->whereIn('name', self::STAFF_ROLES)
             )
-            ->when(
-                $actorId !== null,
-                fn($query) => $query->where(
-                    'id',
-                    '!=',
-                    $actorId,
-                ),
-            )
-            ->get();
+            ->exists();
+    }
+
+    protected function mergeRecipients(Collection ...$collections): Collection
+    {
+        return collect($collections)
+            ->flatten(1)
+            ->filter(fn($user) => $user instanceof User)
+            ->unique('id')
+            ->values();
     }
 }

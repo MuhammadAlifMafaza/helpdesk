@@ -4,6 +4,7 @@ namespace App\Services\Notifications;
 
 use App\Models\User;
 use App\Notifications\HelpdeskNotification;
+use Filament\Notifications\Events\DatabaseNotificationsSent;
 
 class HelpdeskNotificationService
 {
@@ -43,5 +44,8 @@ class HelpdeskNotificationService
                 data: $data,
             ),
         );
+
+        // Refresh Filament's built-in notification drawer and unread counter.
+        DatabaseNotificationsSent::dispatch($recipient);
     }
 }

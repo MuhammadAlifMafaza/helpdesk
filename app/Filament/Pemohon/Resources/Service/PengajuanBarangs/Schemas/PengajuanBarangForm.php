@@ -69,15 +69,7 @@ class PengajuanBarangForm
                             $query = MasterKategoriBarang::query()
                                 ->orderBy('nama_kategori');
 
-                            /*
-                             * Pengajuan baru:
-                             * hanya kategori aktif.
-                             *
-                             * Pengajuan lama:
-                             * kategori yang sedang digunakan tetap
-                             * dapat ditampilkan agar histori tidak rusak
-                             * ketika kategori menjadi nonaktif.
-                             */
+                            // Pertahankan kategori transaksi lama meski sudah nonaktif.
                             if (
                                 $record?->barang?->kategori_barang_id
                             ) {
@@ -150,21 +142,12 @@ class PengajuanBarangForm
                     )
                     ->afterStateUpdated(
                         function (Set $set): void {
-                            /*
-                             * Ketika kategori berubah,
-                             * barang sebelumnya tidak boleh
-                             * tetap terpilih.
-                             */
+                            // Reset barang dan spesifikasinya saat kategori berubah.
                             $set(
                                 'barang_id',
                                 null
                             );
 
-                            /*
-                             * Spesifikasi terkait dengan barang
-                             * yang dipilih. Karena barang berubah,
-                             * spesifikasi harus diisi kembali.
-                             */
                             $set(
                                 'spesifikasi_barang',
                                 null
@@ -203,10 +186,6 @@ class PengajuanBarangForm
                                 )
                                 ->where(
                                     function ($query) use ($currentBarangId): void {
-                                        /*
-                                         * Barang yang dapat dipilih
-                                         * untuk transaksi baru.
-                                         */
                                         $query->where(
                                             function ($query): void {
                                                 $query
@@ -233,11 +212,6 @@ class PengajuanBarangForm
                                             }
                                         );
 
-                                        /*
-                                         * Saat edit transaksi lama,
-                                         * barang yang sedang digunakan
-                                         * tetap ditampilkan.
-                                         */
                                         if ($currentBarangId) {
                                             $query->orWhere(
                                                 $query->getModel()
@@ -281,14 +255,7 @@ class PengajuanBarangForm
                                 $record->barang_id
                             );
 
-                            /*
-                             * Spesifikasi adalah data transaksi.
-                             *
-                             * Ambil hanya dari record pengajuan.
-                             *
-                             * TIDAK mengambil:
-                             * $record->barang?->keterangan
-                             */
+                            // Spesifikasi berasal dari transaksi, bukan keterangan master barang.
                             $set(
                                 'spesifikasi_barang',
                                 $record->spesifikasi_barang
@@ -322,10 +289,10 @@ class PengajuanBarangForm
                 Textarea::make('spesifikasi_barang')
                     ->label('Spesifikasi Barang')
                     ->placeholder(
-                        'Contoh: Kapasitas 2TB, NVMe M.2, PCIe Gen 4'
+                        'Contoh: tipe/model, ukuran atau kapasitas, spesifikasi teknis, dan kompatibilitas yang dibutuhkan.'
                     )
                     ->helperText(
-                        'Isi spesifikasi teknis barang yang diperlukan.'
+                        'Opsional. Isi spesifikasi atau kebutuhan teknis khusus sesuai barang yang dipilih.'
                     )
                     ->rows(4)
                     ->maxLength(2000),
@@ -346,4 +313,5 @@ class PengajuanBarangForm
                     ),
             ]);
     }
+
 }

@@ -28,7 +28,7 @@ class LogTiketPerbaikansTable
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
+                        fn($record) => $record->created_at?->timezone('Asia/Jakarta')->format('H:i:s') ?? '-'
                     )
                     ->sortable(),
 
@@ -76,7 +76,8 @@ class LogTiketPerbaikansTable
                     ),
 
                 TextColumn::make('tiket.status')
-                    ->label('Status Tiket')
+                    ->label('Status Saat Ini')
+                    ->tooltip('Status terbaru dari tiket, bukan status pada saat aktivitas log dibuat.')
                     ->badge()
                     ->colors([
                         'primary' => 'Open',
@@ -100,6 +101,7 @@ class LogTiketPerbaikansTable
                     ->label('Deskripsi')
                     ->wrap()
                     ->limit(70)
+                    ->tooltip(fn($record) => $record->event_description)
                     ->searchable(
                         query: fn(
                         Builder $query,
@@ -124,7 +126,6 @@ class LogTiketPerbaikansTable
                     ->options([
                         'CREATE' => 'Tiket Dibuat',
                         'ASSIGN' => 'Tiket Diambil',
-                        'PENDING' => 'Pending',
                         'CHAT' => 'Pesan',
                         'UPDATE' => 'Perubahan Data',
                         'COMPLETE' => 'Selesai',
@@ -171,7 +172,7 @@ class LogTiketPerbaikansTable
                             'DELETE' => $query
                                 ->where('kategori_log', 'Delete Data'),
 
-                            default => $query,
+                            default => $query->whereRaw('1 = 0'),
                         };
 
                     }),

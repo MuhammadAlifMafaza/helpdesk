@@ -1,63 +1,53 @@
 @auth
-    @vite('resources/js/app.js')
+            @vite('resources/js/app.js')
 
     <script>
-        window.helpdeskUserId = @json(auth()->id())
+        window.helpdeskUserId = @json(auth()->id());
     </script>
 
     <script>
-        document.addEventListener(
-            'helpdesk-notification',
-            (event) => {
+    if (!window.helpdeskToastHandlerRegistered) {
+    window.helpdeskToastHandlerRegistered = true;
 
-                const notification = event.detail
+    const escapeHelpdeskHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+    })[character]);
 
-                let body = ''
+    document.addEventListener('helpdesk-notification', (event) => {
+    const notification = event.detail ?? {};
+    const bodyParts = [];
 
-                if (notification.kode) {
+    if (notification.kode) {
+    bodyParts.push(`<strong>${escapeHelpdeskHtml(notification.kode)}</strong>`);
+    }
 
-                    body += `
-                        <strong>
-                            ${notification.kode}
-                        </strong>
-                    `
-                }
+    if (notification.data?.sender_name) {
+    bodyParts.push(escapeHelpdeskHtml(notification.data.sender_name));
+    }
 
-                if (
-                    notification.data?.sender_name
-                ) {
+    if (notification.message) {
+    bodyParts.push(escapeHelpdeskHtml(notification.message));
+    }
 
-                    body += `
-                        <br>
-                        ${notification.data.sender_name}
-                    `
-                }
+    const toast = new window.FilamentNotification();
+    toast
+    .title(notification.title ?? 'Notifikasi Helpdesk')
+    .body(bodyParts.join('<br>'));
 
-                body += `
-                    <br>
-                    ${notification.message ?? ''}
-                `
+    if (notification.color) {
+    toast.color(notification.color);
+    }
 
-                const toast =
-                    new window.FilamentNotification()
+    if (notification.icon) {
+    toast.icon(notification.icon);
+    }
 
-                toast
-                    .title(
-                        notification.title ??
-                        'Notifikasi Helpdesk'
-                    )
-                    .body(body)
-
-                if (notification.color) {
-                    toast.color(notification.color)
-                }
-
-                if (notification.icon) {
-                    toast.icon(notification.icon)
-                }
-
-                toast.send()
-            }
-        )
+    toast.send();
+    });
+    }
     </script>
 @endauth

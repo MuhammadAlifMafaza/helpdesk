@@ -187,6 +187,7 @@ class TicketServiceResource extends Resource
                     ->schema([
 
                         ViewEntry::make('id')
+                            ->hiddenLabel()
                             ->view('filament.pages.tiket.timeline'),
 
                     ]),

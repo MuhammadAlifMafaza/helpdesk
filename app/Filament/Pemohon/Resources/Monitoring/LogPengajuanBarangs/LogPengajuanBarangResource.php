@@ -54,6 +54,11 @@ class LogPengajuanBarangResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('user_id', auth()->id());
+            ->with(['user', 'pengajuan' => fn($query) => $query->withTrashed(), 'pengajuan.user'])
+            // Tampilkan seluruh riwayat untuk pengajuan milik pemohon,
+            // termasuk aktivitas yang dilakukan petugas/admin.
+            ->whereHas('pengajuan', fn(Builder $query) => $query
+                ->withTrashed()
+                ->where('user_id', auth()->id()));
     }
 }

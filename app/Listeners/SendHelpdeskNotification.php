@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Notifications\HelpdeskNotificationUrl;
 use App\Services\Notifications\HelpdeskRecipientResolver;
 use App\Notifications\HelpdeskNotification;
+use Filament\Notifications\Events\DatabaseNotificationsSent;
 
 class SendHelpdeskNotification
 {
@@ -26,7 +27,12 @@ class SendHelpdeskNotification
          * Jika referenceId null, maka tidak ada yang perlu dikirimkan.
          * ========================================================================
          */
-        if ($event->referenceId === null) {
+        if (
+            $event->referenceId === null
+            || ! in_array($event->module, ['perbaikan', 'pengajuan'], true)
+            || ! in_array($event->activity, ['created', 'chat', 'status', 'cancelled', 'updated'], true)
+            || ($event->activity === 'cancelled' && $event->module !== 'pengajuan')
+        ) {
             return;
         }
 
@@ -56,22 +62,53 @@ class SendHelpdeskNotification
          */
         foreach ($recipients as $recipient) {
 
-            $url = HelpdeskNotificationUrl::for(
-                module: $event->module,
-                referenceId: $event->referenceId,
-                recipient: $recipient,
-            );
+            /*
+             * Pengajuan yang dibatalkan menggunakan soft delete.
+             * URL detail pada panel pemohon tidak menjamin record terhapus
+             * dapat dibuka, sehingga untuk aktivitas cancelled kita simpan
+             * notifikasi tanpa URL sampai tersedia halaman riwayat pembatalan.
+             */
+            $url = $event->activity === 'cancelled'
+                ? null
+                : HelpdeskNotificationUrl::for(
+                    module: $event->module,
+                    referenceId: $event->referenceId,
+                    recipient: $recipient,
+                );
 
             $notification = $this->buildNotification(
                 event: $event,
                 url: $url,
             );
 
-            if (!$notification) {
+            if (! $notification) {
                 continue;
             }
 
+            // A domain activity is tied to its audit log. If the same event is
+            // dispatched again, do not create another database notification.
+            $logId = $event->data['log_id'] ?? null;
+            if ($logId !== null) {
+                $activityKey = implode(':', [
+                    $notification->type,
+                    (string) $event->referenceId,
+                    (string) $logId,
+                ]);
+
+                $alreadyNotified = $recipient->notifications()
+                    ->where('data->activity_key', $activityKey)
+                    ->exists();
+
+                if ($alreadyNotified) {
+                    continue;
+                }
+            }
+
+            // Persist first, then tell Filament's native drawer to refresh.
+            // DatabaseNotificationsSent uses the User model's broadcast channel,
+            // which is already configured as users.{id} in this application.
             $recipient->notify($notification);
+            DatabaseNotificationsSent::dispatch($recipient);
         }
     }
 
@@ -88,6 +125,7 @@ class SendHelpdeskNotification
             'created' => $this->createdNotification($event, $url),
             'chat' => $this->chatNotification($event, $url),
             'status' => $this->statusNotification($event, $url),
+            'cancelled' => $this->cancelledNotification($event),
             'updated' => $this->updatedNotification($event, $url),
             default => null,
         };
@@ -172,6 +210,25 @@ class SendHelpdeskNotification
             url: $url,
             icon: 'heroicon-o-arrow-path',
             color: 'warning',
+            referenceId: (string) $event->referenceId,
+            data: $event->data,
+        );
+    }
+
+    // Notification pembatalan pengajuan barang.
+    protected function cancelledNotification(
+        HelpdeskActivityCreated $event,
+    ): HelpdeskNotification {
+
+        return new HelpdeskNotification(
+            type: "{$event->module}.cancelled",
+            title: "Pengajuan {$event->kode} Dibatalkan",
+            message: $event->data['message']
+                ?? "Pengajuan {$event->kode} telah dibatalkan.",
+            kode: $event->kode,
+            url: null,
+            icon: 'heroicon-o-x-circle',
+            color: 'danger',
             referenceId: (string) $event->referenceId,
             data: $event->data,
         );

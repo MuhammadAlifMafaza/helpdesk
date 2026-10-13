@@ -28,7 +28,7 @@ class LogPengajuanBarangsTable
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
+                        fn($record) => $record->created_at?->timezone('Asia/Jakarta')->format('H:i:s') ?? '-'
                     )
                     ->sortable(),
 
@@ -71,7 +71,8 @@ class LogPengajuanBarangsTable
                     ),
 
                 TextColumn::make('pengajuan.status')
-                    ->label('Status Pengajuan')
+                    ->label('Status Saat Ini')
+                    ->tooltip('Status terbaru dari pengajuan, bukan status pada saat aktivitas log dibuat.')
                     ->badge()
                     ->colors([
                         'primary' => 'Open',
@@ -95,6 +96,7 @@ class LogPengajuanBarangsTable
                     ->label('Deskripsi')
                     ->wrap()
                     ->limit(70)
+                    ->tooltip(fn($record) => $record->event_description)
                     ->searchable(
                         query: fn(
                         Builder $query,
@@ -110,7 +112,6 @@ class LogPengajuanBarangsTable
                     ->options([
                         'CREATE' => 'Pengajuan Dibuat',
                         'ASSIGN' => 'Pengajuan Diambil',
-                        'PENDING' => 'Pending',
                         'CHAT' => 'Pesan',
                         'UPDATE' => 'Perubahan Data',
                         'COMPLETE' => 'Selesai',
@@ -135,9 +136,6 @@ class LogPengajuanBarangsTable
                                 ->where('kategori_log', 'Status')
                                 ->where('data_lama', 'Open')
                                 ->where('data_baru', 'In Progress'),
-
-                            'PENDING' => $query
-                                ->where('kategori_log', 'Pending'),
 
                             'CHAT' => $query
                                 ->where('kategori_log', 'Chat'),
@@ -166,7 +164,7 @@ class LogPengajuanBarangsTable
                             'DELETE' => $query
                                 ->where('kategori_log', 'Delete Data'),
 
-                            default => $query,
+                            default => $query->whereRaw('1 = 0'),
                         };
                     }),
 

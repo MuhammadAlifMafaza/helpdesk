@@ -5,14 +5,10 @@ namespace App\Filament\Resources\LogPerbaikans;
 use App\Filament\Resources\LogPerbaikans\Pages\ListLogPerbaikans;
 use App\Filament\Resources\LogPerbaikans\Schemas\LogPerbaikanInfolist;
 use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
-use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
-// Filament Forms imports
-
-// Filament Tables(Data) imports
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -129,10 +125,6 @@ class LogPerbaikanResource extends Resource
                     ) => $query->searchTimeline($search)
                     ),
 
-            ])
-
-            ->actions([
-                ViewAction::make(),
             ])
 
             ->filters([

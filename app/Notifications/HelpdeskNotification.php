@@ -2,12 +2,13 @@
 
 namespace App\Notifications;
 
+use Filament\Actions\Action;
+use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
-class HelpdeskNotification extends Notification implements ShouldQueue
+class HelpdeskNotification extends Notification
 {
     use Queueable;
 
@@ -43,19 +44,45 @@ class HelpdeskNotification extends Notification implements ShouldQueue
     public function toDatabase(
         object $notifiable
     ): array {
-        return [
-            'type' => $this->type,
-            'title' => $this->title,
-            'message' => $this->message,
-            'kode' => $this->kode,
-            'url' => $this->url,
-            'icon' => $this->icon,
-            'color' => $this->color,
-            'reference_id' => $this->referenceId,
-            'data' => array_merge($this->data, [
-                'module' => explode('.', $this->type)[0] ?? null,
-            ]),
-        ];
+        /*
+         * Filament's built-in database notification drawer only recognizes
+         * payloads produced by Filament Notification::getDatabaseMessage().
+         * Keep the existing Helpdesk metadata alongside that native payload
+         * so realtime consumers and audit/debugging code remain compatible.
+         */
+        $filamentNotification = FilamentNotification::make()
+            ->title($this->title)
+            ->body($this->message)
+            ->icon($this->icon)
+            ->color($this->color ?? 'info');
+
+        if (filled($this->url)) {
+            $filamentNotification->actions([
+                Action::make('open')
+                    ->label('Buka notifikasi')
+                    ->button()
+                    ->url($this->url)
+                    ->markAsRead(),
+            ]);
+        }
+
+        return array_merge(
+            $filamentNotification->getDatabaseMessage(),
+            [
+                'type' => $this->type,
+                'title' => $this->title,
+                'message' => $this->message,
+                'kode' => $this->kode,
+                'url' => $this->url,
+                'icon' => $this->icon,
+                'color' => $this->color,
+                'reference_id' => $this->referenceId,
+                'activity_key' => $this->activityKey(),
+                'data' => array_merge($this->data, [
+                    'module' => explode('.', $this->type)[0] ?? null,
+                ]),
+            ],
+        );
     }
 
     /* ========================================================================
@@ -76,10 +103,30 @@ class HelpdeskNotification extends Notification implements ShouldQueue
             'icon' => $this->icon,
             'color' => $this->color,
             'reference_id' => $this->referenceId,
+            'activity_key' => $this->activityKey(),
             'data' => array_merge($this->data, [
                 'module' => explode('.', $this->type)[0] ?? null,
                 'activity' => explode('.', $this->type)[1] ?? null,
             ]),
+        ]);
+    }
+
+
+    /** Stable key used to prevent duplicate database notifications when an
+     * activity event is dispatched more than once for the same audit log.
+     */
+    protected function activityKey(): ?string
+    {
+        $logId = $this->data['log_id'] ?? null;
+
+        if ($logId === null || $this->referenceId === null) {
+            return null;
+        }
+
+        return implode(':', [
+            $this->type,
+            $this->referenceId,
+            (string) $logId,
         ]);
     }
 

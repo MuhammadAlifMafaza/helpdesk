@@ -62,6 +62,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
             ])
             ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
