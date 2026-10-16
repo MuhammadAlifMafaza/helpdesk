@@ -2,6 +2,8 @@
 
 namespace App\Filament\Concerns;
 
+use App\Models\User;
+use App\Services\Notifications\HelpdeskNotificationReadService;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\WithPagination;
@@ -21,56 +23,82 @@ trait InteractsWithNotificationCenter
         $this->resetPage();
     }
 
-    public function markAsRead(string $notificationId): void
-    {
-        $notification = Auth::user()
-            ?->notifications()
-            ->whereKey($notificationId)
-            ->first();
+    /**
+     * Menandai satu notifikasi sebagai terbaca.
+     * Kepemilikan divalidasi oleh service melalui relasi aktor.
+     */
+    public function markAsRead(
+        string $notificationId,
+        HelpdeskNotificationReadService $notificationReader,
+    ): void {
+        $user = Auth::user();
 
-        if ($notification && ! $notification->read_at) {
-            $notification->markAsRead();
-        }
+        abort_unless($user instanceof User, 401);
+
+        $notificationReader->markAsRead($user, $notificationId);
     }
 
-    public function markAllAsRead(): void
-    {
-        Auth::user()
-            ?->unreadNotifications()
-            ->update(['read_at' => now()]);
+    /**
+     * Menandai semua unread milik aktor, tidak hanya item yang terlihat.
+     */
+    public function markAllAsRead(
+        HelpdeskNotificationReadService $notificationReader,
+    ): void {
+        $user = Auth::user();
+
+        abort_unless($user instanceof User, 401);
+
+        $notificationReader->markAllAsRead($user);
+
+        // getViewData() menghitung unread dari database pada render berikutnya.
+        // Jika komponen memiliki state/counter tersimpan, reset state tersebut
+        // atau panggil mekanisme refresh yang memang digunakan komponen.
+        $this->dispatch('$refresh');
     }
 
-    public function openNotification(string $notificationId)
-    {
-        /** @var DatabaseNotification|null $notification */
-        $notification = Auth::user()
-            ?->notifications()
+    /**
+     * Tandai terbaca sebelum navigasi dan pertahankan URL payload Helpdesk.
+     */
+    public function openNotification(
+        string $notificationId,
+        HelpdeskNotificationReadService $notificationReader,
+    ) {
+        $user = Auth::user();
+
+        abort_unless($user instanceof User, 401);
+
+        /** @var DatabaseNotification $notification */
+        $notification = $user->notifications()
             ->whereKey($notificationId)
-            ->first();
+            ->firstOrFail();
 
-        if (! $notification) {
-            abort(404);
-        }
-
-        $notification->markAsRead();
+        $notificationReader->markAsRead($user, $notificationId);
 
         $url = data_get($notification->data, 'url');
 
-        if (! is_string($url) || trim($url) === '') {
+        if (!is_string($url) || trim($url) === '') {
+            $this->dispatch('$refresh');
+
             return null;
         }
 
-        // Old notifications may contain an absolute URL from a previous host.
-        // Keep navigation inside the current application by using only its path
-        // and query string rather than redirecting to the stored hostname.
+        // Hindari open redirect: navigasi hanya memakai path dan query
+        // dari URL tersimpan, bukan hostname eksternal.
         $path = parse_url($url, PHP_URL_PATH);
         $query = parse_url($url, PHP_URL_QUERY);
 
-        if (! is_string($path) || $path === '' || ! str_starts_with($path, '/')) {
+        if (
+            !is_string($path)
+            || $path === ''
+            || !str_starts_with($path, '/')
+            || str_starts_with($path, '//')
+        ) {
+            $this->dispatch('$refresh');
+
             return null;
         }
 
-        $target = $path.($query ? '?'.$query : '');
+        $target = $path . ($query ? '?' . $query : '');
 
         return redirect()->to($target);
     }
@@ -79,9 +107,7 @@ trait InteractsWithNotificationCenter
     {
         $user = Auth::user();
 
-        if (! $user) {
-            abort(401);
-        }
+        abort_unless($user instanceof User, 401);
 
         $query = $user->notifications()->latest();
 
