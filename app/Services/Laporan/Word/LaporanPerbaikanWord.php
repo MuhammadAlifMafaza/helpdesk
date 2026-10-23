@@ -3,38 +3,36 @@
 namespace App\Services\Laporan\Word;
 
 use Illuminate\Database\Eloquent\Builder;
-use App\Services\Laporan\Word\BaseWordExporter;
 
 class LaporanPerbaikanWord extends BaseWordExporter
 {
     /* Query dari Filament Filter */
     protected Builder $query;
+
     /* Periode Laporan */
     protected string $periode = '-';
-    protected string $filename = 'laporan_perbaikan.docx';
 
+    protected string $filename = 'laporan_perbaikan.docx';
 
     // Document Code (Kode Dokumen)
     private const DOCUMENT_CODE = '1FM-01.07.16/R0';
+
     // Title Document (Judul Dokumen)
     private const DOCUMENT_TITLE = 'Laporan Perbaikan PC Teknisi';
+
     // Document Number (Nomer Dokumen)
     private const DOCUMENT_NUMBER = 'No. 003/IWIMA/KTPI-P3SDI/0426';
 
     // Data Signature (Tanda Tangan)
     private const SIGNATURES = [
         [
-            'title' =>
-                'Ka. Bidang Teknisi Perawatan dan Infrastruktur',
-            'name' =>
-                'Edi Purwanto, S.Kom',
+            'title' => 'Ka. Bidang Teknisi Perawatan dan Infrastruktur',
+            'name' => 'Edi Purwanto, S.Kom',
         ],
 
         [
-            'title' =>
-                'Ka. UPT Laboratorium Komputer dan Bahasa',
-            'name' =>
-                'Wachid Darmawan, M.Kom',
+            'title' => 'Ka. UPT Laboratorium Komputer dan Bahasa',
+            'name' => 'Wachid Darmawan, M.Kom',
         ],
     ];
 
@@ -97,11 +95,11 @@ class LaporanPerbaikanWord extends BaseWordExporter
         return $this->query
             ->get()
             ->map(
-                fn($item, $index) => [
+                fn ($item, $index) => [
 
                     $index + 1,
 
-                    $item->kode_tiket,
+                    $item->tiket?->kode_tiket ?? $item->kode_tiket,
 
                     $item->nama_pemohon,
 
@@ -115,11 +113,11 @@ class LaporanPerbaikanWord extends BaseWordExporter
 
                     $item->service_category,
 
-                    $item->waktu_mulai,
+                    $item->tiket?->waktu_mulai ?? $item->waktu_mulai,
 
-                    $item->waktu_selesai,
+                    $item->tiket?->waktu_selesai ?? $item->waktu_selesai,
 
-                    $item->durasi,
+                    $item->tiket?->durasi_pengerjaan ?? $item->durasi,
 
                 ]
             )

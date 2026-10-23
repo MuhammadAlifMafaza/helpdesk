@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pemohon\Pages\Dashboard;
 use App\Http\Middleware\IsPemohon;
+use App\Http\Middleware\RedirectToAllowedPanel;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -71,6 +72,7 @@ class PemohonPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                RedirectToAllowedPanel::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

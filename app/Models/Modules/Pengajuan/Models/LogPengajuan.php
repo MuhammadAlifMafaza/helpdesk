@@ -12,21 +12,38 @@ class LogPengajuan extends Model
 
     // Kategori Log
     const STATUS = 'Status';
+
     const CHAT = 'Chat';
+
     const UPDATE_DATA = 'Update Data';
+
     const PRIORITAS = 'Prioritas';
 
+    const KONFIRMASI = 'Konfirmasi';
+
     public const EVENT_CREATE = 'CREATE';
+
     public const EVENT_PROCESS = 'PROCESS';
+
     public const EVENT_APPROVE = 'APPROVE';
+
     public const EVENT_REJECT = 'REJECT';
+
     public const EVENT_REOPEN = 'REOPEN';
+
     public const EVENT_PENDING = 'PENDING';
+
     public const EVENT_CHAT = 'CHAT';
+
     public const EVENT_UPDATE = 'UPDATE';
+
     public const EVENT_DELETE = 'DELETE';
+
     public const EVENT_STATUS = 'STATUS';
+
     public const EVENT_SYSTEM = 'SYSTEM';
+
+    public const EVENT_KONFIRMASI = 'KONFIRMASI';
 
     public $timestamps = false;
 
@@ -200,35 +217,39 @@ class LogPengajuan extends Model
         return [
             [
                 'name' => 'Pengajuan Dibuat',
-                'query' => fn(Builder $query) => $query->created(),
+                'query' => fn (Builder $query) => $query->created(),
             ],
             [
                 'name' => 'Pengajuan Diproses',
-                'query' => fn(Builder $query) => $query->process(),
+                'query' => fn (Builder $query) => $query->process(),
             ],
             [
                 'name' => 'Pengajuan Disetujui',
-                'query' => fn(Builder $query) => $query->approve(),
+                'query' => fn (Builder $query) => $query->approve(),
             ],
             [
                 'name' => 'Pengajuan Ditolak',
-                'query' => fn(Builder $query) => $query->reject(),
+                'query' => fn (Builder $query) => $query->reject(),
             ],
             [
                 'name' => 'Pengajuan Dibuka Kembali',
-                'query' => fn(Builder $query) => $query->reopen(),
+                'query' => fn (Builder $query) => $query->reopen(),
             ],
             [
                 'name' => 'Pesan Baru',
-                'query' => fn(Builder $query) => $query->where('kategori_log', 'Chat'),
+                'query' => fn (Builder $query) => $query->where('kategori_log', 'Chat'),
             ],
             [
                 'name' => 'Perubahan Data',
-                'query' => fn(Builder $query) => $query->where('kategori_log', 'Update Data'),
+                'query' => fn (Builder $query) => $query->where('kategori_log', 'Update Data'),
             ],
             [
                 'name' => 'Hapus Data',
-                'query' => fn(Builder $query) => $query->where('kategori_log', 'Delete Data'),
+                'query' => fn (Builder $query) => $query->where('kategori_log', 'Delete Data'),
+            ],
+            [
+                'name' => 'Konfirmasi Penyelesaian',
+                'query' => fn (Builder $query) => $query->where('kategori_log', 'Konfirmasi'),
             ],
         ];
     }
@@ -310,30 +331,31 @@ class LogPengajuan extends Model
     {
         return match ($this->kategori_log) {
             'Status' => match (true) {
-                    blank($this->data_lama)
-                    && $this->data_baru === 'Open' => self::EVENT_CREATE,
+                blank($this->data_lama)
+                && $this->data_baru === 'Open' => self::EVENT_CREATE,
 
-                    $this->data_lama === 'Open'
-                    && $this->data_baru === 'In Progress' => self::EVENT_PROCESS,
+                $this->data_lama === 'Open'
+                && $this->data_baru === 'In Progress' => self::EVENT_PROCESS,
 
-                    $this->data_lama === 'In Progress'
-                    && $this->data_baru === 'Close'
-                    && str_contains($this->keterangan, '[SELESAI]') => self::EVENT_APPROVE,
+                $this->data_lama === 'In Progress'
+                && $this->data_baru === 'Close'
+                && str_contains($this->keterangan, '[SELESAI]') => self::EVENT_APPROVE,
 
-                    $this->data_lama === 'In Progress'
-                    && $this->data_baru === 'Close'
-                    && str_contains($this->keterangan, '[DITOLAK]') => self::EVENT_REJECT,
+                $this->data_lama === 'In Progress'
+                && $this->data_baru === 'Close'
+                && str_contains($this->keterangan, '[DITOLAK]') => self::EVENT_REJECT,
 
-                    $this->data_lama === 'Close'
-                    && $this->data_baru === 'In Progress' => self::EVENT_REOPEN,
+                $this->data_lama === 'Close'
+                && $this->data_baru === 'In Progress' => self::EVENT_REOPEN,
 
-                    default => self::EVENT_STATUS,
-                },
+                default => self::EVENT_STATUS,
+            },
 
             'Pending' => self::EVENT_PENDING,
             'Chat' => self::EVENT_CHAT,
             'Update Data' => self::EVENT_UPDATE,
             'Delete Data' => self::EVENT_DELETE,
+            'Konfirmasi' => self::EVENT_KONFIRMASI,
             default => self::EVENT_SYSTEM,
         };
     }
@@ -350,6 +372,11 @@ class LogPengajuan extends Model
             self::EVENT_CHAT => 'Pesan Baru',
             self::EVENT_UPDATE => 'Perubahan Data',
             self::EVENT_DELETE => 'Hapus Data',
+            self::EVENT_KONFIRMASI => match ($this->data_baru) {
+                'Disetujui' => 'Konfirmasi Diterima',
+                'Ditolak' => 'Konfirmasi Ditolak',
+                default => 'Menunggu Konfirmasi',
+            },
             default => 'Aktivitas',
         };
     }
@@ -390,6 +417,11 @@ class LogPengajuan extends Model
             self::EVENT_REJECT => 'heroicon-o-x-circle',
             self::EVENT_REOPEN => 'heroicon-o-arrow-path',
             self::EVENT_DELETE => 'heroicon-o-trash',
+            self::EVENT_KONFIRMASI => match ($this->data_baru) {
+                'Disetujui' => 'heroicon-o-check-badge',
+                'Ditolak' => 'heroicon-o-arrow-path',
+                default => 'heroicon-o-hand-raised',
+            },
             default => 'heroicon-o-clock',
         };
     }
@@ -406,6 +438,11 @@ class LogPengajuan extends Model
             self::EVENT_REJECT => 'danger',
             self::EVENT_REOPEN => 'reopen',
             self::EVENT_DELETE => 'danger',
+            self::EVENT_KONFIRMASI => match ($this->data_baru) {
+                'Disetujui' => 'success',
+                'Ditolak' => 'warning',
+                default => 'info',
+            },
             default => 'gray',
         };
     }
@@ -422,6 +459,11 @@ class LogPengajuan extends Model
             self::EVENT_REJECT => "{$this->user?->name} menolak pengajuan.",
             self::EVENT_REOPEN => "{$this->user?->name} membuka kembali pengajuan.",
             self::EVENT_DELETE => "{$this->user?->name} menghapus pengajuan.",
+            self::EVENT_KONFIRMASI => match ($this->data_baru) {
+                'Disetujui' => "{$this->user?->name} mengonfirmasi penyelesaian pengajuan.",
+                'Ditolak' => "{$this->user?->name} meminta revisi penyelesaian pengajuan.",
+                default => "{$this->user?->name} meminta konfirmasi penyelesaian pengajuan.",
+            },
             default => "{$this->user?->name} melakukan aktivitas.",
         };
     }
@@ -459,10 +501,10 @@ class LogPengajuan extends Model
             'Open' => 'Menunggu Persetujuan',
             'In Progress' => 'Sedang Diproses',
             'Close' => match ($this->pengajuan?->status_outcome) {
-                    'Completed' => 'Disetujui',
-                    'Rejected' => 'Ditolak',
-                    default => 'Selesai',
-                },
+                'Completed' => 'Disetujui',
+                'Rejected' => 'Ditolak',
+                default => 'Selesai',
+            },
 
             default => '-',
         };

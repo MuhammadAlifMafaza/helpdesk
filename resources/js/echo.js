@@ -17,6 +17,10 @@ if (!window.helpdeskRealtimeInitialized) {
         enabledTransports: ['ws', 'wss'],
     });
 
+    // Beritahu komponen Filament (drawer notifikasi) bahwa Echo sudah siap
+    // dan mereka boleh subscribe ke channel realtime.
+    window.dispatchEvent(new CustomEvent('EchoLoaded'));
+
     window.Echo.connector.pusher.connection.bind('error', (error) => {
         console.error('[Helpdesk realtime] Connection error', error);
     });

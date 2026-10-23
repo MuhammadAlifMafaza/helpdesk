@@ -3,9 +3,11 @@
 namespace App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Tables;
 
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -144,6 +146,72 @@ class TiketPerbaikansTable
                     ->visible(
                         fn (TiketPerbaikan $record): bool => $record->canPemohonEdit()
                     ),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Konfirmasi Penyelesaian
+                |--------------------------------------------------------------------------
+                */
+                Action::make('konfirmasi_selesai')
+                    ->label('')
+                    ->tooltip('Konfirmasi Selesai')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(
+                        fn (TiketPerbaikan $record): bool => $record->isMenungguKonfirmasi()
+                    )
+                    ->modalHeading('Konfirmasi Penyelesaian')
+                    ->modalDescription(
+                        'Pastikan pekerjaan sudah sesuai. Tiket akan ditutup sebagai selesai setelah dikonfirmasi.'
+                    )
+                    ->modalSubmitActionLabel('Ya, Selesai')
+                    ->form([
+                        Textarea::make('catatan')
+                            ->label('Catatan (opsional)')
+                            ->rows(3),
+                    ])
+                    ->action(function (TiketPerbaikan $record, array $data): void {
+
+                        abort_unless(
+                            $record->canBeAccessedBy(auth()->user()),
+                            403,
+                            'Anda tidak memiliki akses ke tiket ini.'
+                        );
+
+                        $record->konfirmasiSelesai($data['catatan'] ?? null);
+                    }),
+
+                Action::make('tolak_konfirmasi')
+                    ->label('')
+                    ->tooltip('Minta Revisi')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->visible(
+                        fn (TiketPerbaikan $record): bool => $record->isMenungguKonfirmasi()
+                    )
+                    ->modalHeading('Tolak Konfirmasi')
+                    ->modalDescription(
+                        'Tiket akan tetap terbuka dan dikembalikan kepada staf untuk diperbaiki.'
+                    )
+                    ->modalSubmitActionLabel('Kirim Permintaan Revisi')
+                    ->form([
+                        Textarea::make('catatan')
+                            ->label('Alasan Revisi')
+                            ->required()
+                            ->rows(3),
+                    ])
+                    ->action(function (TiketPerbaikan $record, array $data): void {
+
+                        abort_unless(
+                            $record->canBeAccessedBy(auth()->user()),
+                            403,
+                            'Anda tidak memiliki akses ke tiket ini.'
+                        );
+
+                        $record->tolakKonfirmasi($data['catatan']);
+                    }),
 
                 /*
                 |--------------------------------------------------------------------------

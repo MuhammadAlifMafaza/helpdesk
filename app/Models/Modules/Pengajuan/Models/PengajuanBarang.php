@@ -42,6 +42,15 @@ class PengajuanBarang extends Model
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Status konfirmasi penyelesaian pekerjaan oleh pemohon.
+     */
+    public const KONFIRMASI_MENUNGGU = 'menunggu';
+
+    public const KONFIRMASI_DISETUJUI = 'disetujui';
+
+    public const KONFIRMASI_DITOLAK = 'ditolak_pemohon';
+
     public const ALLOWED_UPDATE_FIELDS = [
         'barang_id' => 'Barang',
         'spesifikasi_barang' => 'Spesifikasi Barang',
@@ -57,7 +66,17 @@ class PengajuanBarang extends Model
         'jumlah',
         'alasan',
         'status',
+        'konfirmasi_status',
+        'konfirmasi_at',
+        'konfirmasi_catatan',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'konfirmasi_at' => 'datetime',
+        ];
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -191,8 +210,7 @@ class PengajuanBarang extends Model
                 kategori: 'Delete Data',
                 lama: $pengajuan->status,
                 baru: 'Deleted',
-                keterangan:
-                "Pengajuan barang telah dihapus oleh {$namaUser}"
+                keterangan: "Pengajuan barang telah dihapus oleh {$namaUser}"
             );
         });
     }
@@ -205,10 +223,9 @@ class PengajuanBarang extends Model
 
     protected function validateAndSyncBarang(): void
     {
-        if (!$this->barang_id) {
+        if (! $this->barang_id) {
             throw ValidationException::withMessages([
-                'barang_id' =>
-                    'Barang wajib dipilih dari Master Barang.',
+                'barang_id' => 'Barang wajib dipilih dari Master Barang.',
             ]);
         }
 
@@ -217,18 +234,16 @@ class PengajuanBarang extends Model
             ->with('kategoriBarang')
             ->find($this->barang_id);
 
-        if (!$barang) {
+        if (! $barang) {
             throw ValidationException::withMessages([
-                'barang_id' =>
-                    'Master Barang yang dipilih tidak ditemukan.',
+                'barang_id' => 'Master Barang yang dipilih tidak ditemukan.',
             ]);
         }
 
-        if (!$barang->canBeUsedForNewTransaction()) {
+        if (! $barang->canBeUsedForNewTransaction()) {
             throw ValidationException::withMessages([
-                'barang_id' =>
-                    'Barang yang dipilih tidak aktif atau '
-                    . 'kategorinya tidak aktif.',
+                'barang_id' => 'Barang yang dipilih tidak aktif atau '
+                    .'kategorinya tidak aktif.',
             ]);
         }
 
@@ -250,7 +265,7 @@ class PengajuanBarang extends Model
     ): bool {
         $user ??= auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -285,7 +300,7 @@ class PengajuanBarang extends Model
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -298,18 +313,18 @@ class PengajuanBarang extends Model
             return true;
         }
 
-        return !$this->isClosed();
+        return ! $this->isClosed();
     }
 
     public function canPemohonEdit(): bool
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
-        if (!$user->hasRole('pemohon')) {
+        if (! $user->hasRole('pemohon')) {
             return false;
         }
 
@@ -333,11 +348,11 @@ class PengajuanBarang extends Model
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
-        if (!$user->hasRole('pemohon')) {
+        if (! $user->hasRole('pemohon')) {
             return false;
         }
 
@@ -374,12 +389,12 @@ class PengajuanBarang extends Model
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
         if (
-            !$user->hasAnyRole([
+            ! $user->hasAnyRole([
                 'admin',
                 'super_admin',
             ])
@@ -394,12 +409,12 @@ class PengajuanBarang extends Model
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
         if (
-            !$user->hasAnyRole([
+            ! $user->hasAnyRole([
                 'admin',
                 'super_admin',
             ])
@@ -414,12 +429,12 @@ class PengajuanBarang extends Model
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
         if (
-            !$user->hasAnyRole([
+            ! $user->hasAnyRole([
                 'admin',
                 'super_admin',
             ])
@@ -434,12 +449,12 @@ class PengajuanBarang extends Model
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
         if (
-            !$user->hasAnyRole([
+            ! $user->hasAnyRole([
                 'admin',
                 'super_admin',
             ])
@@ -454,12 +469,12 @@ class PengajuanBarang extends Model
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
         if (
-            !$user->hasAnyRole([
+            ! $user->hasAnyRole([
                 'admin',
                 'super_admin',
             ])
@@ -467,19 +482,19 @@ class PengajuanBarang extends Model
             return false;
         }
 
-        return $this->isClosed() && !$this->trashed();
+        return $this->isClosed() && ! $this->trashed();
     }
 
     public function canStaffRestore(): bool
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
         if (
-            !$user->hasAnyRole([
+            ! $user->hasAnyRole([
                 'admin',
                 'super_admin',
             ])
@@ -494,7 +509,7 @@ class PengajuanBarang extends Model
     {
         $user = auth()->user();
 
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -545,12 +560,22 @@ class PengajuanBarang extends Model
 
     public function updateStatus(
         string $statusBaru,
-        ?string $catatan = null
+        ?string $catatan = null,
+        string $activity = 'status',
+        ?string $message = null
     ): bool {
         $statusLama = $this->status;
 
         if ($statusLama === $statusBaru) {
             return false;
+        }
+
+        // Transisi keluar dari siklus Close (mis. reopen) membersihkan
+        // sisa state konfirmasi agar tidak tertinggal pada pengajuan terbuka.
+        if ($statusBaru !== 'Close') {
+            $this->konfirmasi_status = null;
+            $this->konfirmasi_at = null;
+            $this->konfirmasi_catatan = null;
         }
 
         $this->update([
@@ -566,17 +591,17 @@ class PengajuanBarang extends Model
 
         HelpdeskActivityCreated::dispatch(
             module: 'pengajuan',
-            activity: 'status',
+            activity: $activity,
             referenceId: $this->id,
             kode: $this->kode_pengajuan,
             actorId: auth()->id(),
             data: [
                 'old_status' => $statusLama,
                 'new_status' => $statusBaru,
-                'message' =>
-                    "Status {$this->kode_pengajuan} "
-                    . "berubah dari {$statusLama} "
-                    . "menjadi {$statusBaru}.",
+                'message' => $message
+                ?? "Status {$this->kode_pengajuan} "
+                    ."berubah dari {$statusLama} "
+                    ."menjadi {$statusBaru}.",
                 'log_id' => $log->id,
             ],
         );
@@ -590,7 +615,7 @@ class PengajuanBarang extends Model
         return $this->updateStatus(
             'In Progress',
             '[REOPEN] '
-            . (
+            .(
                 $catatan ?? 'Pengajuan telah dibuka kembali oleh {$}'
             )
         );
@@ -610,21 +635,163 @@ class PengajuanBarang extends Model
     public function closeAsCompleted(
         ?string $catatan = null
     ): bool {
+        $this->resetKonfirmasi();
+
         return $this->updateStatus(
             'Close',
             '[SELESAI] '
-            . ($catatan ?? '')
+            .($catatan ?? '')
         );
     }
 
     public function closeAsRejected(
         ?string $catatan = null
     ): bool {
+        $this->resetKonfirmasi();
+
+        $pesan = 'Pengajuan '.$this->kode_pengajuan.' ditolak'
+            .(filled($catatan) ? ': '.trim($catatan) : '.');
+
         return $this->updateStatus(
             'Close',
             '[DITOLAK] '
-            . ($catatan ?? '')
+            .($catatan ?? ''),
+            activity: 'rejected',
+            message: $pesan
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Konfirmasi Penyelesaian Pekerjaan
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Staf menandai pekerjaan selesai dan meminta konfirmasi dari pemohon.
+     * Status pengajuan tetap In Progress sampai pemohon memutuskan.
+     */
+    public function mintaKonfirmasiSelesai(
+        ?string $catatan = null
+    ): bool {
+
+        if ($this->isClosed()) {
+            return false;
+        }
+
+        $this->konfirmasi_status = self::KONFIRMASI_MENUNGGU;
+        $this->konfirmasi_at = now();
+        $this->konfirmasi_catatan = $catatan;
+        $this->save();
+
+        $log = $this->tambahLog(
+            kategori: 'Konfirmasi',
+            lama: $this->status,
+            baru: 'Menunggu Konfirmasi',
+            keterangan: '[MENUNGGU KONFIRMASI] '.($catatan ?? '')
+        );
+
+        HelpdeskActivityCreated::dispatch(
+            module: 'pengajuan',
+            activity: 'confirmation_requested',
+            referenceId: $this->id,
+            kode: $this->kode_pengajuan,
+            actorId: auth()->id(),
+            data: [
+                'message' => "Pengajuan {$this->kode_pengajuan} telah selesai diproses. Mohon konfirmasi penyelesaian.",
+                'catatan' => $catatan,
+                'log_id' => $log->id,
+            ],
+        );
+
+        return true;
+    }
+
+    /**
+     * Pemohon mengonfirmasi pekerjaan selesai → pengajuan ditutup sebagai selesai.
+     */
+    public function konfirmasiSelesai(
+        ?string $catatan = null
+    ): bool {
+
+        if (! $this->isMenungguKonfirmasi()) {
+            return false;
+        }
+
+        $this->konfirmasi_status = self::KONFIRMASI_DISETUJUI;
+        $this->konfirmasi_at = now();
+        $this->konfirmasi_catatan = $catatan;
+        $this->save();
+
+        return $this->updateStatus(
+            'Close',
+            '[SELESAI] '
+            .($catatan ?? ''),
+            activity: 'confirmed',
+            message: "Penyelesaian {$this->kode_pengajuan} dikonfirmasi oleh pemohon."
+        );
+    }
+
+    /**
+     * Pemohon menolak konfirmasi dan meminta revisi → pengajuan tetap In Progress.
+     */
+    public function tolakKonfirmasi(
+        string $catatan
+    ): bool {
+
+        if (! $this->isMenungguKonfirmasi()) {
+            return false;
+        }
+
+        $this->konfirmasi_status = self::KONFIRMASI_DITOLAK;
+        $this->konfirmasi_at = now();
+        $this->konfirmasi_catatan = $catatan;
+        $this->save();
+
+        $log = $this->tambahLog(
+            kategori: 'Konfirmasi',
+            lama: 'Menunggu Konfirmasi',
+            baru: 'Ditolak',
+            keterangan: '[KONFIRMASI DITOLAK] '.$catatan
+        );
+
+        HelpdeskActivityCreated::dispatch(
+            module: 'pengajuan',
+            activity: 'confirmation_rejected',
+            referenceId: $this->id,
+            kode: $this->kode_pengajuan,
+            actorId: auth()->id(),
+            data: [
+                'message' => "Penyelesaian {$this->kode_pengajuan} ditolak oleh pemohon. Alasan: {$catatan}",
+                'catatan' => $catatan,
+                'log_id' => $log->id,
+            ],
+        );
+
+        return true;
+    }
+
+    public function isMenungguKonfirmasi(): bool
+    {
+        return $this->konfirmasi_status === self::KONFIRMASI_MENUNGGU
+            && ! $this->isClosed();
+    }
+
+    public function isKonfirmasiDisetujui(): bool
+    {
+        return $this->konfirmasi_status === self::KONFIRMASI_DISETUJUI;
+    }
+
+    public function isKonfirmasiDitolak(): bool
+    {
+        return $this->konfirmasi_status === self::KONFIRMASI_DITOLAK;
+    }
+
+    protected function resetKonfirmasi(): void
+    {
+        $this->konfirmasi_status = null;
+        $this->konfirmasi_at = null;
+        $this->konfirmasi_catatan = null;
     }
 
     /*
@@ -640,7 +807,7 @@ class PengajuanBarang extends Model
         /*
          * Validasi hak akses dan status.
          */
-        if (!$this->canPemohonDelete()) {
+        if (! $this->canPemohonDelete()) {
             return false;
         }
 
@@ -681,8 +848,7 @@ class PengajuanBarang extends Model
                     activity: 'cancelled',
                     referenceId: $this->id,
                     kode: $this->kode_pengajuan,
-                    actorId:
-                    $user?->id
+                    actorId: $user?->id
                     ?? $this->user_id,
 
                     data: [
@@ -709,7 +875,7 @@ class PengajuanBarang extends Model
 
     public function isCancelled(): bool
     {
-        if (!$this->trashed()) {
+        if (! $this->trashed()) {
             return false;
         }
 
@@ -769,18 +935,17 @@ class PengajuanBarang extends Model
         array $data
     ): bool {
 
-        if (!$this->canPemohonEdit()) {
+        if (! $this->canPemohonEdit()) {
             return false;
         }
 
         $updated = false;
 
         foreach (
-            self::ALLOWED_UPDATE_FIELDS
-            as $field => $label
+            self::ALLOWED_UPDATE_FIELDS as $field => $label
         ) {
 
-            if (!array_key_exists($field, $data)) {
+            if (! array_key_exists($field, $data)) {
                 continue;
             }
 
@@ -802,7 +967,7 @@ class PengajuanBarang extends Model
     ): bool {
 
         if (
-            !array_key_exists(
+            ! array_key_exists(
                 $field,
                 self::ALLOWED_UPDATE_FIELDS
             )
@@ -849,7 +1014,7 @@ class PengajuanBarang extends Model
             baru: (string) ($valueBaru ?? '-'),
             keterangan: $catatan
             ?? 'Data pengajuan diperbarui oleh '
-            . (
+            .(
                 auth()->user()?->name
                 ?? 'System'
             ),
@@ -901,19 +1066,17 @@ class PengajuanBarang extends Model
             ->with('kategoriBarang')
             ->find($barangId);
 
-        if (!$barangBaru) {
+        if (! $barangBaru) {
             throw ValidationException::withMessages([
-                'barang_id' =>
-                    'Master Barang yang dipilih '
-                    . 'tidak ditemukan.',
+                'barang_id' => 'Master Barang yang dipilih '
+                    .'tidak ditemukan.',
             ]);
         }
 
-        if (!$barangBaru->canBeUsedForNewTransaction()) {
+        if (! $barangBaru->canBeUsedForNewTransaction()) {
             throw ValidationException::withMessages([
-                'barang_id' =>
-                    'Barang yang dipilih tidak aktif '
-                    . 'atau kategorinya tidak aktif.',
+                'barang_id' => 'Barang yang dipilih tidak aktif '
+                    .'atau kategorinya tidak aktif.',
             ]);
         }
 
@@ -928,10 +1091,9 @@ class PengajuanBarang extends Model
             kategori: 'Update Data',
             lama: $namaLama,
             baru: $namaBaru,
-            keterangan:
-            $catatan
+            keterangan: $catatan
             ?? 'Barang pengajuan diperbarui oleh '
-            . (
+            .(
                 auth()->user()?->name
                 ?? 'System'
             ),
@@ -987,7 +1149,7 @@ class PengajuanBarang extends Model
             lama: $spesifikasiLama ?: '-',
             baru: $spesifikasiBaru ?: '-',
             keterangan: $catatan ?? 'Spesifikasi barang diperbarui oleh '
-            . (
+            .(
                 auth()->user()?->name
                 ?? 'System'
             ),
@@ -1006,9 +1168,8 @@ class PengajuanBarang extends Model
                 'field_label' => 'Spesifikasi Barang',
                 'old_value' => $spesifikasiLama,
                 'new_value' => $spesifikasiBaru,
-                'message' =>
-                    "Spesifikasi barang pada {$this->kode_pengajuan} "
-                    . "telah diperbarui oleh {$userName}.",
+                'message' => "Spesifikasi barang pada {$this->kode_pengajuan} "
+                    ."telah diperbarui oleh {$userName}.",
                 'log_id' => $log->id,
             ],
         );
@@ -1037,41 +1198,55 @@ class PengajuanBarang extends Model
 
     public function getWaktuMulaiAttribute(): ?Carbon
     {
-        return $this->logs()
+        $startedAt = $this->logs()
             ->where('kategori_log', 'Status')
-            ->where(
-                'data_baru',
-                'In Progress'
-            )
+            ->where('data_baru', 'In Progress')
             ->orderBy('created_at')
             ->value('created_at');
+
+        return $startedAt ? Carbon::parse($startedAt) : null;
     }
 
+    /**
+     * Waktu selesai hanya dianggap final bila status saat ini Close dan
+     * log penutupan terakhir memiliki outcome [SELESAI] atau [DITOLAK].
+     * Jika tiket sudah dibuka kembali, waktu selesai bernilai null.
+     */
     public function getWaktuSelesaiAttribute(): ?Carbon
     {
-        return $this->logs()
-            ->where('kategori_log', 'Status')
-            ->where(
-                'data_baru',
-                'Close'
-            )
-            ->latest('created_at')
-            ->value('created_at');
-    }
-
-    public function getDurasiPengerjaanAttribute(): ?string
-    {
-        if (
-            !$this->waktu_mulai
-            || !$this->waktu_selesai
-        ) {
+        if (! $this->isClosed()) {
             return null;
         }
 
-        return $this->waktu_mulai->diffForHumans(
-            $this->waktu_selesai,
-            true
-        );
+        $closeLog = $this->logs()
+            ->where('kategori_log', 'Status')
+            ->where('data_baru', 'Close')
+            ->latest('created_at')
+            ->first();
+
+        if (! $closeLog) {
+            return null;
+        }
+
+        $keterangan = $closeLog->keterangan ?? '';
+        if (! str_contains($keterangan, '[SELESAI]') && ! str_contains($keterangan, '[DITOLAK]')) {
+            return null;
+        }
+
+        return $closeLog->created_at ? Carbon::parse($closeLog->created_at) : null;
+    }
+
+    /** Durasi kalender total; tiket yang belum selesai terus dihitung sampai sekarang. */
+    public function getDurasiPengerjaanAttribute(): ?string
+    {
+        $mulai = $this->waktu_mulai;
+        if (! $mulai) {
+            return null;
+        }
+
+        $akhir = $this->waktu_selesai ?? now();
+
+        return $mulai->diffForHumans($akhir, true);
     }
 
     /*
@@ -1113,7 +1288,7 @@ class PengajuanBarang extends Model
 
     public function getStatusOutcomeAttribute(): ?string
     {
-        if (!$this->isClosed()) {
+        if (! $this->isClosed()) {
             return null;
         }
 
@@ -1129,7 +1304,7 @@ class PengajuanBarang extends Model
             ->latest('created_at')
             ->first();
 
-        if (!$closeLog) {
+        if (! $closeLog) {
             return null;
         }
 
@@ -1253,8 +1428,8 @@ class PengajuanBarang extends Model
             $hours,
             2
         )
-            . ' Jam'
-            . " ({$days} Hari)";
+            .' Jam'
+            ." ({$days} Hari)";
     }
 
     public static function getAverageDurationDescription(
@@ -1309,7 +1484,7 @@ class PengajuanBarang extends Model
                                 'data_baru',
                                 'In Progress'
                             )
-                                ?->created_at;
+                            ?->created_at;
 
                     $waktuSelesai =
                         $pengajuan
@@ -1319,11 +1494,11 @@ class PengajuanBarang extends Model
                                 'Close'
                             )
                             ->last()
-                                ?->created_at;
+                            ?->created_at;
 
                     if (
-                        !$waktuMulai
-                        || !$waktuSelesai
+                        ! $waktuMulai
+                        || ! $waktuSelesai
                     ) {
                         return null;
                     }

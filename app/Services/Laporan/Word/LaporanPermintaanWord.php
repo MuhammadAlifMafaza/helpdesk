@@ -3,15 +3,17 @@
 namespace App\Services\Laporan\Word;
 
 use Illuminate\Database\Eloquent\Builder;
-use App\Services\Laporan\Word\BaseWordExporter;
 
 class LaporanPermintaanWord extends BaseWordExporter
 {
     /* Query dari Filament Filter */
     protected Builder $query;
+
     /* Periode Laporan */
     protected string $periode = '-';
+
     protected string $filename = 'laporan-permintaan_barang.docx';
+
     // Document Code (Bisa disesuaikan jika format suratnya berbeda)
     private const DOCUMENT_CODE = '1FM-02.07.16/R0';
 
@@ -89,17 +91,17 @@ class LaporanPermintaanWord extends BaseWordExporter
         return $this->query
             ->get()
             ->map(
-                fn($item, $index) => [
+                fn ($item, $index) => [
                     $index + 1,                                        // 0. No
                     $item->kode_pengajuan,                             // 1. Kode
                     $item->nama_pemohon,                               // 2. Pemohon
                     $item->nama_barang,                                // 3. Nama Barang
                     $item->pengajuan?->jumlah ?? '-',                  // 4. Jumlah
-                    $item->status_label,                               // 5. Status
+                    $item->pengajuan?->status_label ?? $item->status_label, // 5. Status
                     $item->outcome_label,                              // 6. Hasil (Completed/Rejected)
-                    $item->waktu_mulai?->format('Y-m-d H:i') ?? '-',   // 7. Mulai
-                    $item->waktu_selesai?->format('Y-m-d H:i') ?? '-', // 8. Selesai
-                    $item->durasi,                                     // 9. Durasi
+                    $item->pengajuan?->waktu_mulai?->format('Y-m-d H:i') ?? '-', // 7. Mulai
+                    $item->pengajuan?->waktu_selesai?->format('Y-m-d H:i') ?? '-', // 8. Selesai
+                    $item->pengajuan?->durasi_pengerjaan ?? $item->durasi, // 9. Durasi
                 ]
             )
             ->toArray();

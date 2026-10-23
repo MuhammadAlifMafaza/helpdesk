@@ -22,8 +22,6 @@ class LaporanKegiatanExport extends BaseLaporanExport
             'Petugas',
             'Lokasi',
             'Deskripsi Kegiatan',
-            'Status',
-            'Catatan (opsional)',
         ];
     }
 
@@ -35,8 +33,6 @@ class LaporanKegiatanExport extends BaseLaporanExport
             $laporan->nama_teknisi ?? '-',
             $laporan->lokasi ?? '-',
             $laporan->deskripsi ?? '-',
-            $laporan->status_label ?? $laporan->status ?? '-',
-            $laporan->catatan ?? '-',
         ];
     }
 }

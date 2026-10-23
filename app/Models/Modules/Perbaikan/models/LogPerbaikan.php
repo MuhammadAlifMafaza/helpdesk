@@ -13,6 +13,8 @@ class LogPerbaikan extends Model
     const STATUS = 'Status';
     const CHAT = 'Chat';
     const UPDATE_DATA = 'Update Data';
+    const KONFIRMASI = 'Konfirmasi';
+
     public const EVENT_CREATE = 'CREATE';
     public const EVENT_ASSIGN = 'ASSIGN';
     public const EVENT_PENDING = 'PENDING';
@@ -24,6 +26,7 @@ class LogPerbaikan extends Model
     public const EVENT_DELETE = 'DELETE';
     public const EVENT_STATUS = 'STATUS';
     public const EVENT_SYSTEM = 'SYSTEM';
+    public const EVENT_KONFIRMASI = 'KONFIRMASI';
 
     public $timestamps = false;
 
@@ -152,10 +155,12 @@ class LogPerbaikan extends Model
             self::EVENT_UPDATE => $query->where('kategori_log', self::UPDATE_DATA),
             self::EVENT_DELETE => $query->where('kategori_log', 'Delete Data'),
             self::EVENT_STATUS => $query->where('kategori_log', self::STATUS),
+            self::EVENT_KONFIRMASI => $query->where('kategori_log', self::KONFIRMASI),
             self::EVENT_SYSTEM => $query->whereNotIn('kategori_log', [
                 self::STATUS,
                 self::CHAT,
                 self::UPDATE_DATA,
+                self::KONFIRMASI,
                 'Delete Data',
                 'Pending',
             ]),
@@ -389,6 +394,12 @@ class LogPerbaikan extends Model
 
             self::EVENT_DELETE => 'Hapus Data',
 
+            self::EVENT_KONFIRMASI => match ($this->data_baru) {
+                'Disetujui' => 'Konfirmasi Diterima',
+                'Ditolak' => 'Konfirmasi Ditolak',
+                default => 'Menunggu Konfirmasi',
+            },
+
             default => 'Aktivitas',
         };
     }
@@ -415,6 +426,12 @@ class LogPerbaikan extends Model
 
             self::EVENT_DELETE => 'heroicon-o-trash',
 
+            self::EVENT_KONFIRMASI => match ($this->data_baru) {
+                'Disetujui' => 'heroicon-o-check-badge',
+                'Ditolak' => 'heroicon-o-arrow-path',
+                default => 'heroicon-o-hand-raised',
+            },
+
             default => 'heroicon-o-clock',
         };
     }
@@ -440,6 +457,12 @@ class LogPerbaikan extends Model
             self::EVENT_REOPEN => 'primary',
 
             self::EVENT_DELETE => 'danger',
+
+            self::EVENT_KONFIRMASI => match ($this->data_baru) {
+                'Disetujui' => 'success',
+                'Ditolak' => 'warning',
+                default => 'info',
+            },
 
             default => 'gray',
         };
@@ -533,6 +556,8 @@ class LogPerbaikan extends Model
             'Update Data' => self::EVENT_UPDATE,
 
             'Delete Data' => self::EVENT_DELETE,
+
+            'Konfirmasi' => self::EVENT_KONFIRMASI,
 
             default => self::EVENT_SYSTEM,
         };

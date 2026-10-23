@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Laporan\LaporanPerbaikans\Tables;
 
 use App\Models\Modules\Laporan\Models\LaporanPerbaikan;
-use Filament\Actions\ViewAction;
+use App\Services\Laporan\LaporanPeriodFormatter;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\BadgeColumn;
@@ -94,19 +94,40 @@ class LaporanPerbaikansTable
             ->filters([
                 //
                 Filter::make('periode')
-                    ->label('Periode')
+                    ->label('Periode Laporan')
                     ->form([
+                        Select::make('bulan')
+                            ->label('Bulan')
+                            ->placeholder('Pilih bulan')
+                            ->options([
+                                1 => 'Januari',
+                                2 => 'Februari',
+                                3 => 'Maret',
+                                4 => 'April',
+                                5 => 'Mei',
+                                6 => 'Juni',
+                                7 => 'Juli',
+                                8 => 'Agustus',
+                                9 => 'September',
+                                10 => 'Oktober',
+                                11 => 'November',
+                                12 => 'Desember',
+                            ]),
+                        Select::make('tahun')
+                            ->label('Tahun')
+                            ->placeholder('Pilih tahun')
+                            ->options(fn () => collect(range(now()->year + 1, now()->year - 5))
+                                ->mapWithKeys(fn ($year) => [$year => (string) $year])
+                                ->all()),
                         DatePicker::make('from')
                             ->label('Tanggal Awal'),
-
                         DatePicker::make('until')
                             ->label('Tanggal Akhir'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
-                        return $query->periode(
-                            $data['from'] ?? null,
-                            $data['until'] ?? null
-                        );
+                        $range = LaporanPeriodFormatter::range($data);
+
+                        return $query->periode($range['from'], $range['until']);
                     }),
 
                 Filter::make('status')

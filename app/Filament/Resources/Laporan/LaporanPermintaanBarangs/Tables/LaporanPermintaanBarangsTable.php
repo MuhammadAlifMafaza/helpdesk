@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Laporan\LaporanPermintaanBarangs\Tables;
 
+use App\Services\Laporan\LaporanPeriodFormatter;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -91,15 +93,40 @@ class LaporanPermintaanBarangsTable
             // 2. Definisikan Filter (Menggunakan Scope dari Model)
             ->filters([
                 Filter::make('periode')
+                    ->label('Periode Laporan')
                     ->form([
-                        DatePicker::make('dari_tanggal'),
-                        DatePicker::make('sampai_tanggal'),
+                        Select::make('bulan')
+                            ->label('Bulan')
+                            ->placeholder('Pilih bulan')
+                            ->options([
+                                1 => 'Januari',
+                                2 => 'Februari',
+                                3 => 'Maret',
+                                4 => 'April',
+                                5 => 'Mei',
+                                6 => 'Juni',
+                                7 => 'Juli',
+                                8 => 'Agustus',
+                                9 => 'September',
+                                10 => 'Oktober',
+                                11 => 'November',
+                                12 => 'Desember',
+                            ]),
+                        Select::make('tahun')
+                            ->label('Tahun')
+                            ->placeholder('Pilih tahun')
+                            ->options(fn () => collect(range(now()->year + 1, now()->year - 5))
+                                ->mapWithKeys(fn ($year) => [$year => (string) $year])
+                                ->all()),
+                        DatePicker::make('dari_tanggal')
+                            ->label('Tanggal Awal'),
+                        DatePicker::make('sampai_tanggal')
+                            ->label('Tanggal Akhir'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
-                        return $query->periode(
-                            $data['dari_tanggal'] ?? null,
-                            $data['sampai_tanggal'] ?? null
-                        );
+                        $range = LaporanPeriodFormatter::range($data);
+
+                        return $query->periode($range['from'], $range['until']);
                     }),
 
                 SelectFilter::make('status')

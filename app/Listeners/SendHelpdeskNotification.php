@@ -4,16 +4,16 @@ namespace App\Listeners;
 
 use App\Events\HelpdeskActivityCreated;
 use App\Models\User;
+use App\Notifications\HelpdeskNotification;
 use App\Services\Notifications\HelpdeskNotificationUrl;
 use App\Services\Notifications\HelpdeskRecipientResolver;
-use App\Notifications\HelpdeskNotification;
+use Filament\Notifications\Events\DatabaseNotificationsSent;
 
 class SendHelpdeskNotification
 {
     public function __construct(
         protected HelpdeskRecipientResolver $recipientResolver,
-    ) {
-    }
+    ) {}
 
     /* =======================================================================
      * HANDLE EVENT
@@ -75,12 +75,18 @@ class SendHelpdeskNotification
                 url: $url,
             );
 
-            if (!$notification) {
+            if (! $notification) {
                 continue;
             }
 
             // Preserve the actor in metadata and make it visible in the native drawer body.
             $recipient->notify($notification);
+
+            // Perbarui drawer notifikasi Filament secara realtime
+            // (membutuhkan server Reverb yang berjalan).
+            if (config('helpdesk.notifications.broadcast_enabled', false)) {
+                DatabaseNotificationsSent::dispatch($recipient);
+            }
         }
     }
 
@@ -98,6 +104,11 @@ class SendHelpdeskNotification
             'chat' => $this->chatNotification($event, $url),
             'status' => $this->statusNotification($event, $url),
             'updated' => $this->updatedNotification($event, $url),
+            'cancelled' => $this->cancelledNotification($event, $url),
+            'rejected' => $this->rejectedNotification($event, $url),
+            'confirmation_requested' => $this->confirmationRequestedNotification($event, $url),
+            'confirmed' => $this->confirmedNotification($event, $url),
+            'confirmation_rejected' => $this->confirmationRejectedNotification($event, $url),
             default => null,
         };
     }
@@ -207,6 +218,131 @@ class SendHelpdeskNotification
             data: $event->data,
         );
     }
+
+    // Notification Pembatalan layanan (pemberitahuan ke staf).
+    protected function cancelledNotification(
+        HelpdeskActivityCreated $event,
+        ?string $url,
+    ): HelpdeskNotification {
+
+        $isTicket = $event->module === 'perbaikan';
+
+        return new HelpdeskNotification(
+            type: "{$event->module}.cancelled",
+
+            title: $isTicket
+            ? "Tiket {$event->kode} Dibatalkan"
+            : "Pengajuan {$event->kode} Dibatalkan",
+
+            message: $this->messageWithActor($event, $event->data['message']
+            ?? 'Layanan telah dibatalkan.'),
+
+            kode: $event->kode,
+            url: $url,
+
+            icon: 'heroicon-o-x-circle',
+
+            color: 'danger',
+            referenceId: (string) $event->referenceId,
+            data: $event->data,
+        );
+    }
+
+    // Notification Penolakan layanan oleh staf (ke pemilik layanan).
+    protected function rejectedNotification(
+        HelpdeskActivityCreated $event,
+        ?string $url,
+    ): HelpdeskNotification {
+
+        $isTicket = $event->module === 'perbaikan';
+
+        return new HelpdeskNotification(
+            type: "{$event->module}.rejected",
+
+            title: $isTicket
+            ? "Tiket {$event->kode} Ditolak"
+            : "Pengajuan {$event->kode} Ditolak",
+
+            message: $this->messageWithActor($event, $event->data['message']
+            ?? 'Layanan Anda ditolak. Silakan hubungi staf untuk keterangan lebih lanjut.'),
+
+            kode: $event->kode,
+            url: $url,
+
+            icon: 'heroicon-o-no-symbol',
+
+            color: 'danger',
+            referenceId: (string) $event->referenceId,
+            data: $event->data,
+        );
+    }
+
+    // Notification Permintaan konfirmasi penyelesaian (staf → pemilik layanan).
+    protected function confirmationRequestedNotification(
+        HelpdeskActivityCreated $event,
+        ?string $url,
+    ): HelpdeskNotification {
+
+        return new HelpdeskNotification(
+            type: "{$event->module}.confirmation_requested",
+            title: "Konfirmasi Penyelesaian · {$event->kode}",
+
+            message: $this->messageWithActor($event, $event->data['message']
+            ?? 'Pekerjaan telah selesai dikerjakan. Mohon konfirmasi penyelesaian.'),
+
+            kode: $event->kode,
+            url: $url,
+            icon: 'heroicon-o-hand-raised',
+            color: 'info',
+            referenceId: (string) $event->referenceId,
+            data: $event->data,
+        );
+    }
+
+    // Notification Konfirmasi diterima (pemilik layanan → staf).
+    protected function confirmedNotification(
+        HelpdeskActivityCreated $event,
+        ?string $url,
+    ): HelpdeskNotification {
+
+        return new HelpdeskNotification(
+            type: "{$event->module}.confirmed",
+            title: "Penyelesaian {$event->kode} Dikonfirmasi",
+
+            message: $this->messageWithActor($event, $event->data['message']
+            ?? 'Pemohon mengonfirmasi pekerjaan telah selesai.'),
+
+            kode: $event->kode,
+            url: $url,
+            icon: 'heroicon-o-check-badge',
+            color: 'success',
+            referenceId: (string) $event->referenceId,
+            data: $event->data,
+        );
+    }
+
+    // Notification Konfirmasi ditolak / minta revisi (pemilik layanan → staf).
+    protected function confirmationRejectedNotification(
+        HelpdeskActivityCreated $event,
+        ?string $url,
+    ): HelpdeskNotification {
+
+        return new HelpdeskNotification(
+            type: "{$event->module}.confirmation_rejected",
+            title: "Konfirmasi Ditolak · {$event->kode}",
+
+            message: $this->messageWithActor($event, $event->data['message']
+            ?? 'Pemohon meminta revisi sebelum penyelesaian dikonfirmasi.'),
+
+            kode: $event->kode,
+            url: $url,
+            icon: 'heroicon-o-arrow-path',
+            color: 'warning',
+            referenceId: (string) $event->referenceId,
+            data: $event->data,
+        );
+    }
+
     protected function messageWithActor(HelpdeskActivityCreated $event, string $message): string
     {
         $actorName = trim((string) ($event->data['actor_name'] ?? ''));
@@ -215,10 +351,10 @@ class SendHelpdeskNotification
         }
 
         // Avoid duplicate prefixes when upstream already supplied actor information.
-        if (str_starts_with(mb_strtolower($message), mb_strtolower($actorName . ':'))) {
+        if (str_starts_with(mb_strtolower($message), mb_strtolower($actorName.':'))) {
             return $message;
         }
 
-        return $actorName . ': ' . $message;
+        return $actorName.': '.$message;
     }
 }

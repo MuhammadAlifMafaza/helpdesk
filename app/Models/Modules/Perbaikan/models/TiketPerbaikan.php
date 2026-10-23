@@ -40,6 +40,15 @@ class TiketPerbaikan extends Model
     | Model Fillable Fields
     |--------------------------------------------------------------------------
     */
+    /**
+     * Status konfirmasi penyelesaian pekerjaan oleh pemohon.
+     */
+    public const KONFIRMASI_MENUNGGU = 'menunggu';
+
+    public const KONFIRMASI_DISETUJUI = 'disetujui';
+
+    public const KONFIRMASI_DITOLAK = 'ditolak_pemohon';
+
     private const ALLOWED_UPDATE_FIELDS = [
         'kepemilikan',
         'ruangan_id',
@@ -54,7 +63,17 @@ class TiketPerbaikan extends Model
         'kepemilikan',
         'deskripsi',
         'status',
+        'konfirmasi_status',
+        'konfirmasi_at',
+        'konfirmasi_catatan',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'konfirmasi_at' => 'datetime',
+        ];
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -85,7 +104,7 @@ class TiketPerbaikan extends Model
     */
     public function getKodeTiketAttribute(): string
     {
-        $firstIdToday = self::query()
+        $firstIdToday = self::withTrashed()
             ->whereDate(
                 'created_at',
                 $this->created_at->toDateString()
@@ -309,13 +328,23 @@ class TiketPerbaikan extends Model
 
     public function updateStatus(
         string $statusBaru,
-        ?string $catatan = null
+        ?string $catatan = null,
+        string $activity = 'status',
+        ?string $message = null
     ): bool {
 
         $statusLama = $this->status;
 
         if ($statusLama === $statusBaru) {
             return false;
+        }
+
+        // Transisi keluar dari siklus Close (mis. reopen) membersihkan
+        // sisa state konfirmasi agar tidak tertinggal pada tiket terbuka.
+        if ($statusBaru !== TicketStatus::CLOSE->value) {
+            $this->konfirmasi_status = null;
+            $this->konfirmasi_at = null;
+            $this->konfirmasi_catatan = null;
         }
 
         $this->update([
@@ -331,14 +360,15 @@ class TiketPerbaikan extends Model
 
         HelpdeskActivityCreated::dispatch(
             module: 'perbaikan',
-            activity: 'status',
+            activity: $activity,
             referenceId: $this->id,
             kode: $this->kode_tiket,
             actorId: auth()->id(),
             data: [
                 'old_status' => $statusLama,
                 'new_status' => $statusBaru,
-                'message' => "Status {$this->kode_tiket} berubah dari {$statusLama} menjadi {$statusBaru}.",
+                'message' => $message
+                ?? "Status {$this->kode_tiket} berubah dari {$statusLama} menjadi {$statusBaru}.",
                 'log_id' => $log->id,
             ],
         );
@@ -369,6 +399,8 @@ class TiketPerbaikan extends Model
     public function closeAsCompleted(
         ?string $catatan = null
     ) {
+        $this->resetKonfirmasi();
+
         return $this->updateStatus(
             'Close',
             '[SELESAI] ' . ($catatan ?? '')
@@ -378,10 +410,149 @@ class TiketPerbaikan extends Model
     public function closeAsRejected(
         ?string $catatan = null
     ) {
+        $this->resetKonfirmasi();
+
+        $pesan = 'Layanan ' . $this->kode_tiket . ' ditolak'
+            . (filled($catatan) ? ': ' . trim($catatan) : '.');
+
         return $this->updateStatus(
             'Close',
-            '[DITOLAK] ' . ($catatan ?? '')
+            '[DITOLAK] ' . ($catatan ?? ''),
+            activity: 'rejected',
+            message: $pesan
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Konfirmasi Penyelesaian Pekerjaan
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Staf menandai pekerjaan selesai dan meminta konfirmasi dari pemohon.
+     * Status tiket tetap In Progress sampai pemohon memutuskan.
+     */
+    public function mintaKonfirmasiSelesai(
+        ?string $catatan = null
+    ): bool {
+
+        if ($this->isClosed()) {
+            return false;
+        }
+
+        $this->konfirmasi_status = self::KONFIRMASI_MENUNGGU;
+        $this->konfirmasi_at = now();
+        $this->konfirmasi_catatan = $catatan;
+        $this->save();
+
+        $log = $this->tambahLog(
+            kategori: 'Konfirmasi',
+            lama: $this->status,
+            baru: 'Menunggu Konfirmasi',
+            keterangan: '[MENUNGGU KONFIRMASI] ' . ($catatan ?? '')
+        );
+
+        HelpdeskActivityCreated::dispatch(
+            module: 'perbaikan',
+            activity: 'confirmation_requested',
+            referenceId: $this->id,
+            kode: $this->kode_tiket,
+            actorId: auth()->id(),
+            data: [
+                'message' => "Pekerjaan {$this->kode_tiket} telah selesai dikerjakan. Mohon konfirmasi penyelesaian.",
+                'catatan' => $catatan,
+                'log_id' => $log->id,
+            ],
+        );
+
+        return true;
+    }
+
+    /**
+     * Pemohon mengonfirmasi pekerjaan selesai → tiket ditutup sebagai selesai.
+     */
+    public function konfirmasiSelesai(
+        ?string $catatan = null
+    ): bool {
+
+        if (! $this->isMenungguKonfirmasi()) {
+            return false;
+        }
+
+        $this->konfirmasi_status = self::KONFIRMASI_DISETUJUI;
+        $this->konfirmasi_at = now();
+        $this->konfirmasi_catatan = $catatan;
+        $this->save();
+
+        return $this->updateStatus(
+            'Close',
+            '[SELESAI] ' . ($catatan ?? ''),
+            activity: 'confirmed',
+            message: "Penyelesaian {$this->kode_tiket} dikonfirmasi oleh pemohon."
+        );
+    }
+
+    /**
+     * Pemohon menolak konfirmasi dan meminta revisi → tiket tetap In Progress.
+     */
+    public function tolakKonfirmasi(
+        string $catatan
+    ): bool {
+
+        if (! $this->isMenungguKonfirmasi()) {
+            return false;
+        }
+
+        $this->konfirmasi_status = self::KONFIRMASI_DITOLAK;
+        $this->konfirmasi_at = now();
+        $this->konfirmasi_catatan = $catatan;
+        $this->save();
+
+        $log = $this->tambahLog(
+            kategori: 'Konfirmasi',
+            lama: 'Menunggu Konfirmasi',
+            baru: 'Ditolak',
+            keterangan: '[KONFIRMASI DITOLAK] ' . $catatan
+        );
+
+        HelpdeskActivityCreated::dispatch(
+            module: 'perbaikan',
+            activity: 'confirmation_rejected',
+            referenceId: $this->id,
+            kode: $this->kode_tiket,
+            actorId: auth()->id(),
+            data: [
+                'message' => "Penyelesaian {$this->kode_tiket} ditolak oleh pemohon. Alasan: {$catatan}",
+                'catatan' => $catatan,
+                'log_id' => $log->id,
+            ],
+        );
+
+        return true;
+    }
+
+    public function isMenungguKonfirmasi(): bool
+    {
+        return $this->konfirmasi_status === self::KONFIRMASI_MENUNGGU
+            && ! $this->isClosed();
+    }
+
+    public function isKonfirmasiDisetujui(): bool
+    {
+        return $this->konfirmasi_status === self::KONFIRMASI_DISETUJUI;
+    }
+
+    public function isKonfirmasiDitolak(): bool
+    {
+        return $this->konfirmasi_status === self::KONFIRMASI_DITOLAK;
+    }
+
+    protected function resetKonfirmasi(): void
+    {
+        $this->konfirmasi_status = null;
+        $this->konfirmasi_at = null;
+        $this->konfirmasi_catatan = null;
     }
 
     /*
@@ -593,35 +764,54 @@ class TiketPerbaikan extends Model
     */
     public function getWaktuMulaiAttribute(): ?Carbon
     {
-        return $this->logs()
+        $startedAt = $this->logs()
             ->where('kategori_log', 'Status')
             ->where('data_baru', 'In Progress')
             ->orderBy('created_at')
             ->value('created_at');
+
+        return $startedAt ? Carbon::parse($startedAt) : null;
     }
 
+    /**
+     * Waktu selesai hanya dianggap final bila status saat ini Close dan
+     * log penutupan terakhir memiliki outcome [SELESAI] atau [DITOLAK].
+     * Jika tiket sudah dibuka kembali, waktu selesai bernilai null.
+     */
     public function getWaktuSelesaiAttribute(): ?Carbon
     {
-        return $this->logs()
-            ->where('kategori_log', 'Status')
-            ->where('data_baru', 'Close')
-            ->latest('created_at')
-            ->value('created_at');
-    }
-
-    public function getDurasiPengerjaanAttribute(): ?string
-    {
-        if (
-            !$this->waktu_mulai ||
-            !$this->waktu_selesai
-        ) {
+        if (! $this->isClosed()) {
             return null;
         }
 
-        return $this->waktu_mulai->diffForHumans(
-            $this->waktu_selesai,
-            true
-        );
+        $closeLog = $this->logs()
+            ->where('kategori_log', 'Status')
+            ->where('data_baru', 'Close')
+            ->latest('created_at')
+            ->first();
+
+        if (! $closeLog) {
+            return null;
+        }
+
+        $keterangan = $closeLog->keterangan ?? '';
+        if (! str_contains($keterangan, '[SELESAI]') && ! str_contains($keterangan, '[DITOLAK]')) {
+            return null;
+        }
+
+        return $closeLog->created_at ? Carbon::parse($closeLog->created_at) : null;
+    }
+
+    /** Durasi kalender total; tiket yang belum selesai terus dihitung sampai sekarang. */
+    public function getDurasiPengerjaanAttribute(): ?string
+    {
+        $mulai = $this->waktu_mulai;
+        if (! $mulai) {
+            return null;
+        }
+
+        $akhir = $this->waktu_selesai ?? now();
+        return $mulai->diffForHumans($akhir, true);
     }
 
     /*

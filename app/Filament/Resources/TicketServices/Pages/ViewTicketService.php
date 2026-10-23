@@ -119,6 +119,7 @@ class ViewTicketService extends ViewRecord
                 ->color('success')
                 ->visible(
                     fn ($record) => $record->status === 'In Progress'
+                    && ! $record->isMenungguKonfirmasi()
                 )
                 ->requiresConfirmation()
                 ->form([
@@ -127,11 +128,15 @@ class ViewTicketService extends ViewRecord
                 ])
                 ->action(function ($record, array $data) {
 
-                    $record->closeAsCompleted(
+                    $record->mintaKonfirmasiSelesai(
                         $data['catatan']
                     );
 
-                }),
+                })
+                ->modalHeading('Konfirmasi Penyelesaian')
+                ->modalDescription(
+                    'Pemohon akan diminta mengonfirmasi penyelesaian pekerjaan ini.'
+                ),
 
             Action::make('tolak')
                 ->label('Tolak')
@@ -151,7 +156,11 @@ class ViewTicketService extends ViewRecord
                         $data['catatan']
                     );
 
-                }),
+                })
+                ->modalHeading('Konfirmasi Penolakan')
+                ->modalDescription(
+                    'Tiket akan ditutup sebagai ditolak dan pemohon menerima notifikasi penolakan.'
+                ),
 
             Action::make('reopen')
                 ->label('Reopen Ticket')

@@ -37,13 +37,13 @@ class LaporanPermintaanExport extends BaseLaporanExport
             $this->nextRowNumber(),
             $laporan->kode_pengajuan ?? '-',
             $laporan->nama_pemohon ?? '-',
-            $laporan->nama_barang ?? '-',
+            $laporan->pengajuan?->nama_barang ?? $laporan->nama_barang ?? '-',
             $laporan->pengajuan?->jumlah ?? '-',
-            $laporan->status_label ?? $laporan->status ?? '-',
+            $laporan->pengajuan?->status_label ?? $laporan->status_label ?? '-',
             $laporan->outcome_label ?? $laporan->outcome ?? '-',
-            $laporan->waktu_mulai?->format('d-m-Y H:i') ?? '-',
-            $laporan->waktu_selesai?->format('d-m-Y H:i') ?? '-',
-            $laporan->durasi ?? '-',
+            $laporan->pengajuan?->waktu_mulai?->format('d-m-Y H:i') ?? '-',
+            $laporan->pengajuan?->waktu_selesai?->format('d-m-Y H:i') ?? '-',
+            $laporan->pengajuan?->durasi_pengerjaan ?? '-',
         ];
     }
 }

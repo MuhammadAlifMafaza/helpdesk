@@ -2,12 +2,10 @@
 
 namespace App\Models\Modules\Laporan\Models;
 
-use App\Models\User;
 use App\Models\Modules\Pengajuan\Models\LogPengajuan;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
-
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class LaporanPermintaanBarang extends Model
 {
@@ -18,9 +16,13 @@ class LaporanPermintaanBarang extends Model
     */
 
     protected $table = 'view_laporan_barang';
+
     protected $primaryKey = 'no_pengajuan';
+
     public $incrementing = false;
+
     protected $keyType = 'int';
+
     public $timestamps = false;
 
     protected $guarded = [];
@@ -30,6 +32,17 @@ class LaporanPermintaanBarang extends Model
         'waktu_selesai' => 'datetime',
         'durasi_pengerjaan_menit' => 'integer',
     ];
+
+    /**
+     * View laporan tidak memfilter soft delete. Baris laporan hanya valid
+     * jika record sumbernya masih aktif pada modul Pengajuan Barang.
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope('pengajuan_aktif', function (Builder $query): void {
+            $query->whereHas('pengajuan');
+        });
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -99,18 +112,16 @@ class LaporanPermintaanBarang extends Model
         return $query
             ->when(
                 $from,
-                fn(Builder $query) =>
-                $query->whereDate(
-                    'waktu_mulai',
+                fn (Builder $query) => $query->whereDate(
+                    'waktu_pengajuan',
                     '>=',
                     $from
                 )
             )
             ->when(
                 $until,
-                fn(Builder $query) =>
-                $query->whereDate(
-                    'waktu_mulai',
+                fn (Builder $query) => $query->whereDate(
+                    'waktu_pengajuan',
                     '<=',
                     $until
                 )
@@ -125,8 +136,7 @@ class LaporanPermintaanBarang extends Model
 
         return $query->when(
             filled($status),
-            fn(Builder $query) =>
-            $query->where(
+            fn (Builder $query) => $query->where(
                 'status',
                 $status
             )
@@ -149,32 +159,27 @@ class LaporanPermintaanBarang extends Model
         }
 
         return match ($kategori) {
-            'Cepat'
-            => $query->whereBetween(
+            'Cepat' => $query->whereBetween(
                 'durasi_pengerjaan_menit',
                 [1, 60]
             ),
 
-            'Normal'
-            => $query->whereBetween(
+            'Normal' => $query->whereBetween(
                 'durasi_pengerjaan_menit',
                 [61, 240]
             ),
 
-            'Lama'
-            => $query->where(
+            'Lama' => $query->where(
                 'durasi_pengerjaan_menit',
                 '>',
                 240
             ),
 
-            'Belum Selesai'
-            => $query->whereNull(
+            'Belum Selesai' => $query->whereNull(
                 'durasi_pengerjaan_menit'
             ),
 
-            default
-            => $query,
+            default => $query,
         };
     }
 
@@ -195,8 +200,7 @@ class LaporanPermintaanBarang extends Model
 
         return $query->whereHas(
             'pengajuan',
-            fn(Builder $query) =>
-            $query->whereRaw('1 = 1') // Bisa disesuaikan jika ingin filter spesifik outcome
+            fn (Builder $query) => $query->whereRaw('1 = 1') // Bisa disesuaikan jika ingin filter spesifik outcome
         );
     }
 
@@ -229,20 +233,20 @@ class LaporanPermintaanBarang extends Model
 
     public function scopeToday(Builder $query): Builder
     {
-        return $query->whereDate('waktu_mulai', today());
+        return $query->whereDate('waktu_pengajuan', today());
     }
 
     public function scopeThisMonth(Builder $query): Builder
     {
         return $query
-            ->whereMonth('waktu_mulai', now()->month)
-            ->whereYear('waktu_mulai', now()->year);
+            ->whereMonth('waktu_pengajuan', now()->month)
+            ->whereYear('waktu_pengajuan', now()->year);
     }
 
     public function scopeThisYear(Builder $query): Builder
     {
         return $query
-            ->whereYear('waktu_mulai', now()->year);
+            ->whereYear('waktu_pengajuan', now()->year);
     }
 
     /*
@@ -253,21 +257,9 @@ class LaporanPermintaanBarang extends Model
 
     public function getKodePengajuanAttribute(): string
     {
-        if (!$this->waktu_mulai) {
-            return "PJB-{$this->no_pengajuan}";
-        }
-
-        $firstId = self::query()
-            ->whereDate('waktu_mulai', $this->waktu_mulai->toDateString())
-            ->min('no_pengajuan');
-
-        $urut = ($this->no_pengajuan - $firstId) + 1;
-
-        return sprintf(
-            'PJB-%s-%04d',
-            $this->waktu_mulai->format('dmY'),
-            $urut
-        );
+        // Gunakan satu sumber kebenaran yang sama dengan modul Pengajuan.
+        return $this->pengajuan?->kode_pengajuan
+            ?? 'PJB-'.$this->no_pengajuan;
     }
 
     /*
@@ -376,6 +368,7 @@ class LaporanPermintaanBarang extends Model
             if ($hari > 0) {
                 $hasil[] = "{$hari} Hari";
             }
+
             return implode(' ', $hasil);
         }
 
@@ -384,11 +377,13 @@ class LaporanPermintaanBarang extends Model
             if ($hari > 0) {
                 $hasil[] = "{$hari} Hari";
             }
+
             return implode(' ', $hasil);
         }
 
         if ($hari > 0) {
             $hasil[] = "{$hari} Hari";
+
             return implode(' ', $hasil);
         }
 
@@ -397,6 +392,7 @@ class LaporanPermintaanBarang extends Model
             if ($menit > 0) {
                 $hasil[] = "{$menit} Menit";
             }
+
             return implode(' ', $hasil);
         }
 
@@ -412,39 +408,43 @@ class LaporanPermintaanBarang extends Model
 
     public function getDurasiJamAttribute(): float
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 0;
         }
+
         return round($this->durasi_pengerjaan_menit / 60, 2);
     }
 
     public function getDurasiHariAttribute(): float
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 0;
         }
+
         return round($this->durasi_pengerjaan_menit / 1440, 2);
     }
 
     public function getDurasiMingguAttribute(): float
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 0;
         }
+
         return round($this->durasi_pengerjaan_menit / 10080, 2);
     }
 
     public function getDurasiBulanAttribute(): float
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 0;
         }
+
         return round($this->durasi_pengerjaan_menit / 43200, 2);
     }
 
     public function getDurasiLevelAttribute(): string
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 'Belum Selesai';
         }
 
@@ -499,6 +499,7 @@ class LaporanPermintaanBarang extends Model
     public static function getTotalPengajuan(?Builder $query = null): int
     {
         $query ??= static::query();
+
         return (clone $query)->count();
     }
 
@@ -506,6 +507,7 @@ class LaporanPermintaanBarang extends Model
     public static function getTotalOpen(?Builder $query = null): int
     {
         $query ??= static::query();
+
         return (clone $query)->where('status', 'Open')->count();
     }
 
@@ -513,13 +515,15 @@ class LaporanPermintaanBarang extends Model
     public static function getTotalInProgress(?Builder $query = null): int
     {
         $query ??= static::query();
+
         return (clone $query)->where('status', 'In Progress')->count();
     }
 
-    /* Total Pengajuan Yang Telah Selesai (Close)*/
+    /* Total Pengajuan Yang Telah Selesai (Close) */
     public static function getTotalClose(?Builder $query = null): int
     {
         $query ??= static::query();
+
         return (clone $query)->where('status', 'Close')->count();
     }
 
@@ -527,6 +531,7 @@ class LaporanPermintaanBarang extends Model
     public static function getTotalBelumSelesai(?Builder $query = null): int
     {
         $query ??= static::query();
+
         return (clone $query)->whereNull('waktu_selesai')->count();
     }
 
@@ -534,6 +539,7 @@ class LaporanPermintaanBarang extends Model
     public static function getTotalPemohon(?Builder $query = null): int
     {
         $query ??= static::query();
+
         return (clone $query)->whereNotNull('nama_pemohon')->distinct()->count('nama_pemohon');
     }
 
@@ -543,8 +549,10 @@ class LaporanPermintaanBarang extends Model
         $query ??= static::query();
         $minutes = (clone $query)->whereNotNull('durasi_pengerjaan_menit')->avg('durasi_pengerjaan_menit');
 
-        if (!$minutes)
+        if (! $minutes) {
             return 0;
+        }
+
         return round($minutes / 60, 2);
     }
 
@@ -553,11 +561,13 @@ class LaporanPermintaanBarang extends Model
     {
         $hours = static::getAverageDuration($query);
 
-        if ($hours <= 0)
+        if ($hours <= 0) {
             return '-';
+        }
 
         $days = round($hours / 24, 2);
-        return number_format($hours, 2) . ' Jam' . " ({$days} Hari)";
+
+        return number_format($hours, 2).' Jam'." ({$days} Hari)";
     }
 
     /* Average Duration Description */
@@ -566,10 +576,12 @@ class LaporanPermintaanBarang extends Model
         $query ??= static::query();
         $minutes = (clone $query)->whereNotNull('durasi_pengerjaan_menit')->avg('durasi_pengerjaan_menit');
 
-        if (!$minutes)
+        if (! $minutes) {
             return '-';
+        }
 
         $days = round($minutes / 1440, 2);
+
         return "≈ {$days} Hari";
     }
 
@@ -581,7 +593,7 @@ class LaporanPermintaanBarang extends Model
 
     public function getProcessCategoryAttribute(): string
     {
-        if (!$this->durasi_pengerjaan_menit) {
+        if (! $this->durasi_pengerjaan_menit) {
             return 'Belum Selesai';
         }
 

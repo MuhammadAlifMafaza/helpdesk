@@ -32,13 +32,13 @@ class LaporanPerbaikanExport extends BaseLaporanExport
     {
         return [
             $this->nextRowNumber(),
-            $laporan->kode_tiket ?? '-',
+            $laporan->tiket?->kode_tiket ?? $laporan->kode_tiket ?? '-',
             $laporan->nama_pemohon ?? '-',
             $laporan->lokasi ?? '-',
-            $laporan->waktu_mulai?->format('d/m/Y') ?? '-',
-            $laporan->waktu_selesai?->format('d/m/Y') ?? '-',
-            $laporan->keluhan ?? $laporan->service_category ?? '-',
-            $laporan->status_label ?? $laporan->status ?? '-',
+            $laporan->tiket?->created_at?->format('d/m/Y') ?? $laporan->waktu_mulai?->format('d/m/Y') ?? '-',
+            $laporan->tiket?->waktu_selesai?->format('d/m/Y') ?? $laporan->waktu_selesai?->format('d/m/Y') ?? '-',
+            $laporan->tiket?->keluhan ?? $laporan->service_category ?? '-',
+            $laporan->tiket?->status_label ?? $laporan->status_label ?? '-',
         ];
     }
 }

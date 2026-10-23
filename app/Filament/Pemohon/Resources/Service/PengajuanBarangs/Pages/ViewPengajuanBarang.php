@@ -4,8 +4,10 @@ namespace App\Filament\Pemohon\Resources\Service\PengajuanBarangs\Pages;
 
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\PengajuanBarangResource;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Resources\Pages\ViewRecord;
 use Livewire\Attributes\On;
 
@@ -99,6 +101,75 @@ class ViewPengajuanBarang extends ViewRecord
                     fn ($record): bool => $record->canPemohonEdit()
                 ),
 
+            /*
+            |--------------------------------------------------------------------------
+            | Konfirmasi Penyelesaian
+            |--------------------------------------------------------------------------
+            */
+            Action::make('konfirmasi_selesai')
+                ->label('Konfirmasi Selesai')
+                ->icon('heroicon-o-check-badge')
+                ->color('success')
+                ->visible(
+                    fn (PengajuanBarang $record): bool => $record->isMenungguKonfirmasi()
+                        && $record->canBeAccessedBy(auth()->user())
+                )
+                ->requiresConfirmation()
+                ->form([
+                    Textarea::make('catatan')
+                        ->label('Catatan (opsional)')
+                        ->rows(3),
+                ])
+                ->modalHeading('Konfirmasi Penyelesaian')
+                ->modalDescription(
+                    'Pastikan pengajuan sudah sesuai. Pengajuan akan ditutup sebagai selesai setelah dikonfirmasi.'
+                )
+                ->modalSubmitActionLabel('Ya, Selesai')
+                ->action(function (PengajuanBarang $record, array $data): void {
+
+                    abort_unless(
+                        $record->canBeAccessedBy(auth()->user()),
+                        403,
+                        'Anda tidak memiliki akses ke pengajuan ini.'
+                    );
+
+                    $record->konfirmasiSelesai($data['catatan'] ?? null);
+
+                    $this->record->refresh();
+                }),
+
+            Action::make('tolak_konfirmasi')
+                ->label('Minta Revisi')
+                ->icon('heroicon-o-arrow-path')
+                ->color('warning')
+                ->visible(
+                    fn (PengajuanBarang $record): bool => $record->isMenungguKonfirmasi()
+                        && $record->canBeAccessedBy(auth()->user())
+                )
+                ->requiresConfirmation()
+                ->form([
+                    Textarea::make('catatan')
+                        ->label('Alasan Revisi')
+                        ->required()
+                        ->rows(3),
+                ])
+                ->modalHeading('Tolak Konfirmasi')
+                ->modalDescription(
+                    'Pengajuan akan tetap terbuka dan dikembalikan kepada staf untuk diproses ulang.'
+                )
+                ->modalSubmitActionLabel('Kirim Permintaan Revisi')
+                ->action(function (PengajuanBarang $record, array $data): void {
+
+                    abort_unless(
+                        $record->canBeAccessedBy(auth()->user()),
+                        403,
+                        'Anda tidak memiliki akses ke pengajuan ini.'
+                    );
+
+                    $record->tolakKonfirmasi($data['catatan']);
+
+                    $this->record->refresh();
+                }),
 
             DeleteAction::make()
                 ->label('Batalkan Permintaan')

@@ -7,6 +7,7 @@ use App\Filament\Resources\Laporan\LaporanPerbaikans\LaporanPerbaikanResource;
 use App\Filament\Resources\Laporan\LaporanPerbaikans\Widgets\LaporanPerbaikanStats;
 // Import Export Dokument Service
 use App\Services\Laporan\LaporanExportService;
+use App\Services\Laporan\LaporanPeriodFormatter;
 use App\Services\Laporan\Pdf\LaporanPerbaikanPdf;
 use App\Services\Laporan\Word\LaporanPerbaikanWord;
 use Filament\Actions\Action;
@@ -16,6 +17,11 @@ use Filament\Resources\Pages\ListRecords;
 class ListLaporanPerbaikans extends ListRecords
 {
     protected static string $resource = LaporanPerbaikanResource::class;
+
+    protected function getSelectedReportPeriod(): string
+    {
+        return LaporanPeriodFormatter::format($this->getTableFilterState('periode') ?? []);
+    }
 
     protected function getHeaderActions(): array
     {
@@ -32,7 +38,8 @@ class ListLaporanPerbaikans extends ListRecords
                             ->exportExcel(
                                 $this->getFilteredTableQuery(),
                                 LaporanPerbaikanExport::class,
-                                'Laporan-Perbaikan-'.now()->format('(d-m-Y)').'.xlsx'
+                                'Laporan-Perbaikan-'.now()->format('(d-m-Y)').'.xlsx',
+                                $this->getSelectedReportPeriod()
                             );
                     }),
 
@@ -48,6 +55,7 @@ class ListLaporanPerbaikans extends ListRecords
                         )->exportWord(
                             query: $this->getFilteredTableQuery(),
                             wordExporter: LaporanPerbaikanWord::class,
+                            periode: $this->getSelectedReportPeriod(),
                         );
                     }),
 
@@ -59,6 +67,7 @@ class ListLaporanPerbaikans extends ListRecords
                         return app(LaporanExportService::class)->exportPDF(
                             query: $this->getFilteredTableQuery(),
                             exportClass: LaporanPerbaikanPdf::class,
+                            periode: $this->getSelectedReportPeriod(),
                         );
                     }),
 
@@ -72,6 +81,7 @@ class ListLaporanPerbaikans extends ListRecords
                         $url = app(LaporanExportService::class)->print(
                             query: $this->getFilteredTableQuery(),
                             exportClass: LaporanPerbaikanPdf::class,
+                            periode: $this->getSelectedReportPeriod(),
                         );
 
                         // 2. Alihkan pengguna ke link tersebut untuk melihat preview

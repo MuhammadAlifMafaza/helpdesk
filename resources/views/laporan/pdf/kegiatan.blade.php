@@ -35,9 +35,7 @@
                     <th width="10%">Tanggal</th>
                     <th width="25%">Petugas</th>
                     <th width="12%">Lokasi</th>
-                    <th width="31%">Deskripsi Kegiatan</th>
-                    <th width="9%">Status</th>
-                    <th width="9%">Catatan (opsional)</th>
+                    <th width="43%">Deskripsi Kegiatan</th>
                 </tr>
             </thead>
             <tbody>
@@ -48,12 +46,10 @@
                         <td>{{ $row->nama_teknisi ?? '-' }}</td>
                         <td class="center">{{ $row->lokasi ?? '-' }}</td>
                         <td>{{ $row->deskripsi ?? '-' }}</td>
-                        <td class="center">{{ $row->status_label ?? $row->status ?? '-' }}</td>
-                        <td>{{ $row->catatan ?? '-' }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td class="empty-row" colspan="7">Tidak ada kegiatan pada periode ini.</td>
+                        <td class="empty-row" colspan="5">Tidak ada kegiatan pada periode ini.</td>
                     </tr>
                 @endforelse
             </tbody>

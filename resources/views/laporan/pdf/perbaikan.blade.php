@@ -54,13 +54,13 @@
                 @forelse($completedRecords as $index => $row)
                     <tr>
                         <td class="center">{{ $index + 1 }}</td>
-                        <td>{{ $row->kode_tiket ?? '-' }}</td>
+                        <td>{{ $row->tiket?->kode_tiket ?? $row->kode_tiket ?? '-' }}</td>
                         <td>{{ $row->nama_pemohon ?? '-' }}</td>
                         <td>{{ $row->lokasi ?? '-' }}</td>
-                        <td class="center">{{ $row->waktu_mulai?->format('d/m/Y') ?? '-' }}</td>
-                        <td class="center">{{ $row->waktu_selesai?->format('d/m/Y') ?? '-' }}</td>
-                        <td>{{ $row->keluhan ?? $row->service_category ?? '-' }}</td>
-                        <td class="center">{{ $row->status_label ?? $row->status ?? '-' }}</td>
+                        <td class="center">{{ $row->tiket?->created_at?->format('d/m/Y') ?? $row->waktu_mulai?->format('d/m/Y') ?? '-' }}</td>
+                        <td class="center">{{ $row->tiket?->waktu_selesai?->format('d/m/Y') ?? $row->waktu_selesai?->format('d/m/Y') ?? '-' }}</td>
+                        <td>{{ $row->tiket?->keluhan ?? $row->service_category ?? '-' }}</td>
+                        <td class="center">{{ $row->tiket?->status_label ?? $row->status_label ?? '-' }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -87,12 +87,12 @@
                 @forelse($pendingRecords as $index => $row)
                     <tr>
                         <td class="center">{{ $index + 1 }}</td>
-                        <td>{{ $row->kode_tiket ?? '-' }}</td>
+                        <td>{{ $row->tiket?->kode_tiket ?? $row->kode_tiket ?? '-' }}</td>
                         <td>{{ $row->nama_pemohon ?? '-' }}</td>
                         <td>{{ $row->lokasi ?? '-' }}</td>
-                        <td class="center">{{ $row->waktu_mulai?->format('d/m/Y') ?? '-' }}</td>
-                        <td>{{ $row->keluhan ?? $row->service_category ?? '-' }}</td>
-                        <td class="center">{{ $row->status_label ?? $row->status ?? '-' }}</td>
+                        <td class="center">{{ $row->tiket?->created_at?->format('d/m/Y') ?? $row->waktu_mulai?->format('d/m/Y') ?? '-' }}</td>
+                        <td>{{ $row->tiket?->keluhan ?? $row->service_category ?? '-' }}</td>
+                        <td class="center">{{ $row->tiket?->status_label ?? $row->status_label ?? '-' }}</td>
                     </tr>
                 @empty
                     <tr>

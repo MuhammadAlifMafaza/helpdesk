@@ -64,6 +64,25 @@ class User extends Authenticatable implements FilamentUser
         };
     }
 
+    /**
+     * Halaman utama yang berhak dibuka user sesuai perannya.
+     *
+     * Mengembalikan null ketika user tidak memegang peran apa pun sehingga
+     * pemanggil wajib menanganinya (misalnya tetap menampilkan 403).
+     */
+    public function homeUrl(): ?string
+    {
+        if ($this->hasAnyRole(['admin', 'teknisi', 'super_admin'])) {
+            return '/admin';
+        }
+
+        if ($this->hasRole('pemohon')) {
+            return '/pemohon';
+        }
+
+        return null;
+    }
+
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'users.'.$this->id;

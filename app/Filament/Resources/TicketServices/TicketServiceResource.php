@@ -134,7 +134,7 @@ class TicketServiceResource extends Resource
                             ->label('Status')
                             ->badge()
                             ->color(
-                                fn(?string $state): string => match ($state) {
+                                fn (?string $state): string => match ($state) {
                                     'Open' => 'info',
                                     'In Progress' => 'warning',
                                     'Close' => 'success',
@@ -148,7 +148,7 @@ class TicketServiceResource extends Resource
                             ->badge()
                             ->placeholder('-')
                             ->color(
-                                fn(?string $state): string => match ($state) {
+                                fn (?string $state): string => match ($state) {
                                     'Completed' => 'success',
                                     'Rejected' => 'danger',
                                     default => 'gray',
@@ -233,7 +233,7 @@ class TicketServiceResource extends Resource
 
                 TextColumn::make('status')
                     ->badge()
-                    ->icon(fn(string $state) => match ($state) {
+                    ->icon(fn (string $state) => match ($state) {
 
                         'Open' => 'heroicon-o-exclamation-circle',
 
@@ -243,7 +243,7 @@ class TicketServiceResource extends Resource
 
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn(string $state) => match ($state) {
+                    ->color(fn (string $state) => match ($state) {
                         'Open' => 'info',
                         'In Progress' => 'warning',
                         'Close' => 'success',
@@ -252,13 +252,13 @@ class TicketServiceResource extends Resource
 
                 TextColumn::make('status_outcome')
                     ->badge()
-                    ->icon(fn(?string $state) => match ($state) {
+                    ->icon(fn (?string $state) => match ($state) {
                         'Completed' => 'heroicon-o-check-circle',
                         'Rejected' => 'heroicon-o-x-circle',
                         'Reopen' => 'heroicon-o-arrow-path',
                         default => 'heroicon-o-question-mark-circle',
                     })
-                    ->color(fn(?string $state): string => match ($state) {
+                    ->color(fn (?string $state): string => match ($state) {
                         'Completed' => 'success',
                         'Rejected' => 'danger',
                         'Reopen' => 'warning',
@@ -270,21 +270,21 @@ class TicketServiceResource extends Resource
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
+                        fn ($record) => $record->created_at->format('H:i:s')
                     ),
 
                 TextColumn::make('waktu_mulai')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at->format('H:i:s')
+                        fn ($record) => $record->created_at->format('H:i:s')
                     ),
 
                 TextColumn::make('waktu_selesai')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->waktu_selesai->format('H:i:s')
+                        fn ($record) => $record->waktu_selesai->format('H:i:s')
                     ),
 
                 TextColumn::make('durasi_pengerjaan')
@@ -304,20 +304,20 @@ class TicketServiceResource extends Resource
                     ->tooltip('Ambil Tiket')
                     ->icon('heroicon-o-wrench-screwdriver')
                     ->visible(
-                        fn($record) => $record->status === 'Open'
+                        fn ($record) => $record->status === 'Open'
                     )
                     ->action(function ($record) {
 
                         $record->updateStatus(
                             'In Progress',
                             'Tiket mulai dikerjakan oleh '
-                            . auth()->user()->name
+                            .auth()->user()->name
                         );
 
                         $record->sendMessage(
                             'Teknisi '
-                            . auth()->user()->name
-                            . ' mengambil tiket ini.'
+                            .auth()->user()->name
+                            .' mengambil tiket ini.'
                         );
                     }),
 
@@ -327,7 +327,8 @@ class TicketServiceResource extends Resource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(
-                        fn($record) => $record->status === 'In Progress'
+                        fn ($record) => $record->status === 'In Progress'
+                        && ! $record->isMenungguKonfirmasi()
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -336,14 +337,14 @@ class TicketServiceResource extends Resource
                     ])
                     ->action(function ($record, array $data) {
 
-                        $record->closeAsCompleted(
+                        $record->mintaKonfirmasiSelesai(
                             $data['catatan']
                         );
 
                     })
                     ->modalHeading('Konfirmasi Penyelesaian')
                     ->modalDescription(
-                        'Tindakan ini akan menutup tiket.'
+                        'Pemohon akan diminta mengonfirmasi penyelesaian pekerjaan ini.'
                     ),
 
                 Action::make('tolak')
@@ -352,7 +353,7 @@ class TicketServiceResource extends Resource
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
                     ->visible(
-                        fn($record) => $record->status === 'In Progress'
+                        fn ($record) => $record->status === 'In Progress'
                     )
                     ->requiresConfirmation()
                     ->form([
@@ -366,9 +367,9 @@ class TicketServiceResource extends Resource
                         );
 
                     })
-                    ->modalHeading('Konfirmasi Penyelesaian')
+                    ->modalHeading('Konfirmasi Penolakan')
                     ->modalDescription(
-                        'Tindakan ini akan menutup tiket.'
+                        'Tiket akan ditutup sebagai ditolak dan pemohon menerima notifikasi penolakan.'
                     ),
 
                 Action::make('reopen')
@@ -377,7 +378,7 @@ class TicketServiceResource extends Resource
                     ->color('primary')
                     ->icon('heroicon-o-arrow-path')
                     ->visible(
-                        fn($record) => $record->isClosed()
+                        fn ($record) => $record->isClosed()
                         &&
                         (
                             auth()->user()->hasRole('admin')
@@ -407,7 +408,7 @@ class TicketServiceResource extends Resource
                     ->label('')
                     ->tooltip('Restore Ticket')
                     ->visible(
-                        fn($record) => $record->trashed()
+                        fn ($record) => $record->trashed()
                         &&
                         (
                             auth()->user()->hasRole('admin')
@@ -421,14 +422,14 @@ class TicketServiceResource extends Resource
                     ->label('')
                     ->tooltip('Edit')
                     ->visible(
-                        fn($record) => $record->canStaffEdit()
+                        fn ($record) => $record->canStaffEdit()
                     ),
 
                 DeleteAction::make()
                     ->label('')
                     ->tooltip('Soft Delete')
                     ->visible(
-                        fn($record) => $record->isClosed()
+                        fn ($record) => $record->isClosed()
                         &&
                         (
                             auth()->user()->hasRole('admin')
@@ -442,7 +443,7 @@ class TicketServiceResource extends Resource
                     ->label('')
                     ->tooltip('Force Delete')
                     ->visible(
-                        fn() => auth()->user()->hasRole('super_admin')
+                        fn () => auth()->user()->hasRole('super_admin')
                     ),
 
             ])

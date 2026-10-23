@@ -49,13 +49,13 @@
                         <td class="center">{{ $index + 1 }}</td>
                         <td>{{ $row->kode_pengajuan ?? '-' }}</td>
                         <td>{{ $row->nama_pemohon ?? '-' }}</td>
-                        <td>{{ $row->nama_barang ?? '-' }}</td>
+                        <td>{{ $row->pengajuan?->nama_barang ?? $row->nama_barang ?? '-' }}</td>
                         <td class="center">{{ $row->pengajuan?->jumlah ?? '-' }}</td>
-                        <td class="center">{{ $row->status_label ?? $row->status ?? '-' }}</td>
+                        <td class="center">{{ $row->pengajuan?->status_label ?? $row->status_label ?? '-' }}</td>
                         <td class="center">{{ $row->outcome_label ?? $row->outcome ?? '-' }}</td>
-                        <td class="center">{{ $row->waktu_mulai?->format('d/m/Y H:i') ?? '-' }}</td>
-                        <td class="center">{{ $row->waktu_selesai?->format('d/m/Y H:i') ?? '-' }}</td>
-                        <td>{{ $row->durasi ?? '-' }}</td>
+                        <td class="center">{{ $row->pengajuan?->waktu_mulai?->format('d/m/Y H:i') ?? '-' }}</td>
+                        <td class="center">{{ $row->pengajuan?->waktu_selesai?->format('d/m/Y H:i') ?? '-' }}</td>
+                        <td>{{ $row->pengajuan?->durasi_pengerjaan ?? '-' }}</td>
                     </tr>
                 @empty
                     <tr>

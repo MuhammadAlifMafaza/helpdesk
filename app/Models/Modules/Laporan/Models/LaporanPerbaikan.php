@@ -33,6 +33,14 @@ class LaporanPerbaikan extends Model
         'durasi_pengerjaan_menit' => 'integer',
     ];
 
+    /** View laporan hanya menampilkan tiket yang belum di-soft-delete. */
+    protected static function booted(): void
+    {
+        static::addGlobalScope('tiket_aktif', function (Builder $query): void {
+            $query->whereHas('tiket');
+        });
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Relationship
@@ -43,8 +51,7 @@ class LaporanPerbaikan extends Model
         return $this->belongsTo(
             TiketPerbaikan::class,
             'no_tiket',
-            'id',
-            'kode_tiket'
+            'id'
         );
     }
 
@@ -317,21 +324,9 @@ class LaporanPerbaikan extends Model
 
     public function getKodeTiketAttribute(): string
     {
-        if (! $this->waktu_mulai) {
-            return "TK-{$this->no_tiket}";
-        }
-
-        $firstId = self::query()
-            ->whereDate('waktu_mulai', $this->waktu_mulai->toDateString())
-            ->min('no_tiket');
-
-        $urut = ($this->no_tiket - $firstId) + 1;
-
-        return sprintf(
-            'TK-%s-%04d',
-            $this->waktu_mulai->format('dmY'),
-            $urut
-        );
+        // Jangan membangkitkan ulang kode berdasarkan waktu mulai SLA.
+        return $this->tiket?->kode_tiket
+            ?? 'TK-'.$this->no_tiket;
     }
 
     /*

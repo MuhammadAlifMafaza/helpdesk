@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Laporan\LaporanKegiatans\Pages;
 use App\Exports\LaporanKegiatanExport;
 use App\Filament\Resources\Laporan\LaporanKegiatans\LaporanKegiatanResource;
 use App\Services\Laporan\LaporanExportService;
+use App\Services\Laporan\LaporanPeriodFormatter;
 use App\Services\Laporan\Pdf\LaporanKegiatanPdf;
 use App\Services\Laporan\Word\LaporanKegiatanWord;
 // Import Class Exporter (Kita akan membuatnya setelah ini)
@@ -15,6 +16,11 @@ use Filament\Resources\Pages\ListRecords;
 class ListLaporanKegiatans extends ListRecords
 {
     protected static string $resource = LaporanKegiatanResource::class;
+
+    protected function getSelectedReportPeriod(): string
+    {
+        return LaporanPeriodFormatter::format($this->getTableFilterState('periode') ?? []);
+    }
 
     protected function getHeaderActions(): array
     {
@@ -29,7 +35,8 @@ class ListLaporanKegiatans extends ListRecords
                         return app(LaporanExportService::class)->exportExcel(
                             $this->getFilteredTableQuery(),
                             LaporanKegiatanExport::class,
-                            'Laporan-Kegiatan-Teknisi-'.now()->format('(d-m-Y)').'.xlsx'
+                            'Laporan-Kegiatan-Teknisi-'.now()->format('(d-m-Y)').'.xlsx',
+                            $this->getSelectedReportPeriod()
                         );
                     }),
 
@@ -44,6 +51,7 @@ class ListLaporanKegiatans extends ListRecords
                         return app(LaporanExportService::class)->exportWord(
                             query: $this->getFilteredTableQuery(),
                             wordExporter: LaporanKegiatanWord::class,
+                            periode: $this->getSelectedReportPeriod(),
                         );
                     }),
 
@@ -56,6 +64,7 @@ class ListLaporanKegiatans extends ListRecords
                         return app(LaporanExportService::class)->exportPDF(
                             query: $this->getFilteredTableQuery(),
                             exportClass: LaporanKegiatanPdf::class,
+                            periode: $this->getSelectedReportPeriod(),
                         );
                     }),
 
@@ -68,6 +77,7 @@ class ListLaporanKegiatans extends ListRecords
                         $url = app(LaporanExportService::class)->print(
                             query: $this->getFilteredTableQuery(),
                             exportClass: LaporanKegiatanPdf::class,
+                            periode: $this->getSelectedReportPeriod(),
                         );
 
                         return redirect($url);

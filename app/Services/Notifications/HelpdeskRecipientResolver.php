@@ -2,9 +2,9 @@
 
 namespace App\Services\Notifications;
 
-use App\Models\User;
-use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
+use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -41,7 +41,15 @@ class HelpdeskRecipientResolver
                 $this->ownerRecipients($record, $actorId),
                 $this->staffRecipients($module, $actorId),
             ),
-            'cancelled' => $this->ownerRecipients($record, $actorId),
+            // Pembatalan hanya perlu diketahui staf; pemilik layanan adalah
+            // aktornya sehingga ia sudah tahu sendiri.
+            'cancelled' => $this->staffRecipients($module, $actorId),
+            // Staf menandai selesai → konfirmasi diminta ke pemilik layanan.
+            'confirmation_requested' => $this->ownerRecipients($record, $actorId),
+            // Pemilik layanan memutuskan konfirmasi → staf yang menangani.
+            'confirmed', 'confirmation_rejected' => $this->staffRecipients($module, $actorId),
+            // Staf menolak layanan → pemilik layanan menerima penolakan.
+            'rejected' => $this->ownerRecipients($record, $actorId),
             'chat' => $this->resolveChatRecipients($module, $record, $actorId, $data),
             default => collect(),
         };
@@ -49,9 +57,11 @@ class HelpdeskRecipientResolver
 
     protected function resolveRecord(string $module, int|string $referenceId): ?Model
     {
+        // withTrashed(): notifikasi bisa dibuat setelah record di-soft-delete
+        // (mis. pembatalan pengajuan), record tetap dibutuhkan untuk resolver.
         return match ($module) {
-            'perbaikan' => TiketPerbaikan::query()->with('user')->find($referenceId),
-            'pengajuan' => PengajuanBarang::query()->with('user')->find($referenceId),
+            'perbaikan' => TiketPerbaikan::query()->withTrashed()->with('user')->find($referenceId),
+            'pengajuan' => PengajuanBarang::query()->withTrashed()->with('user')->find($referenceId),
             default => null,
         };
     }

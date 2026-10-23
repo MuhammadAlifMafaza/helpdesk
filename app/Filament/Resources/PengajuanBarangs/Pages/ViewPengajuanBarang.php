@@ -118,6 +118,7 @@ class ViewPengajuanBarang extends ViewRecord
                 ->color('success')
                 ->visible(
                     fn ($record) => $record->status === 'In Progress'
+                    && ! $record->isMenungguKonfirmasi()
                 )
                 ->requiresConfirmation()
                 ->form([
@@ -126,11 +127,15 @@ class ViewPengajuanBarang extends ViewRecord
                 ])
                 ->action(function ($record, array $data) {
 
-                    $record->closeAsCompleted(
+                    $record->mintaKonfirmasiSelesai(
                         $data['catatan']
                     );
 
-                }),
+                })
+                ->modalHeading('Konfirmasi Penyelesaian')
+                ->modalDescription(
+                    'Pemohon akan diminta mengonfirmasi penyelesaian pengajuan ini.'
+                ),
 
             Action::make('tolak')
                 ->label('Tolak')
@@ -150,7 +155,11 @@ class ViewPengajuanBarang extends ViewRecord
                         $data['catatan']
                     );
 
-                }),
+                })
+                ->modalHeading('Konfirmasi Penolakan')
+                ->modalDescription(
+                    'Pengajuan akan ditutup sebagai ditolak dan pemohon menerima notifikasi penolakan.'
+                ),
 
             Action::make('reopen')
                 ->label('Reopen Ticket')
