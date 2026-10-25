@@ -16,4 +16,20 @@ class ViewKegiatanTeknisi extends ViewRecord
             EditAction::make(),
         ];
     }
+
+    /**
+     * Judul & breadcrumb: "Lihat Kegiatan Edi Purwanto 22 Okt 2026".
+     * Format deterministik, tidak tergantung isi catatan.
+     * translatedFormat() (bukan format()) agar nama bulan ikut locale "id".
+     */
+    public function getRecordTitle(): string
+    {
+        $record = $this->getRecord();
+
+        return sprintf(
+            'Kegiatan %s %s',
+            $record->teknisi?->name,
+            $record->tanggal->translatedFormat('d M Y')
+        );
+    }
 }

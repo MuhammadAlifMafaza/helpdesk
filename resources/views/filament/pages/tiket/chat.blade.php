@@ -601,7 +601,7 @@
                         </div>
 
                         <span class="ticket-message-time">
-                            {{ $message->created_at->format('d M Y H:i') }}
+                            {{ $message->created_at->translatedFormat('d M Y H:i') }}
                         </span>
 
                     </div>

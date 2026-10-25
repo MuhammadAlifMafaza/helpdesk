@@ -8,11 +8,12 @@ use App\Filament\Widgets\Admin\AdminPengajuanTerbaru;
 use App\Filament\Widgets\Admin\AdminTiketStatusChart;
 use App\Filament\Widgets\Admin\AdminTiketTerbaru;
 use App\Filament\Widgets\Admin\AdminTiketTrendChart;
-use Filament\Pages\Page;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
 {
+    protected static ?string $title = 'Dashboard';
+
     protected static bool $shouldRegisterNavigation = false;
 
     // protected string $view = 'filament.pages.dashboard';

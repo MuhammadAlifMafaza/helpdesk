@@ -530,7 +530,7 @@
 
                         {{-- DATE --}}
                         <div class="ticket-timeline-date">
-                            {{ $log->created_at?->format('d M Y, H:i') ?? 'Waktu tidak tersedia' }}
+                            {{ $log->created_at?->translatedFormat('d M Y, H:i') ?? 'Waktu tidak tersedia' }}
                         </div>
 
                         {{-- USER --}}

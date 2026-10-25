@@ -2,15 +2,16 @@
 
 namespace App\Services\Laporan\Pdf;
 
-use Illuminate\Database\Eloquent\Builder;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Illuminate\Support\Facades\Storage;
 
 abstract class BasePdfExporter
 {
     protected Builder $query;
+
     protected string $filename = 'laporan.pdf';
+
     protected string $view;
 
     public function __construct(Builder $query)
@@ -24,12 +25,14 @@ abstract class BasePdfExporter
     {
         $timestamp = now()->format('d-m-Y_H-i');
         $name = str($this->filename)->beforeLast('.')->slug('-');
+
         return "{$name}_{$timestamp}.pdf";
     }
 
     protected function generatePdf()
     {
         $data = $this->prepareData();
+
         return Pdf::loadView($this->view, $data)->setPaper('A4', 'landscape');
     }
 
@@ -44,7 +47,7 @@ abstract class BasePdfExporter
             ob_end_clean();
         }
 
-        $tempFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $this->generateFilename();
+        $tempFile = sys_get_temp_dir().DIRECTORY_SEPARATOR.$this->generateFilename();
 
         // Simpan PDF ke folder temporary
         $this->generatePdf()->save($tempFile);
@@ -57,25 +60,22 @@ abstract class BasePdfExporter
     }
 
     /* |--------------------------------------------------------------------------
-    | Fitur 2: Print Preview di Browser
+    | Fitur 2: Halaman Cetak di Browser
     |--------------------------------------------------------------------------
+    | Data disiapkan oleh prepareData() yang sama dengan PDF, lalu dirender
+    | di halaman cetak (view laporan.print.*) oleh PrintLaporanController.
     */
-    public function stream(): string
+    public function preparePrintData(): array
     {
-        if (ob_get_level() > 0) {
-            ob_end_clean();
-        }
+        return $this->prepareData();
+    }
 
-        $filename = 'preview_' . $this->generateFilename();
-        
-        // [PERBAIKAN] Pastikan folder 'pdf' benar-benar dibuat sebelum menyimpan file
-        if (!Storage::disk('public')->exists('pdf')) {
-            Storage::disk('public')->makeDirectory('pdf');
-        }
-        
-        // Simpan ke storage/app/public/pdf
-        Storage::disk('public')->put('pdf/' . $filename, $this->generatePdf()->output());
-        
-        return Storage::url('pdf/' . $filename);
+    /**
+     * Nama view cetak yang setara dengan view PDF
+     * ('laporan.pdf.kegiatan' → 'laporan.print.kegiatan').
+     */
+    public function printView(): string
+    {
+        return str_replace('.pdf.', '.print.', $this->view);
     }
 }

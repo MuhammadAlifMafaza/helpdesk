@@ -465,7 +465,7 @@ class LaporanPermintaanBarang extends Model
 
     public function getTanggalMulaiAttribute(): ?string
     {
-        return $this->waktu_mulai?->format('d M Y');
+        return $this->waktu_mulai?->translatedFormat('d M Y');
     }
 
     public function getJamMulaiAttribute(): ?string
@@ -481,7 +481,7 @@ class LaporanPermintaanBarang extends Model
 
     public function getTanggalSelesaiAttribute(): ?string
     {
-        return $this->waktu_selesai?->format('d M Y');
+        return $this->waktu_selesai?->translatedFormat('d M Y');
     }
 
     public function getJamSelesaiAttribute(): ?string
