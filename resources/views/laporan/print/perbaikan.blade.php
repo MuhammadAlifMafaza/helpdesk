@@ -2,11 +2,17 @@
 
 @section('content')
     @php
+        $records = collect($records);
         $completedRecords = $records->filter(function ($row) {
-            $status = strtolower((string) ($row->status_label ?? $row->status ?? ''));
+            $status = strtolower((string) (data_get($row, 'status_label') ?? data_get($row, 'status') ?? ''));
             return str_contains($status, 'close') || str_contains($status, 'selesai') || str_contains($status, 'baik');
         });
         $pendingRecords = $records->reject(fn ($row) => $completedRecords->contains($row));
+        $formatReportDate = static function ($value, string $format): string {
+            return blank($value)
+                ? '-'
+                : \Illuminate\Support\Carbon::parse($value)->format($format);
+        };
     @endphp
 
     <div class="section-title">A. PC SELESAI DICEK &amp; DIPERBAIKI</div>
@@ -27,13 +33,13 @@
             @forelse($completedRecords as $index => $row)
                 <tr>
                     <td class="center">{{ $index + 1 }}</td>
-                    <td>{{ $row->tiket?->kode_tiket ?? $row->kode_tiket ?? '-' }}</td>
-                    <td>{{ $row->nama_pemohon ?? '-' }}</td>
-                    <td>{{ $row->lokasi ?? '-' }}</td>
-                    <td class="center">{{ $row->tiket?->created_at?->format('d/m/Y') ?? $row->waktu_mulai?->format('d/m/Y') ?? '-' }}</td>
-                    <td class="center">{{ $row->tiket?->waktu_selesai?->format('d/m/Y') ?? $row->waktu_selesai?->format('d/m/Y') ?? '-' }}</td>
-                    <td>{{ $row->tiket?->keluhan ?? $row->service_category ?? '-' }}</td>
-                    <td class="center">{{ $row->tiket?->status_label ?? $row->status_label ?? '-' }}</td>
+                    <td>{{ data_get($row, 'tiket.kode_tiket') ?? data_get($row, 'kode_tiket') ?? '-' }}</td>
+                    <td>{{ data_get($row, 'nama_pemohon') ?? '-' }}</td>
+                    <td>{{ data_get($row, 'lokasi') ?? '-' }}</td>
+                    <td class="center">{{ $formatReportDate(data_get($row, 'tiket.created_at') ?? data_get($row, 'waktu_mulai'), 'd/m/Y') }}</td>
+                    <td class="center">{{ $formatReportDate(data_get($row, 'tiket.waktu_selesai') ?? data_get($row, 'waktu_selesai'), 'd/m/Y') }}</td>
+                    <td>{{ data_get($row, 'tiket.keluhan') ?? data_get($row, 'service_category') ?? '-' }}</td>
+                    <td class="center">{{ data_get($row, 'tiket.status_label') ?? data_get($row, 'status_label') ?? '-' }}</td>
                 </tr>
             @empty
                 <tr>
@@ -60,12 +66,12 @@
             @forelse($pendingRecords as $index => $row)
                 <tr>
                     <td class="center">{{ $index + 1 }}</td>
-                    <td>{{ $row->tiket?->kode_tiket ?? $row->kode_tiket ?? '-' }}</td>
-                    <td>{{ $row->nama_pemohon ?? '-' }}</td>
-                    <td>{{ $row->lokasi ?? '-' }}</td>
-                    <td class="center">{{ $row->tiket?->created_at?->format('d/m/Y') ?? $row->waktu_mulai?->format('d/m/Y') ?? '-' }}</td>
-                    <td>{{ $row->tiket?->keluhan ?? $row->service_category ?? '-' }}</td>
-                    <td class="center">{{ $row->tiket?->status_label ?? $row->status_label ?? '-' }}</td>
+                    <td>{{ data_get($row, 'tiket.kode_tiket') ?? data_get($row, 'kode_tiket') ?? '-' }}</td>
+                    <td>{{ data_get($row, 'nama_pemohon') ?? '-' }}</td>
+                    <td>{{ data_get($row, 'lokasi') ?? '-' }}</td>
+                    <td class="center">{{ $formatReportDate(data_get($row, 'tiket.created_at') ?? data_get($row, 'waktu_mulai'), 'd/m/Y') }}</td>
+                    <td>{{ data_get($row, 'tiket.keluhan') ?? data_get($row, 'service_category') ?? '-' }}</td>
+                    <td class="center">{{ data_get($row, 'tiket.status_label') ?? data_get($row, 'status_label') ?? '-' }}</td>
                 </tr>
             @empty
                 <tr>

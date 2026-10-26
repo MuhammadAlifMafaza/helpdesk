@@ -63,10 +63,9 @@ class LaporanPrintTest extends TestCase
     }
 
     /**
-     * Payload contoh dengan struktur identik hasil preparePrintData()
-     * exporter LaporanKegiatanPdf (records kosong → cabang @empty).
+     * Payload contoh dengan records berbentuk array seperti hasil serialisasi session.
      */
-    private function payloadCetak(): array
+    private function payloadCetak(array $records = []): array
     {
         return [
             'title' => 'LAPORAN KEGIATAN TEKNISI',
@@ -75,7 +74,7 @@ class LaporanPrintTest extends TestCase
             'periode' => '01-10-2026 - 25-10-2026',
             'printedBy' => 'Admin Uji Cetak',
             'printDate' => now()->translatedFormat('d F Y H:i'),
-            'records' => collect(),
+            'records' => $records,
             'signatures' => [
                 ['title' => 'Ka. Bidang Teknisi & Perawatan Infrastruktur', 'name' => 'Edi Purwanto, S.Kom'],
                 ['title' => 'Ka. UPT Laboratorium Komputer & Bahasa', 'name' => 'Wachid Darmawan, M.Kom'],
@@ -114,6 +113,89 @@ class LaporanPrintTest extends TestCase
             ->assertSee('LAPORAN KEGIATAN TEKNISI')
             ->assertSee('Tidak ada kegiatan pada periode ini.')
             ->assertSee('window.print', false);
+    }
+
+    public function test_payload_array_merender_data_kegiatan(): void
+    {
+        $data = $this->payloadCetak([
+            [
+                'tanggal_kegiatan' => '2026-10-25 00:00:00',
+                'nama_teknisi' => 'Teknisi Uji',
+                'lokasi' => 'Laboratorium',
+                'deskripsi' => 'Pemeriksaan perangkat',
+            ],
+        ]);
+
+        $this->actingAs($this->staff)
+            ->withSession(['laporan.print' => [
+                'view' => 'laporan.print.kegiatan',
+                'data' => $data,
+            ]])
+            ->get('/laporan/cetak')
+            ->assertSee('25/10/2026')
+            ->assertSee('Teknisi Uji')
+            ->assertSee('Pemeriksaan perangkat');
+    }
+
+    public function test_payload_array_merender_data_perbaikan_dengan_relasi_array(): void
+    {
+        $data = $this->payloadCetak([
+            [
+                'status_label' => 'Close',
+                'nama_pemohon' => 'Pemohon Uji',
+                'lokasi' => 'Laboratorium',
+                'tiket' => [
+                    'kode_tiket' => 'TKT-001',
+                    'created_at' => '2026-10-20 00:00:00',
+                    'waktu_selesai' => '2026-10-25 00:00:00',
+                    'keluhan' => 'Komputer tidak menyala',
+                    'status_label' => 'Selesai',
+                ],
+            ],
+        ]);
+
+        $this->actingAs($this->staff)
+            ->withSession(['laporan.print' => [
+                'view' => 'laporan.print.perbaikan',
+                'data' => $data,
+            ]])
+            ->get('/laporan/cetak')
+            ->assertSee('TKT-001')
+            ->assertSee('20/10/2026')
+            ->assertSee('25/10/2026')
+            ->assertSee('Komputer tidak menyala')
+            ->assertSee('Selesai');
+    }
+
+    public function test_payload_array_merender_data_permintaan_dengan_relasi_array(): void
+    {
+        $data = $this->payloadCetak([
+            [
+                'kode_pengajuan' => 'PGB-001',
+                'nama_pemohon' => 'Pemohon Uji',
+                'outcome_label' => 'Disetujui',
+                'pengajuan' => [
+                    'nama_barang' => 'Keyboard',
+                    'jumlah' => 2,
+                    'status_label' => 'Selesai',
+                    'waktu_mulai' => '2026-10-24 08:30:00',
+                    'waktu_selesai' => '2026-10-25 09:45:00',
+                    'durasi_pengerjaan' => '1 hari',
+                ],
+            ],
+        ]);
+
+        $this->actingAs($this->staff)
+            ->withSession(['laporan.print' => [
+                'view' => 'laporan.print.permintaan',
+                'data' => $data,
+            ]])
+            ->get('/laporan/cetak')
+            ->assertSee('PGB-001')
+            ->assertSee('Keyboard')
+            ->assertSee('24/10/2026 08:30')
+            ->assertSee('25/10/2026 09:45')
+            ->assertSee('Disetujui');
     }
 
     public function test_service_print_menyimpan_payload_dan_url_relatif(): void

@@ -1,6 +1,14 @@
 @extends('laporan.print.layout')
 
 @section('content')
+    @php
+        $formatReportDate = static function ($value, string $format): string {
+            return blank($value)
+                ? '-'
+                : \Illuminate\Support\Carbon::parse($value)->format($format);
+        };
+    @endphp
+
     <table class="data-table">
         <thead>
             <tr>
@@ -17,18 +25,18 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($records as $index => $row)
+            @forelse(collect($records) as $index => $row)
                 <tr>
                     <td class="center">{{ $index + 1 }}</td>
-                    <td>{{ $row->kode_pengajuan ?? '-' }}</td>
-                    <td>{{ $row->nama_pemohon ?? '-' }}</td>
-                    <td>{{ $row->pengajuan?->nama_barang ?? $row->nama_barang ?? '-' }}</td>
-                    <td class="center">{{ $row->pengajuan?->jumlah ?? '-' }}</td>
-                    <td class="center">{{ $row->pengajuan?->status_label ?? $row->status_label ?? '-' }}</td>
-                    <td class="center">{{ $row->outcome_label ?? $row->outcome ?? '-' }}</td>
-                    <td class="center">{{ $row->pengajuan?->waktu_mulai?->format('d/m/Y H:i') ?? '-' }}</td>
-                    <td class="center">{{ $row->pengajuan?->waktu_selesai?->format('d/m/Y H:i') ?? '-' }}</td>
-                    <td>{{ $row->pengajuan?->durasi_pengerjaan ?? '-' }}</td>
+                    <td>{{ data_get($row, 'kode_pengajuan') ?? '-' }}</td>
+                    <td>{{ data_get($row, 'nama_pemohon') ?? '-' }}</td>
+                    <td>{{ data_get($row, 'pengajuan.nama_barang') ?? data_get($row, 'nama_barang') ?? '-' }}</td>
+                    <td class="center">{{ data_get($row, 'pengajuan.jumlah') ?? '-' }}</td>
+                    <td class="center">{{ data_get($row, 'pengajuan.status_label') ?? data_get($row, 'status_label') ?? '-' }}</td>
+                    <td class="center">{{ data_get($row, 'outcome_label') ?? data_get($row, 'outcome') ?? '-' }}</td>
+                    <td class="center">{{ $formatReportDate(data_get($row, 'pengajuan.waktu_mulai'), 'd/m/Y H:i') }}</td>
+                    <td class="center">{{ $formatReportDate(data_get($row, 'pengajuan.waktu_selesai'), 'd/m/Y H:i') }}</td>
+                    <td>{{ data_get($row, 'pengajuan.durasi_pengerjaan') ?? '-' }}</td>
                 </tr>
             @empty
                 <tr>

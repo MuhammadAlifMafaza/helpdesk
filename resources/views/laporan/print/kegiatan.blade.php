@@ -1,6 +1,14 @@
 @extends('laporan.print.layout')
 
 @section('content')
+    @php
+        $formatReportDate = static function ($value, string $format): string {
+            return blank($value)
+                ? '-'
+                : \Illuminate\Support\Carbon::parse($value)->format($format);
+        };
+    @endphp
+
     <table class="data-table">
         <thead>
             <tr>
@@ -12,13 +20,13 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($records as $index => $row)
+            @forelse(collect($records) as $index => $row)
                 <tr>
                     <td class="center">{{ $index + 1 }}</td>
-                    <td class="center">{{ $row->tanggal_kegiatan?->format('d/m/Y') ?? '-' }}</td>
-                    <td>{{ $row->nama_teknisi ?? '-' }}</td>
-                    <td class="center">{{ $row->lokasi ?? '-' }}</td>
-                    <td>{{ $row->deskripsi ?? '-' }}</td>
+                    <td class="center">{{ $formatReportDate(data_get($row, 'tanggal_kegiatan'), 'd/m/Y') }}</td>
+                    <td>{{ data_get($row, 'nama_teknisi') ?? '-' }}</td>
+                    <td class="center">{{ data_get($row, 'lokasi') ?? '-' }}</td>
+                    <td>{{ data_get($row, 'deskripsi') ?? '-' }}</td>
                 </tr>
             @empty
                 <tr>
