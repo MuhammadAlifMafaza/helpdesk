@@ -1,8 +1,8 @@
 {{-- Penyesuaian halaman cetak untuk browser (menimpa _styles milik DomPDF) --}}
 
-{{-- Kertas A4 lanskap — menyamakan setelan DomPDF: setPaper('A4', 'landscape') --}}
+{{-- Ukuran fisik eksplisit agar dialog cetak browser tidak kembali ke portrait/Letter. --}}
 @page {
-    size: A4 landscape;
+    size: 297mm 210mm;
     margin: 14mm;
 }
 
@@ -61,6 +61,46 @@
     {{-- Sembunyikan toolbar --}}
     .no-print {
         display: none !important;
+    }
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+
+    .sheet {
+        box-shadow: none;
+        margin: 0;
+        max-width: none;
+        padding: 0;
+        width: 100%;
+    }
+
+    .data-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    .data-table th,
+    .data-table td {
+        overflow-wrap: anywhere;
+    }
+
+    .data-table thead {
+        display: table-header-group;
+    }
+
+    .data-table tr,
+    .signature-table {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .section-title {
+        break-after: avoid;
+        page-break-after: avoid;
     }
 
     {{-- Warna latar (header tabel biru, kop) tetap tercetak --}}

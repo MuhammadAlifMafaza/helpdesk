@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Models\Modules\Teknisi\Models\KegiatanTeknisi;
+use App\Models\Modules\Laporan\Models\LaporanKegiatan;
 use App\Models\User;
 use App\Services\Laporan\LaporanExportService;
 use App\Services\Laporan\Pdf\LaporanKegiatanPdf;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -201,7 +203,7 @@ class LaporanPrintTest extends TestCase
     public function test_service_print_menyimpan_payload_dan_url_relatif(): void
     {
         $url = app(LaporanExportService::class)->print(
-            query: KegiatanTeknisi::query(),
+            query: LaporanKegiatan::query()->whereRaw('1 = 0'),
             exportClass: LaporanKegiatanPdf::class,
             periode: 'Periode Uji Cetak',
         );
@@ -209,7 +211,80 @@ class LaporanPrintTest extends TestCase
         // URL relatif: tidak boleh memakai APP_URL absolut.
         $this->assertSame('/laporan/cetak', $url);
 
-        $this->assertSame('laporan.print.kegiatan', session('laporan.print.view'));
-        $this->assertSame('Periode Uji Cetak', session('laporan.print.data.periode'));
+        $html = session('laporan.print.html');
+
+        $this->assertIsString($html);
+        $this->assertStringContainsString('Periode Uji Cetak', $html);
+        $this->assertStringContainsString('Tidak ada kegiatan pada periode ini.', $html);
+        $this->assertStringContainsString('size: 297mm 210mm', $html);
+
+        $this->actingAs($this->staff)
+            ->withSession(['laporan.print' => ['html' => $html]])
+            ->get('/laporan/cetak')
+            ->assertOk()
+            ->assertSee('Periode Uji Cetak')
+            ->assertSee('window.print', false);
+    }
+
+    public function test_service_print_merender_accessor_sebelum_payload_masuk_session(): void
+    {
+        config([
+            'database.connections.print_test' => [
+                'driver' => 'sqlite',
+                'database' => ':memory:',
+                'prefix' => '',
+                'foreign_key_constraints' => false,
+            ],
+        ]);
+        DB::purge('print_test');
+
+        Schema::connection('print_test')->create('view_laporan_kegiatan', function (Blueprint $table): void {
+            $table->unsignedBigInteger('id_log');
+            $table->string('nama_teknisi');
+            $table->string('unit_bidang')->nullable();
+            $table->date('tanggal');
+            $table->text('deskripsi_kegiatan');
+            $table->dateTime('waktu_dibuat')->nullable();
+        });
+        Schema::connection('print_test')->create('log_harian_teknisi', function (Blueprint $table): void {
+            $table->id();
+            $table->softDeletes();
+        });
+        Schema::connection('print_test')->create('master_ruangan', function (Blueprint $table): void {
+            $table->id();
+            $table->string('nama_ruangan');
+        });
+        DB::connection('print_test')
+            ->table('view_laporan_kegiatan')
+            ->insert([
+                'id_log' => 987,
+                'nama_teknisi' => 'Teknisi Aksesori',
+                'unit_bidang' => 'Teknisi',
+                'tanggal' => '2026-10-25',
+                'deskripsi_kegiatan' => 'Deskripsi dari accessor',
+            ]);
+
+        app(LaporanExportService::class)->print(
+            query: LaporanKegiatan::on('print_test')
+                ->withoutGlobalScopes()
+                ->where('id_log', 987),
+            exportClass: LaporanKegiatanPdf::class,
+            periode: 'Periode Uji',
+        );
+
+        $html = session('laporan.print.html');
+
+        $this->assertIsString($html);
+        $this->assertStringContainsString('25/10/2026', $html);
+        $this->assertStringContainsString('Teknisi Aksesori', $html);
+        $this->assertStringContainsString('Deskripsi dari accessor', $html);
+
+        $this->actingAs($this->staff)
+            ->withSession(['laporan.print' => ['html' => $html]])
+            ->get('/laporan/cetak')
+            ->assertOk()
+            ->assertSee('25/10/2026')
+            ->assertSee('Teknisi Aksesori')
+            ->assertSee('Deskripsi dari accessor');
     }
 }

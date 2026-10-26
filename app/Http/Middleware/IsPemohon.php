@@ -13,7 +13,8 @@ class IsPemohon
         $user = $request->user();
 
         if (! $user instanceof User) {
-            return redirect('/pemohon/login');
+            // Tamu diarahkan ke halaman login pemohon custom (bukan login panel).
+            return redirect()->route('login');
         }
 
         if (! $user->hasRole('pemohon')) {

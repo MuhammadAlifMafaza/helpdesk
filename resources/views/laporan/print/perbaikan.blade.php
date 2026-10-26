@@ -4,7 +4,7 @@
     @php
         $records = collect($records);
         $completedRecords = $records->filter(function ($row) {
-            $status = strtolower((string) (data_get($row, 'status_label') ?? data_get($row, 'status') ?? ''));
+            $status = mb_strtolower((string) (data_get($row, 'status_label') ?? data_get($row, 'status') ?? ''));
             return str_contains($status, 'close') || str_contains($status, 'selesai') || str_contains($status, 'baik');
         });
         $pendingRecords = $records->reject(fn ($row) => $completedRecords->contains($row));

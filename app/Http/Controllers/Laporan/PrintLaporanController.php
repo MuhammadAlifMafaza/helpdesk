@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Filament\Notifications\Notification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class PrintLaporanController extends Controller
@@ -18,11 +19,11 @@ class PrintLaporanController extends Controller
      * dialog cetak terbuka tetap menampilkan halaman yang sama; payload akan
      * tertimpa oleh klik "Print Preview" berikutnya.
      */
-    public function __invoke(Request $request): View|RedirectResponse
+    public function __invoke(Request $request): Response|View|RedirectResponse
     {
         $payload = $request->session()->get('laporan.print');
 
-        if (! is_array($payload) || ! isset($payload['view'], $payload['data'])) {
+        if (! is_array($payload)) {
             Notification::make()
                 ->warning()
                 ->title('Sesi cetak berakhir')
@@ -32,6 +33,20 @@ class PrintLaporanController extends Controller
             return redirect()->to($request->user()?->homeUrl() ?? route('login'));
         }
 
-        return view($payload['view'], $payload['data']);
+        if (is_string($payload['html'] ?? null)) {
+            return response($payload['html']);
+        }
+
+        if (isset($payload['view'], $payload['data'])) {
+            return view($payload['view'], $payload['data']);
+        }
+
+        Notification::make()
+            ->warning()
+            ->title('Sesi cetak berakhir')
+            ->body('Silakan ulangi dari halaman laporan.')
+            ->send();
+
+        return redirect()->to($request->user()?->homeUrl() ?? route('login'));
     }
 }

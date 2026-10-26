@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-
+    <link rel="icon" type="image/svg+xml" href="{{ asset('branding/logo.svg') }}">
     @vite('resources/css/app.css')
 </head>
 
@@ -116,7 +116,8 @@
                                 Remember me
                             </label>
 
-                            <a href="#" class="text-blue-600 hover:text-blue-700 font-medium">
+                            <a href="{{ route('filament.pemohon.auth.password-reset.request') }}"
+                                class="text-blue-600 hover:text-blue-700 font-medium">
                                 Forgot password?
                             </a>
 

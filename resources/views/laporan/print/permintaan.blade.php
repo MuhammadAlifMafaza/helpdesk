@@ -13,15 +13,15 @@
         <thead>
             <tr>
                 <th width="4%">No.</th>
-                <th width="13%">Kode Pengajuan</th>
-                <th width="15%">Pemohon</th>
-                <th width="16%">Nama Barang</th>
-                <th width="7%">Jumlah</th>
-                <th width="12%">Status</th>
-                <th width="12%">Hasil</th>
+                <th width="12%">Kode Pengajuan</th>
+                <th width="14%">Pemohon</th>
+                <th width="15%">Nama Barang</th>
+                <th width="6%">Jumlah</th>
+                <th width="10%">Status</th>
+                <th width="10%">Hasil</th>
                 <th width="10%">Mulai</th>
                 <th width="10%">Selesai</th>
-                <th width="11%">Durasi</th>
+                <th width="9%">Durasi</th>
             </tr>
         </thead>
         <tbody>

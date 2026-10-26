@@ -58,16 +58,16 @@ class LaporanExportService
         string $periode = '-'
     ): string {
         $exporter = new $exportClass($query, $periode);
+        $view = $exporter->printView();
+        $data = $exporter->preparePrintData();
 
         /*
         |----------------------------------------------------------------------
-        | Payload disimpan di session karena query terfilter hanya ada di
-        | konteks Livewire halaman List. Data yang disimpan identik dengan
-        | yang dikirim ke DomPDF, sehingga hasil cetak sama persis.
+        | Render sebelum menyimpan ke session agar accessor dan relasi Eloquent
+        | dievaluasi sebelum payload model diserialisasi menjadi array.
         */
         session()->put('laporan.print', [
-            'view' => $exporter->printView(),
-            'data' => $exporter->preparePrintData(),
+            'html' => view($view, $data)->render(),
         ]);
 
         // URL relatif agar tidak tergantung nilai APP_URL.

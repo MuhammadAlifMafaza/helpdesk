@@ -29,7 +29,12 @@ class PemohonPanelProvider extends PanelProvider
         return $panel
             ->id('pemohon')
             ->path('pemohon')
-            ->login()
+            // Login pemohon memakai halaman custom di "/login" (LoginController),
+            // bukan login bawaan panel. Menonaktifkan route login panel membuat
+            // Filament::getLoginUrl() bernilai null, sehingga tamu yang mencoba
+            // membuka panel dialihkan ke route('login') oleh konfigurasi bawaan
+            // Laravel (redirectGuestsTo). Lihat juga IsPemohon::handle().
+            ->login(null)
             ->passwordReset()
             ->profile()
             ->brandName('Helpdesk System')
