@@ -6,15 +6,15 @@
 @source '../**/*.js';
 
 @theme {
+    --color-iwima-blue: #004b87;
+    --color-iwima-gold: #ffca08;
+    --color-paper: #f7f6f1;
+    --color-ink: #17232d;
     --font-sans:
         "Instrument Sans", ui-sans-serif, system-ui, sans-serif,
         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
         "Noto Color Emoji";
 }
-
-/* =========================================================
-   Helpdesk — Native Filament Notification Badge
-   ========================================================= */
 
 .fi-no-database
     .fi-topbar-database-notifications-btn

@@ -19,7 +19,7 @@ class MasterKategoriBarangTest extends TestCase
         parent::setUp();
         config([
             'database.default' => 'mysql',
-            'database.connections.mysql.database' => env('DB_DATABASE', 'helpdesk_dev') === ':memory:' ? 'helpdesk_dev' : env('DB_DATABASE', 'helpdesk_dev'),
+            'database.connections.mysql.database' => 'helpdesk_dev',
         ]);
     }
 

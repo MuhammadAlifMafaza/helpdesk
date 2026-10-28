@@ -18,7 +18,10 @@ class ViewPengajuanBarang extends ViewRecord
     #[On('helpdesk-realtime-update')]
     public function refreshRealtimeData(?string $module = null, int|string|null $reference_id = null): void
     {
-        if ($module !== 'pengajuan' || (string) $this->record->getKey() !== (string) $reference_id) {
+        if (
+            ($module !== null || $reference_id !== null)
+            && ($module !== 'pengajuan' || (string) $this->record->getKey() !== (string) $reference_id)
+        ) {
             return;
         }
 

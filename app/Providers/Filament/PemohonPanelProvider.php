@@ -37,12 +37,12 @@ class PemohonPanelProvider extends PanelProvider
             ->login(null)
             ->passwordReset()
             ->profile()
-            ->brandName('Helpdesk System')
+            ->brandName('Helpdesk IWIMA')
             ->brandLogo(asset('branding/logo-tag.svg'))
-            ->brandLogoHeight('4rem')
+            ->brandLogoHeight('2.5rem')
             ->favicon(asset('branding/logo.svg'))
             ->colors([
-                'primary' => Color::Blue,
+                'primary' => Color::hex('#004B87'),
                 'edit' => Color::Yellow,
             ])
             ->sidebarCollapsibleOnDesktop()

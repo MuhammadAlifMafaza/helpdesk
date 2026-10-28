@@ -2,9 +2,6 @@
 
 namespace App\Filament\Pemohon\Pages;
 
-use App\Filament\Pemohon\Widgets\AktivitasLayananChart;
-use App\Filament\Pemohon\Widgets\PengajuanBarangTerbaru;
-use App\Filament\Pemohon\Widgets\TiketPerbaikanTerbaru;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
@@ -15,12 +12,5 @@ class Dashboard extends BaseDashboard
 
     protected static ?string $slug = 'dashboard';
 
-    protected function getFooterWidgets(): array
-    {
-        return [
-            // AktivitasLayananChart::class,
-            // TiketPerbaikanTerbaru::class,
-            // PengajuanBarangTerbaru::class,
-        ];
-    }
+    protected string $view = 'filament.pemohon.pages.dashboard';
 }

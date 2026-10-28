@@ -54,20 +54,20 @@ class LandingPageTest extends TestCase
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('Masuk Sekarang')
-            ->assertSee('Fitur Unggulan')
-            ->assertSee('Cara Kerja')
-            ->assertSee('Hubungi Kami');
+            ->assertSee('Dukungan teknologi kampus, lewat satu portal.')
+            ->assertSee('Ruang lingkup layanan')
+            ->assertSee('Alur layanan')
+            ->assertSee('Hubungi kami');
     }
 
     public function test_statistik_dinamis_tampil(): void
     {
         $this->get('/')
             ->assertOk()
-            ->assertSee('Tiket Perbaikan')
-            ->assertSee('Tiket Selesai')
+            ->assertSee('Tiket perbaikan')
+            ->assertSee('Tiket selesai')
             ->assertSee('Pengajuan Barang')
-            ->assertSee('Kegiatan Teknisi');
+            ->assertSee('Kegiatan teknisi');
     }
 
     public function test_user_login_dialihkan_ke_halaman_peran(): void

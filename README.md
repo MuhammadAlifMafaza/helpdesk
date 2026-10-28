@@ -112,7 +112,7 @@ Contoh konfigurasi database:
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=helpdesk_dev
+DB_DATABASE=helpdesk_db
 DB_USERNAME=root
 DB_PASSWORD=
 ```

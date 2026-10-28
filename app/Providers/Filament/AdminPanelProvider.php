@@ -33,12 +33,12 @@ class AdminPanelProvider extends PanelProvider
             ->profile()
             ->id('admin')
             ->path('admin')
-            ->brandName('Helpdesk System')
+            ->brandName('Helpdesk IWIMA')
             ->brandLogo(asset('branding/logo-tag.svg'))
-            ->brandLogoHeight('4rem')
+            ->brandLogoHeight('2.5rem')
             ->favicon(asset('branding/logo.svg'))
             ->colors([
-                'primary' => Color::Blue,
+                'primary' => Color::hex('#004B87'),
                 'pending' => Color::Amber,
                 'chat' => Color::Cyan,
                 'update' => Color::Indigo,

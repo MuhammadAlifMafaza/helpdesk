@@ -4,269 +4,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ config('app.name') }} &mdash; Institut Widya Pratama Pekalongan</title>
-
+    <meta name="theme-color" content="#F7F6F1">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('branding/logo.svg') }}">
+    <title>{{ config('app.name') }} — Institut Widya Pratama Pekalongan</title>
     @vite('resources/css/app.css')
 </head>
 
-<body class="relative overflow-x-hidden bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 text-slate-800 antialiased">
-
-    <!-- Dekorasi latar -->
-    <div class="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-blue-300/20 blur-3xl"></div>
-    <div class="pointer-events-none absolute top-1/3 -right-24 h-96 w-96 rounded-full bg-indigo-300/20 blur-3xl"></div>
-
-    {{-- ====================== NAVBAR ====================== --}}
-    <header class="sticky top-0 z-50 border-b border-white/50 bg-white/70 backdrop-blur-lg">
-        <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-            <a href="/" class="flex items-center gap-3">
-                <img src="{{ asset('images/logo-iwima.png') }}" alt="Logo IWIMA" class="h-10 w-10 object-contain">
-                <span class="text-lg font-bold text-slate-800">
-                    Helpdesk <span class="text-blue-600">IWIMA</span>
+<body class="bg-paper font-sans text-ink antialiased">
+    <header class="border-b border-slate-200">
+        <nav aria-label="Navigasi utama" class="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-4 sm:px-8 lg:px-12">
+            <a href="/" class="inline-flex min-w-0 items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-iwima-blue">
+                <img src="{{ asset('branding/logo.svg') }}" alt="" class="size-10 shrink-0">
+                <span class="min-w-0">
+                    <span class="block text-sm font-bold tracking-wide text-iwima-blue">HELPDESK IWIMA</span>
+                    <span class="mt-0.5 hidden text-xs text-slate-500 sm:block">Layanan teknologi kampus</span>
                 </span>
             </a>
 
-            <div class="flex items-center gap-3">
-                <a href="/admin/login"
-                    class="hidden rounded-xl border border-slate-300 bg-white/60 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-white sm:inline-block">
-                    Panel Admin
+            <div class="flex shrink-0 items-center gap-3 sm:gap-5">
+                <a href="/admin/login" class="hidden text-sm font-medium text-slate-700 underline-offset-4 hover:text-iwima-blue hover:underline sm:inline-block">
+                    Panel staf
                 </a>
-                <a href="{{ route('login') }}"
-                    class="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-lg transition hover:shadow-xl">
+                <a href="{{ route('login') }}" class="inline-flex min-h-10 items-center justify-center rounded-sm bg-iwima-blue px-4 text-sm font-semibold text-white transition-colors hover:bg-sky-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iwima-blue">
                     Masuk
                 </a>
             </div>
         </nav>
     </header>
 
-    {{-- ====================== HERO ====================== --}}
-    <section class="mx-auto max-w-7xl px-6 pb-16 pt-14 lg:pb-24 lg:pt-20">
-        <div class="grid items-center gap-12 lg:grid-cols-2">
-            <div>
-                <span class="inline-block rounded-full border border-blue-200 bg-blue-50 px-4 py-1 text-sm font-medium text-blue-700">
-                    Layanan Teknis &amp; Perawatan Infrastruktur
-                </span>
-
-                <h1 class="mt-6 text-4xl font-bold leading-tight text-slate-800 lg:text-5xl">
-                    Laporkan Masalah IT &amp; Ajukan Kebutuhan dalam
-                    <span class="text-blue-600">Satu Portal</span>
+    <main>
+        <section class="mx-auto grid max-w-7xl items-center gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[0.88fr_1.12fr] lg:gap-14 lg:px-12 lg:py-20">
+            <div class="max-w-2xl">
+                <p class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-iwima-blue">
+                    <span aria-hidden="true" class="h-1 w-8 bg-iwima-gold"></span>
+                    Layanan teknis dan perawatan infrastruktur
+                </p>
+                <h1 class="mt-6 max-w-xl text-4xl font-semibold leading-[1.12] tracking-tight text-ink sm:text-5xl lg:text-[3.5rem]">
+                    Dukungan teknologi kampus, lewat satu portal.
                 </h1>
-
-                <p class="mt-5 text-lg leading-relaxed text-slate-500">
-                    Sistem Helpdesk Institut Widya Pratama Pekalongan &mdash; pantau penanganan
-                    tiket perbaikan dan pengajuan barang secara transparan, cepat, dan realtime.
+                <p class="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
+                    Laporkan gangguan, ajukan kebutuhan barang, dan pantau tindak lanjut dari tim Helpdesk IWIMA.
                 </p>
-
-                <div class="mt-8 flex flex-wrap gap-4">
-                    <a href="{{ route('login') }}"
-                        class="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3 font-semibold text-white shadow-lg transition hover:scale-[1.02] hover:shadow-xl">
-                        Masuk Sekarang
+                <div class="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+                    <a href="{{ route('login') }}" class="inline-flex min-h-12 items-center justify-center rounded-sm bg-iwima-blue px-6 text-sm font-semibold text-white transition-colors hover:bg-sky-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iwima-blue">
+                        Masuk ke portal
                     </a>
-                    <a href="/admin/login"
-                        class="rounded-xl border border-slate-300 bg-white/70 px-7 py-3 font-semibold text-slate-700 backdrop-blur transition hover:bg-white">
-                        Panel Admin
+                    <a href="/admin/login" class="inline-flex min-h-12 items-center gap-2 text-sm font-semibold text-iwima-blue underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iwima-blue">
+                        Akses panel staf
+                        <span aria-hidden="true">→</span>
                     </a>
                 </div>
             </div>
 
-            <div class="hidden lg:block">
-                <img src="{{ asset('images/kampus.png') }}" alt="Kampus Institut Widya Pratama Pekalongan"
-                    class="w-full rounded-[40px] object-cover shadow-2xl">
-            </div>
-        </div>
-    </section>
+            <figure class="relative min-w-0">
+                <img
+                    src="{{ asset('images/kampus.png') }}"
+                    alt="Gedung Institut Widya Pratama Pekalongan"
+                    fetchpriority="high"
+                    class="aspect-[4/3] w-full border border-slate-200 object-cover object-center sm:aspect-[16/10]"
+                >
+                <figcaption class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 text-sm sm:px-5">
+                    <span class="font-medium text-ink">Institut Widya Pratama</span>
+                    <span class="text-slate-500">Pekalongan, Jawa Tengah</span>
+                </figcaption>
+                <span aria-hidden="true" class="absolute -right-2 -top-2 -z-10 h-16 w-16 border-r-4 border-t-4 border-iwima-gold sm:-right-3 sm:-top-3 sm:h-20 sm:w-20"></span>
+            </figure>
+        </section>
 
-    {{-- ====================== STATISTIK ====================== --}}
-    <section class="mx-auto max-w-7xl px-6 pb-16">
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div class="rounded-3xl border border-white/60 bg-white/70 p-6 text-center shadow-xl backdrop-blur-2xl">
-                <div class="text-4xl font-bold text-blue-600">{{ number_format($statistik['tiket']) }}</div>
-                <div class="mt-2 text-sm font-medium text-slate-500">Tiket Perbaikan</div>
-            </div>
-            <div class="rounded-3xl border border-white/60 bg-white/70 p-6 text-center shadow-xl backdrop-blur-2xl">
-                <div class="text-4xl font-bold text-emerald-600">{{ number_format($statistik['tiket_selesai']) }}</div>
-                <div class="mt-2 text-sm font-medium text-slate-500">Tiket Selesai</div>
-            </div>
-            <div class="rounded-3xl border border-white/60 bg-white/70 p-6 text-center shadow-xl backdrop-blur-2xl">
-                <div class="text-4xl font-bold text-blue-600">{{ number_format($statistik['pengajuan']) }}</div>
-                <div class="mt-2 text-sm font-medium text-slate-500">Pengajuan Barang</div>
-            </div>
-            <div class="rounded-3xl border border-white/60 bg-white/70 p-6 text-center shadow-xl backdrop-blur-2xl">
-                <div class="text-4xl font-bold text-indigo-600">{{ number_format($statistik['kegiatan']) }}</div>
-                <div class="mt-2 text-sm font-medium text-slate-500">Kegiatan Teknisi</div>
-            </div>
-        </div>
-    </section>
-
-    {{-- ====================== FITUR ====================== --}}
-    <section class="mx-auto max-w-7xl px-6 pb-20">
-        <div class="text-center">
-            <h2 class="text-3xl font-bold text-slate-800">Fitur Unggulan</h2>
-            <p class="mt-3 text-slate-500">Kemudahan layanan helpdesk dalam satu sistem</p>
-        </div>
-
-        <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {{-- Fitur 1: Tiket --}}
-            <div class="rounded-3xl border border-white/60 bg-white/70 p-6 shadow-xl backdrop-blur-2xl transition hover:-translate-y-1 hover:shadow-2xl">
-                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2.5" y="6" width="19" height="12" rx="2.5" />
-                        <path d="M15 6v12" />
-                    </svg>
+        <section aria-label="Ringkasan layanan" class="border-y border-slate-200 bg-white">
+            <div class="mx-auto grid max-w-7xl grid-cols-2 px-5 sm:px-8 lg:grid-cols-4 lg:px-12">
+                <div class="border-b border-r border-slate-200 py-6 pr-4 sm:py-7 lg:border-b-0 lg:pr-6">
+                    <p class="text-3xl font-semibold tabular-nums tracking-tight text-iwima-blue sm:text-4xl">{{ number_format($statistik['tiket']) }}</p>
+                    <p class="mt-2 text-sm text-slate-600">Tiket perbaikan</p>
                 </div>
-                <h3 class="mt-4 font-semibold text-slate-800">Lapor Tiket Perbaikan</h3>
-                <p class="mt-2 text-sm leading-relaxed text-slate-500">
-                    Catat gangguan perangkat dan infrastruktur, lalu pantau status penanganannya hingga selesai.
-                </p>
-            </div>
-
-            {{-- Fitur 2: Pengajuan --}}
-            <div class="rounded-3xl border border-white/60 bg-white/70 p-6 shadow-xl backdrop-blur-2xl transition hover:-translate-y-1 hover:shadow-2xl">
-                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 8l9-4 9 4v8l-9 4-9-4V8z" />
-                        <path d="M3 8l9 4 9-4" />
-                        <path d="M12 12v8" />
-                    </svg>
+                <div class="border-b border-slate-200 py-6 pl-4 sm:py-7 lg:border-b-0 lg:border-r lg:px-6">
+                    <p class="text-3xl font-semibold tabular-nums tracking-tight text-iwima-blue sm:text-4xl">{{ number_format($statistik['tiket_selesai']) }}</p>
+                    <p class="mt-2 text-sm text-slate-600">Tiket selesai</p>
                 </div>
-                <h3 class="mt-4 font-semibold text-slate-800">Pengajuan Barang</h3>
-                <p class="mt-2 text-sm leading-relaxed text-slate-500">
-                    Ajukan kebutuhan barang dan keperluan teknis dengan alur persetujuan yang jelas dan terdokumentasi.
-                </p>
-            </div>
-
-            {{-- Fitur 3: Realtime --}}
-            <div class="rounded-3xl border border-white/60 bg-white/70 p-6 shadow-xl backdrop-blur-2xl transition hover:-translate-y-1 hover:shadow-2xl">
-                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 9a6 6 0 1 1 12 0c0 4.5 1.5 5.5 1.5 5.5h-15S6 13.5 6 9z" />
-                            <path d="M10 19a2.5 2.5 0 0 0 4 0" />
-                    </svg>
+                <div class="border-r border-slate-200 py-6 pr-4 sm:py-7 lg:px-6">
+                    <p class="text-3xl font-semibold tabular-nums tracking-tight text-iwima-blue sm:text-4xl">{{ number_format($statistik['pengajuan']) }}</p>
+                    <p class="mt-2 text-sm text-slate-600">Pengajuan barang</p>
                 </div>
-                <h3 class="mt-4 font-semibold text-slate-800">Status Realtime</h3>
-                <p class="mt-2 text-sm leading-relaxed text-slate-500">
-                    Notifikasi otomatis setiap ada perubahan status tiket atau pengajuan, tanpa perlu refresh halaman.
-                </p>
-            </div>
-
-            {{-- Fitur 4: Laporan --}}
-            <div class="rounded-3xl border border-white/60 bg-white/70 p-6 shadow-xl backdrop-blur-2xl transition hover:-translate-y-1 hover:shadow-2xl">
-                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 3h8l4 4v14H6z" />
-                        <path d="M14 3v4h4" />
-                        <path d="M9 13h6" />
-                        <path d="M9 17h6" />
-                    </svg>
+                <div class="py-6 pl-4 sm:py-7 lg:pl-6">
+                    <p class="text-3xl font-semibold tabular-nums tracking-tight text-iwima-blue sm:text-4xl">{{ number_format($statistik['kegiatan']) }}</p>
+                    <p class="mt-2 text-sm text-slate-600">Kegiatan teknisi</p>
                 </div>
-                <h3 class="mt-4 font-semibold text-slate-800">Laporan &amp; Riwayat</h3>
-                <p class="mt-2 text-sm leading-relaxed text-slate-500">
-                    Riwayat lengkap aktivitas dan laporan berkala siap cetak dalam format PDF, Excel, dan Word.
-                </p>
             </div>
-        </div>
-    </section>
+        </section>
 
-    {{-- ====================== CARA KERJA ====================== --}}
-    <section class="border-y border-white/60 bg-white/60 py-16 backdrop-blur">
-        <div class="mx-auto max-w-7xl px-6">
-            <div class="text-center">
-                <h2 class="text-3xl font-bold text-slate-800">Cara Kerja</h2>
-                <p class="mt-3 text-slate-500">Tiga langkah mudah memanfaatkan layanan helpdesk</p>
-            </div>
+        <section class="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-16 lg:px-12 lg:py-20">
+            <div class="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-iwima-blue">Ruang lingkup layanan</p>
+                    <h2 class="mt-3 max-w-sm text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">Apa yang dapat Anda urus di sini?</h2>
+                </div>
 
-            <div class="mt-10 grid items-center gap-10 lg:grid-cols-2">
-                <ol class="space-y-6">
-                    <li class="flex gap-4">
-                        <span
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 font-bold text-white">1</span>
+                <div class="divide-y divide-slate-200 border-y border-slate-200">
+                    <article class="grid gap-3 py-5 sm:grid-cols-[5rem_1fr] sm:gap-5 sm:py-6">
+                        <p class="text-xs font-semibold tracking-[0.12em] text-iwima-blue">01 / TIKET</p>
                         <div>
-                            <h3 class="font-semibold text-slate-800">Masuk ke Sistem</h3>
-                            <p class="mt-1 text-sm leading-relaxed text-slate-500">
-                                Login menggunakan akun yang telah diberikan oleh administrator.
-                            </p>
+                            <h3 class="font-semibold">Gangguan perangkat dan infrastruktur</h3>
+                            <p class="mt-1 text-sm leading-6 text-slate-600">Sampaikan masalah, sertakan informasi yang diperlukan, lalu ikuti proses penanganannya.</p>
+                        </div>
+                    </article>
+                    <article class="grid gap-3 py-5 sm:grid-cols-[5rem_1fr] sm:gap-5 sm:py-6">
+                        <p class="text-xs font-semibold tracking-[0.12em] text-iwima-blue">02 / BARANG</p>
+                        <div>
+                            <h3 class="font-semibold">Kebutuhan barang teknis</h3>
+                            <p class="mt-1 text-sm leading-6 text-slate-600">Ajukan barang melalui alur yang tercatat dan dapat dipantau.</p>
+                        </div>
+                    </article>
+                    <article class="grid gap-3 py-5 sm:grid-cols-[5rem_1fr] sm:gap-5 sm:py-6">
+                        <p class="text-xs font-semibold tracking-[0.12em] text-iwima-blue">03 / STATUS</p>
+                        <div>
+                            <h3 class="font-semibold">Pembaruan tindak lanjut</h3>
+                            <p class="mt-1 text-sm leading-6 text-slate-600">Lihat status dan riwayat aktivitas layanan pada akun Anda.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="border-y border-slate-200 bg-[#efeee7]">
+            <div class="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-16 lg:px-12">
+                <div class="max-w-2xl">
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-iwima-blue">Alur layanan</p>
+                    <h2 class="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">Dari laporan hingga tindak lanjut</h2>
+                </div>
+                <ol class="mt-8 grid gap-0 border-y border-slate-300 md:grid-cols-3 md:divide-x md:divide-slate-300">
+                    <li class="grid grid-cols-[2.5rem_1fr] gap-4 border-b border-slate-300 py-5 md:border-b-0 md:px-5 md:first:pl-0 md:last:pr-0">
+                        <span class="flex size-9 items-center justify-center bg-iwima-gold text-sm font-bold text-iwima-blue">1</span>
+                        <div>
+                            <h3 class="font-semibold">Masuk ke portal</h3>
+                            <p class="mt-1 text-sm leading-6 text-slate-600">Gunakan akun yang diberikan administrator.</p>
                         </div>
                     </li>
-                    <li class="flex gap-4">
-                        <span
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 font-bold text-white">2</span>
+                    <li class="grid grid-cols-[2.5rem_1fr] gap-4 border-b border-slate-300 py-5 md:border-b-0 md:px-5">
+                        <span class="flex size-9 items-center justify-center bg-iwima-gold text-sm font-bold text-iwima-blue">2</span>
                         <div>
-                            <h3 class="font-semibold text-slate-800">Buat Laporan atau Pengajuan</h3>
-                            <p class="mt-1 text-sm leading-relaxed text-slate-500">
-                                Isi formulir tiket perbaikan atau pengajuan barang sesuai kebutuhan Anda.
-                            </p>
+                            <h3 class="font-semibold">Kirim kebutuhan</h3>
+                            <p class="mt-1 text-sm leading-6 text-slate-600">Pilih tiket perbaikan atau pengajuan barang.</p>
                         </div>
                     </li>
-                    <li class="flex gap-4">
-                        <span
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 font-bold text-white">3</span>
+                    <li class="grid grid-cols-[2.5rem_1fr] gap-4 py-5 md:px-5 md:last:pr-0">
+                        <span class="flex size-9 items-center justify-center bg-iwima-gold text-sm font-bold text-iwima-blue">3</span>
                         <div>
-                            <h3 class="font-semibold text-slate-800">Pantau Hingga Selesai</h3>
-                            <p class="mt-1 text-sm leading-relaxed text-slate-500">
-                                Ikuti status penanganan secara realtime hingga laporan dinyatakan selesai.
-                            </p>
+                            <h3 class="font-semibold">Pantau prosesnya</h3>
+                            <p class="mt-1 text-sm leading-6 text-slate-600">Periksa status dan riwayat dari akun Anda.</p>
                         </div>
                     </li>
                 </ol>
+            </div>
+        </section>
 
-                <div class="rounded-3xl border border-white/60 bg-white/70 p-6 shadow-xl backdrop-blur-2xl">
-                    <img src="{{ asset('images/helpdesk-flow.svg') }}" alt="Alur Layanan Helpdesk"
-                        class="w-full">
+        <section class="mx-auto grid max-w-7xl gap-8 px-5 py-14 sm:px-8 sm:py-16 lg:grid-cols-[0.72fr_1.28fr] lg:px-12">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-iwima-blue">Informasi kampus</p>
+                <h2 class="mt-3 text-2xl font-semibold tracking-tight">Hubungi kami</h2>
+                <p class="mt-2 text-sm leading-6 text-slate-600">Kabid Teknis dan Perawatan Infrastruktur</p>
+            </div>
+            <dl class="grid gap-x-8 gap-y-5 border-t border-slate-200 pt-5 sm:grid-cols-3">
+                <div>
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Alamat</dt>
+                    <dd class="mt-2 text-sm leading-6">Jl. Patriot No. 25, Pekalongan, Jawa Tengah</dd>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- ====================== KONTAK ====================== --}}
-    <section class="mx-auto max-w-7xl px-6 py-16">
-        <div class="text-center">
-            <h2 class="text-3xl font-bold text-slate-800">Hubungi Kami</h2>
-            <p class="mt-3 text-slate-500">
-                Kabid Teknis dan Perawatan Infrastruktur &mdash; Institut Widya Pratama Pekalongan
-            </p>
-        </div>
-
-        <div class="mt-10 grid gap-6 sm:grid-cols-3">
-            <div class="rounded-3xl border border-white/60 bg-white/70 p-6 text-center shadow-xl backdrop-blur-2xl">
-                <div class="text-sm font-semibold uppercase tracking-wide text-blue-600">Alamat</div>
-                <p class="mt-2 text-slate-600">Jl. Patriot No. 25, Pekalongan, Jawa Tengah</p>
-            </div>
-            <div class="rounded-3xl border border-white/60 bg-white/70 p-6 text-center shadow-xl backdrop-blur-2xl">
-                <div class="text-sm font-semibold uppercase tracking-wide text-blue-600">Telepon</div>
-                <p class="mt-2 text-slate-600">(0285) 427817</p>
-            </div>
-            <div class="rounded-3xl border border-white/60 bg-white/70 p-6 text-center shadow-xl backdrop-blur-2xl">
-                <div class="text-sm font-semibold uppercase tracking-wide text-blue-600">Fax</div>
-                <p class="mt-2 text-slate-600">(0285) 427815</p>
-            </div>
-        </div>
-    </section>
-
-    {{-- ====================== FOOTER ====================== --}}
-    <footer class="border-t border-white/60 bg-white/70 backdrop-blur-lg">
-        <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 py-8 sm:flex-row">
-            <div class="flex items-center gap-3">
-                <img src="{{ asset('images/logo-iwima.png') }}" alt="Logo IWIMA" class="h-9 w-9 object-contain">
-                <div class="text-sm">
-                    <div class="font-bold text-slate-800">Helpdesk IWIMA</div>
-                    <div class="text-slate-500">Institut Widya Pratama Pekalongan</div>
+                <div>
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Telepon</dt>
+                    <dd class="mt-2 text-sm"><a href="tel:+62285427817" class="underline-offset-4 hover:text-iwima-blue hover:underline">(0285) 427817</a></dd>
                 </div>
-            </div>
+                <div>
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Faks</dt>
+                    <dd class="mt-2 text-sm">(0285) 427815</dd>
+                </div>
+            </dl>
+        </section>
+    </main>
 
-            <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
-                <a href="{{ route('login') }}" class="hover:text-blue-600">Masuk Pemohon</a>
-                <a href="/admin/login" class="hover:text-blue-600">Panel Admin</a>
+    <footer class="border-t border-slate-200 bg-white">
+        <div class="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-6 text-sm sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12">
+            <a href="/" class="inline-flex items-center gap-3">
+                <img src="{{ asset('branding/logo.svg') }}" alt="" class="size-8">
+                <span>
+                    <span class="block font-semibold text-iwima-blue">Helpdesk IWIMA</span>
+                    <span class="block text-xs text-slate-500">Institut Widya Pratama Pekalongan</span>
+                </span>
+            </a>
+            <nav aria-label="Navigasi footer" class="flex flex-wrap gap-x-5 gap-y-2 text-slate-600">
+                <a href="{{ route('login') }}" class="underline-offset-4 hover:text-iwima-blue hover:underline">Masuk ke portal</a>
+                <a href="/admin/login" class="underline-offset-4 hover:text-iwima-blue hover:underline">Panel staf</a>
             </nav>
-
-            <div class="text-sm text-slate-500">
-                &copy; {{ date('Y') }} Institut Widya Pratama Pekalongan
-            </div>
+            <p class="text-xs text-slate-500">&copy; {{ date('Y') }} Institut Widya Pratama Pekalongan</p>
         </div>
     </footer>
-
 </body>
 
 </html>
