@@ -23,12 +23,16 @@
                     <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Portal layanan kampus</p>
                     <h1 class="mt-3 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Masuk ke Helpdesk</h1>
                     <p class="mt-3 max-w-sm text-base leading-7 text-slate-600">
-                        Gunakan akun yang diberikan administrator untuk mengelola layanan atau melihat pengajuan Anda.
+                        Masuk sebagai pemohon untuk mengirim kebutuhan dan memantau penanganannya.
                     </p>
                 </div>
 
                 <form method="POST" action="{{ route('login') }}" class="mt-9 space-y-5">
                     @csrf
+
+                    @if (session('status'))
+                        <p role="status" class="border-l-4 border-iwima-blue bg-white px-4 py-3 text-sm leading-6 text-slate-700">{{ session('status') }}</p>
+                    @endif
 
                     @if ($errors->any())
                         <div role="alert" class="border-l-4 border-red-700 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -91,7 +95,7 @@
                             Ingat saya
                         </label>
 
-                        <a href="{{ route('filament.pemohon.auth.password-reset.request') }}" class="font-medium text-iwima-blue underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iwima-blue">
+                        <a href="{{ route('pemohon.password.request') }}" class="font-medium text-iwima-blue underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iwima-blue">
                             Lupa kata sandi?
                         </a>
                     </div>
@@ -105,7 +109,7 @@
                     <a href="/" class="font-medium text-iwima-blue underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iwima-blue">
                         Kembali ke halaman utama
                     </a>
-                    <p class="mt-3 text-xs text-slate-500">Institut Widya Pratama Pekalongan</p>
+                    <p class="mt-3 text-sm text-slate-600">Admin dan teknisi menggunakan <a href="{{ route('filament.admin.auth.login') }}" class="font-medium text-iwima-blue underline underline-offset-4">panel staf</a>.</p>
                 </div>
             </div>
         </section>

@@ -3,29 +3,38 @@
 namespace App\Filament\Widgets\Teknisi;
 
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
+use App\Services\DashboardMetrics;
 use Filament\Widgets\ChartWidget;
 
 class TeknisiStatusChart extends ChartWidget
 {
     protected ?string $heading = 'Status Pekerjaan Saya';
+
     protected ?string $description = 'Distribusi tiket yang pernah ditangani oleh teknisi.';
+
     protected ?string $pollingInterval = '60s';
-    protected static bool $isLazy = false;
+
+    protected static bool $isLazy = true;
+
+    protected ?string $maxHeight = '300px';
+
+    protected ?string $emptyStateHeading = 'Belum ada riwayat pekerjaan';
+
+    public function isEmpty(): bool
+    {
+        return array_sum($this->getCachedData()['datasets'][0]['data']) === 0;
+    }
+
     protected static ?int $sort = 2;
+
     protected int|string|array $columnSpan = 1;
 
     protected function getData(): array
     {
         $userId = auth()->id();
 
-        $query = TiketPerbaikan::query()
-            ->whereHas('logs', function ($query) use ($userId) {
-                $query
-                    ->where('user_id', $userId)
-                    ->where('kategori_log', 'Status')
-                    ->where('data_lama', 'Open')
-                    ->where('data_baru', 'In Progress');
-            });
+        $query = TiketPerbaikan::query()->handledByTechnician($userId);
+        $counts = DashboardMetrics::statusCounts($query);
 
         return [
             'datasets' => [
@@ -33,35 +42,27 @@ class TeknisiStatusChart extends ChartWidget
                     'label' => 'Tiket Saya',
 
                     'data' => [
-                        (clone $query)
-                            ->where('status', 'Open')
-                            ->count(),
-
-                        (clone $query)
-                            ->where('status', 'In Progress')
-                            ->count(),
-
-                        (clone $query)
-                            ->where('status', 'Close')
-                            ->count(),
+                        $counts['Open'] ?? 0,
+                        $counts['In Progress'] ?? 0,
+                        $counts['Close'] ?? 0,
                     ],
 
                     'backgroundColor' => [
-                        '#3B82F6',
                         '#F59E0B',
+                        '#3B82F6',
                         '#10B981',
                     ],
 
                     'borderWidth' => 2,
 
-                    'hoverOffset' => 10,
+                    'hoverOffset' => 3,
                 ],
             ],
 
             'labels' => [
-                'Open',
-                'In Progress',
-                'Close',
+                'Menunggu',
+                'Diproses',
+                'Selesai',
             ],
         ];
     }

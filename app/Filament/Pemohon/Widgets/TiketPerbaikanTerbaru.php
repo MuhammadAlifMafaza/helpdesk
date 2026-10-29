@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pemohon\Widgets;
 
+use App\Filament\Pemohon\Resources\Service\TiketPerbaikans\TiketPerbaikanResource;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -9,14 +10,25 @@ use Filament\Widgets\TableWidget;
 
 class TiketPerbaikanTerbaru extends TableWidget
 {
-    protected static bool $isLazy = false;
+    protected static bool $isLazy = true;
+
     protected static ?string $heading = 'Tiket Perbaikan Terbaru';
+
     protected static ?int $sort = 4;
-    protected int|string|array $columnSpan = 'span';
+
+    protected int|string|array $columnSpan = 'full';
+
+    public static function canView(): bool
+    {
+        return auth()->user()?->hasRole('pemohon') ?? false;
+    }
 
     public function table(Table $table): Table
     {
         return $table
+            ->poll('60s')
+            ->emptyStateHeading('Anda belum memiliki tiket perbaikan')
+            ->recordUrl(fn (TiketPerbaikan $record): ?string => TiketPerbaikanResource::canView($record) ? TiketPerbaikanResource::getUrl('view', ['record' => $record], panel: 'pemohon') : null)
             ->query(
                 TiketPerbaikan::query()
                     ->where('user_id', auth()->id())
@@ -42,8 +54,11 @@ class TiketPerbaikanTerbaru extends TableWidget
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'Open' => 'Menunggu', 'In Progress' => 'Diproses', 'Close' => 'Selesai', default => $state
+                    })
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'Open' => 'warning',
                         'In Progress' => 'info',
                         'Close' => 'success',
@@ -56,6 +71,7 @@ class TiketPerbaikanTerbaru extends TableWidget
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
+            ->defaultPaginationPageOption(5)
             ->paginated([5]);
     }
 }

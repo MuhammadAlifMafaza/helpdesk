@@ -8,10 +8,24 @@ use Filament\Widgets\ChartWidget;
 class TeknisiAktivitasChart extends ChartWidget
 {
     protected ?string $heading = 'Aktivitas Pekerjaan';
-    protected ?string $description = 'Rekap aktivitas pelayanan yang dilakukan teknisi.';
-    protected ?string $pollingInterval = '60s';
-    protected static bool $isLazy = false;
+
+    protected ?string $description = 'Jumlah aktivitas Anda selama 30 hari terakhir, bukan jumlah tiket unik.';
+
+    protected ?string $pollingInterval = null;
+
+    protected static bool $isLazy = true;
+
+    protected ?string $maxHeight = '300px';
+
+    protected ?string $emptyStateHeading = 'Belum ada aktivitas pada periode ini';
+
+    public function isEmpty(): bool
+    {
+        return array_sum($this->getCachedData()['datasets'][0]['data']) === 0;
+    }
+
     protected static ?int $sort = 3;
+
     protected int|string|array $columnSpan = 1;
 
     protected function getData(): array
@@ -20,7 +34,7 @@ class TeknisiAktivitasChart extends ChartWidget
 
         $logs = LogPerbaikan::query()
             ->where('user_id', $userId)
-            ->get();
+            ->whereBetween('created_at', [now()->subDays(29)->startOfDay(), now()->endOfDay()]);
 
         return [
             'datasets' => [
@@ -28,43 +42,27 @@ class TeknisiAktivitasChart extends ChartWidget
                     'label' => 'Aktivitas',
 
                     'data' => [
-                        $logs->where('kategori_log', 'Status')
+                        (clone $logs)->where('kategori_log', 'Status')
                             ->where('data_lama', 'Open')
                             ->where('data_baru', 'In Progress')
                             ->count(),
 
-                        $logs->where('kategori_log', 'Update Data')
+                        (clone $logs)->where('kategori_log', 'Update Data')
                             ->count(),
 
-                        $logs->where('kategori_log', 'Chat')
+                        (clone $logs)->where('kategori_log', 'Chat')
                             ->count(),
 
-                        $logs->where('kategori_log', 'Pending')
+                        (clone $logs)->where('kategori_log', 'Pending')
                             ->count(),
 
-                        $logs->filter(function ($log) {
-                            return $log->kategori_log === 'Status'
-                                && $log->data_lama === 'In Progress'
-                                && $log->data_baru === 'Close'
-                                && str_contains(
-                                    $log->keterangan ?? '',
-                                    '[SELESAI]'
-                                );
-                        })->count(),
+                        (clone $logs)->where('kategori_log', 'Status')->where('data_lama', 'In Progress')->where('data_baru', 'Close')->where('keterangan', 'like', '%[SELESAI]%')->count(),
 
-                        $logs->filter(function ($log) {
-                            return $log->kategori_log === 'Status'
-                                && $log->data_lama === 'In Progress'
-                                && $log->data_baru === 'Close'
-                                && str_contains(
-                                    $log->keterangan ?? '',
-                                    '[DITOLAK]'
-                                );
-                        })->count(),
+                        (clone $logs)->where('kategori_log', 'Status')->where('data_lama', 'In Progress')->where('data_baru', 'Close')->where('keterangan', 'like', '%[DITOLAK]%')->count(),
                     ],
 
                     'backgroundColor' => [
-                        '#3B82F6',
+                        '#004B87',
                         '#8B5CF6',
                         '#06B6D4',
                         '#F59E0B',

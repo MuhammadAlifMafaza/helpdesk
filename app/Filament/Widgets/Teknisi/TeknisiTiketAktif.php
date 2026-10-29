@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets\Teknisi;
 
+use App\Filament\Resources\TicketServices\TicketServiceResource;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -10,8 +11,11 @@ use Filament\Widgets\TableWidget;
 class TeknisiTiketAktif extends TableWidget
 {
     protected static ?int $sort = 4;
+
     protected int|string|array $columnSpan = 'full';
+
     protected static bool $isLazy = false;
+
     protected static ?string $heading = 'Pekerjaan yang Sedang Ditangani';
 
     protected function getTableRecordsPerPageSelectOptions(): array
@@ -24,6 +28,9 @@ class TeknisiTiketAktif extends TableWidget
         $userId = auth()->id();
 
         return $table
+            ->poll('60s')
+            ->emptyStateHeading('Tidak ada pekerjaan aktif')
+            ->recordUrl(fn (TiketPerbaikan $record): ?string => TicketServiceResource::canView($record) ? TicketServiceResource::getUrl('view', ['record' => $record], panel: 'admin') : null)
             ->query(
                 TiketPerbaikan::query()
                     ->currentlyHandledByTechnician($userId)
@@ -48,7 +55,7 @@ class TeknisiTiketAktif extends TableWidget
                     ->limit(45)
                     ->wrap(),
 
-                Tables\Columns\TextColumn::make('ruangan.nama')
+                Tables\Columns\TextColumn::make('ruangan.nama_ruangan')
                     ->label('Ruangan')
                     ->placeholder('-'),
 
@@ -78,6 +85,7 @@ class TeknisiTiketAktif extends TableWidget
                 'desc'
             )
 
+            ->defaultPaginationPageOption(5)
             ->paginated([
                 5,
                 10,

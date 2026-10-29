@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PemohonPasswordController;
 use App\Http\Controllers\Laporan\PrintLaporanController;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
@@ -12,6 +13,15 @@ use Illuminate\Support\Facades\Schema;
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+Route::middleware('guest')->prefix('pemohon')->name('pemohon.password.')->group(function (): void {
+    Route::get('/lupa-kata-sandi', [PemohonPasswordController::class, 'request'])->name('request');
+    Route::post('/lupa-kata-sandi', [PemohonPasswordController::class, 'email'])->middleware('throttle:5,1')->name('email');
+    Route::get('/reset-kata-sandi/{token}', [PemohonPasswordController::class, 'reset'])->name('reset');
+    Route::post('/reset-kata-sandi', [PemohonPasswordController::class, 'update'])->middleware('throttle:5,1')->name('update');
+});
+
+Route::redirect('/pemohon/password-reset/request', '/pemohon/lupa-kata-sandi');
 
 /*
 |----------------------------------------------------------------------

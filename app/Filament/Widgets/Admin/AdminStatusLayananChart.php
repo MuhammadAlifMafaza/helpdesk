@@ -4,42 +4,38 @@ namespace App\Filament\Widgets\Admin;
 
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
+use App\Services\DashboardMetrics;
 use Filament\Widgets\ChartWidget;
 
 class AdminStatusLayananChart extends ChartWidget
 {
     protected static bool $isLazy = true;
+
     protected ?string $heading = 'Status Layanan';
-    protected ?string $description = 'Perbandingan status layanan Perbaikan dan Pengajuan Barang.';
+
+    protected ?string $description = 'Status terkini seluruh layanan, tidak mengikuti filter periode tren.';
+
+    protected ?string $maxHeight = '300px';
+
+    protected ?string $emptyStateHeading = 'Belum ada layanan';
+
+    public function isEmpty(): bool
+    {
+        $data = $this->getCachedData();
+
+        return array_sum($data['datasets'][0]['data']) + array_sum($data['datasets'][1]['data']) === 0;
+    }
+
     protected ?string $pollingInterval = '60s';
+
     protected static ?int $sort = 3;
-    protected int|string|array $columnSpan = '1';
+
+    protected int|string|array $columnSpan = 1;
 
     protected function getData(): array
     {
-        $tiketOpen = TiketPerbaikan::query()
-            ->where('status', 'Open')
-            ->count();
-
-        $tiketProgress = TiketPerbaikan::query()
-            ->where('status', 'In Progress')
-            ->count();
-
-        $tiketClose = TiketPerbaikan::query()
-            ->where('status', 'Close')
-            ->count();
-
-        $pengajuanOpen = PengajuanBarang::query()
-            ->where('status', 'Open')
-            ->count();
-
-        $pengajuanProgress = PengajuanBarang::query()
-            ->where('status', 'In Progress')
-            ->count();
-
-        $pengajuanClose = PengajuanBarang::query()
-            ->where('status', 'Close')
-            ->count();
+        $tiket = DashboardMetrics::statusCounts(TiketPerbaikan::query());
+        $pengajuan = DashboardMetrics::statusCounts(PengajuanBarang::query());
 
         return [
             'datasets' => [
@@ -47,13 +43,13 @@ class AdminStatusLayananChart extends ChartWidget
                     'label' => 'Perbaikan',
 
                     'data' => [
-                        $tiketOpen,
-                        $tiketProgress,
-                        $tiketClose,
+                        $tiket['Open'] ?? 0,
+                        $tiket['In Progress'] ?? 0,
+                        $tiket['Close'] ?? 0,
                     ],
 
-                    'backgroundColor' => '#3B82F6',
-                    'borderColor' => '#2563EB',
+                    'backgroundColor' => '#004B87',
+                    'borderColor' => '#004B87',
                     'borderWidth' => 1,
 
                     'borderRadius' => 4,
@@ -66,13 +62,13 @@ class AdminStatusLayananChart extends ChartWidget
                     'label' => 'Pengajuan Barang',
 
                     'data' => [
-                        $pengajuanOpen,
-                        $pengajuanProgress,
-                        $pengajuanClose,
+                        $pengajuan['Open'] ?? 0,
+                        $pengajuan['In Progress'] ?? 0,
+                        $pengajuan['Close'] ?? 0,
                     ],
 
-                    'backgroundColor' => '#8B5CF6',
-                    'borderColor' => '#7C3AED',
+                    'backgroundColor' => '#B77900',
+                    'borderColor' => '#B77900',
                     'borderWidth' => 1,
 
                     'borderRadius' => 4,
@@ -83,9 +79,9 @@ class AdminStatusLayananChart extends ChartWidget
             ],
 
             'labels' => [
-                'Open',
-                'In Progress',
-                'Close',
+                'Menunggu',
+                'Diproses',
+                'Selesai',
             ],
         ];
     }
@@ -145,7 +141,6 @@ class AdminStatusLayananChart extends ChartWidget
     {
         return auth()->user()?->hasAnyRole([
             'admin',
-            'admin_super',
             'super_admin',
         ]) ?? false;
     }

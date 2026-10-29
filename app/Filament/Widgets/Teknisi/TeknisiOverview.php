@@ -3,12 +3,13 @@
 namespace App\Filament\Widgets\Teknisi;
 
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
+use App\Services\DashboardMetrics;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class TeknisiOverview extends StatsOverviewWidget
 {
-    protected ?string $pollingInterval = '30s';
+    protected ?string $pollingInterval = '60s';
 
     protected static bool $isLazy = false;
 
@@ -34,7 +35,7 @@ class TeknisiOverview extends StatsOverviewWidget
 
         $totalSelesai = (clone $tiketSelesai)->count();
 
-        $averageDuration = TiketPerbaikan::getAverageDurationHuman(
+        $averageDuration = DashboardMetrics::averageCompletedDuration(
             $tiketSelesai
         );
 
@@ -45,7 +46,7 @@ class TeknisiOverview extends StatsOverviewWidget
                 number_format($totalSaya)
             )
                 ->description(
-                    'Tiket yang pernah tangani'
+                    'Tiket yang pernah Anda tangani'
                 )
                 ->icon('heroicon-o-wrench-screwdriver')
                 ->color('primary'),
@@ -55,7 +56,7 @@ class TeknisiOverview extends StatsOverviewWidget
                 number_format($totalAktif)
             )
                 ->description(
-                    'Pekerjaan yang sedang di kerjakan'
+                    'Tiket yang saat ini menjadi tanggung jawab Anda'
                 )
                 ->icon('heroicon-o-cog-6-tooth')
                 ->color('warning'),
@@ -65,7 +66,7 @@ class TeknisiOverview extends StatsOverviewWidget
                 number_format($totalSelesai)
             )
                 ->description(
-                    'Tiket yang telah di selesaikan'
+                    'Tiket dari riwayat penanganan yang kini selesai'
                 )
                 ->icon('heroicon-o-check-circle')
                 ->color('success'),

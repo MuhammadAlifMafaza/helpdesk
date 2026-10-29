@@ -3,14 +3,17 @@
 namespace App\Filament\Pemohon\Widgets\Statistik;
 
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
+use App\Services\DashboardMetrics;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class TiketPerbaikanStats extends StatsOverviewWidget
 {
-    protected ?string $heading = 'Tiket Perbaikan';
+    protected ?string $heading = 'Tiket perbaikan saya';
 
-    protected static ?int $sort = 1;
+    protected ?string $description = 'Status terkini seluruh tiket milik Anda.';
+
+    protected ?string $pollingInterval = '60s';
 
     protected int|string|array $columnSpan = 'full';
 
@@ -18,50 +21,18 @@ class TiketPerbaikanStats extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $query = TiketPerbaikan::query()
-            ->where('user_id', auth()->id());
+        $counts = DashboardMetrics::statusCounts(TiketPerbaikan::query()->where('user_id', auth()->id()));
 
         return [
-
-            Stat::make(
-                'Total',
-                number_format(
-                    TiketPerbaikan::getTotalTiket($query)
-                )
-            )
-                ->description('Seluruh tiket perbaikan Anda')
-                ->icon('heroicon-o-wrench-screwdriver')
-                ->color('primary'),
-
-            Stat::make(
-                'Open',
-                number_format(
-                    TiketPerbaikan::getTotalOpen($query)
-                )
-            )
-                ->description('Menunggu penanganan')
-                ->icon('heroicon-o-clock')
-                ->color('warning'),
-
-            Stat::make(
-                'In Progress',
-                number_format(
-                    TiketPerbaikan::getTotalInProgress($query)
-                )
-            )
-                ->description('Sedang ditangani')
-                ->icon('heroicon-o-arrow-path')
-                ->color('info'),
-
-            Stat::make(
-                'Close',
-                number_format(
-                    TiketPerbaikan::getTotalClose($query)
-                )
-            )
-                ->description('Tiket telah diselesaikan')
-                ->icon('heroicon-o-check-circle')
-                ->color('success'),
+            Stat::make('Total tiket', number_format(array_sum($counts)))->color('primary'),
+            Stat::make('Menunggu', number_format($counts['Open'] ?? 0))->color('warning'),
+            Stat::make('Diproses', number_format($counts['In Progress'] ?? 0))->color('info'),
+            Stat::make('Selesai', number_format($counts['Close'] ?? 0))->color('success'),
         ];
+    }
+
+    public static function canView(): bool
+    {
+        return auth()->user()?->hasRole('pemohon') ?? false;
     }
 }

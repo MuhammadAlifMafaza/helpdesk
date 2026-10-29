@@ -34,6 +34,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName('Helpdesk IWIMA')
+            ->viteTheme('resources/css/filament/theme.css')
             ->brandLogo(asset('branding/logo-tag.svg'))
             ->brandLogoHeight('2.5rem')
             ->favicon(asset('branding/logo.svg'))
@@ -86,6 +87,10 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
                 'auth',
             ])
+            ->renderHook(
+                PanelsRenderHook::FOOTER,
+                fn (): View => view('components.helpdesk-panel-footer')
+            )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn (): View => view('components.helpdesk-realtime-notification')

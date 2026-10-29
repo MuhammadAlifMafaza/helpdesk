@@ -35,9 +35,9 @@ class PemohonPanelProvider extends PanelProvider
             // membuka panel dialihkan ke route('login') oleh konfigurasi bawaan
             // Laravel (redirectGuestsTo). Lihat juga IsPemohon::handle().
             ->login(null)
-            ->passwordReset()
             ->profile()
             ->brandName('Helpdesk IWIMA')
+            ->viteTheme('resources/css/filament/theme.css')
             ->brandLogo(asset('branding/logo-tag.svg'))
             ->brandLogoHeight('2.5rem')
             ->favicon(asset('branding/logo.svg'))
@@ -83,6 +83,10 @@ class PemohonPanelProvider extends PanelProvider
                 Authenticate::class,
                 IsPemohon::class,
             ])
+            ->renderHook(
+                PanelsRenderHook::FOOTER,
+                fn (): View => view('components.helpdesk-panel-footer')
+            )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn (): View => view('components.helpdesk-realtime-notification')

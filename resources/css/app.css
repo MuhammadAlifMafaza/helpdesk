@@ -16,6 +16,15 @@
         "Noto Color Emoji";
 }
 
+@layer base {
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+        outline: 2px solid var(--color-iwima-blue);
+        outline-offset: 3px;
+    }
+}
+
 .fi-no-database
     .fi-topbar-database-notifications-btn
     .fi-icon-btn-badge-ctn

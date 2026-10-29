@@ -11,8 +11,9 @@
 </head>
 
 <body class="bg-paper font-sans text-ink antialiased">
+    <a href="#konten-utama" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:p-4 focus:text-iwima-blue">Lewati ke konten utama</a>
     <header class="border-b border-slate-200">
-        <nav aria-label="Navigasi utama" class="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-4 sm:px-8 lg:px-12">
+        <nav aria-label="Navigasi utama" class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-12">
             <a href="/" class="inline-flex min-w-0 items-center gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-iwima-blue">
                 <img src="{{ asset('branding/logo.svg') }}" alt="" class="size-10 shrink-0">
                 <span class="min-w-0">
@@ -22,7 +23,7 @@
             </a>
 
             <div class="flex shrink-0 items-center gap-3 sm:gap-5">
-                <a href="/admin/login" class="hidden text-sm font-medium text-slate-700 underline-offset-4 hover:text-iwima-blue hover:underline sm:inline-block">
+                <a href="{{ route('filament.admin.auth.login') }}" class="text-sm font-medium text-slate-700 underline-offset-4 hover:text-iwima-blue hover:underline">
                     Panel staf
                 </a>
                 <a href="{{ route('login') }}" class="inline-flex min-h-10 items-center justify-center rounded-sm bg-iwima-blue px-4 text-sm font-semibold text-white transition-colors hover:bg-sky-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iwima-blue">
@@ -32,14 +33,14 @@
         </nav>
     </header>
 
-    <main>
+    <main id="konten-utama">
         <section class="mx-auto grid max-w-7xl items-center gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[0.88fr_1.12fr] lg:gap-14 lg:px-12 lg:py-20">
             <div class="max-w-2xl">
                 <p class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-iwima-blue">
                     <span aria-hidden="true" class="h-1 w-8 bg-iwima-gold"></span>
                     Layanan teknis dan perawatan infrastruktur
                 </p>
-                <h1 class="mt-6 max-w-xl text-4xl font-semibold leading-[1.12] tracking-tight text-ink sm:text-5xl lg:text-[3.5rem]">
+                <h1 class="mt-6 max-w-xl text-4xl font-semibold leading-[1.15] tracking-tight text-ink sm:text-5xl">
                     Dukungan teknologi kampus, lewat satu portal.
                 </h1>
                 <p class="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
@@ -48,10 +49,6 @@
                 <div class="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
                     <a href="{{ route('login') }}" class="inline-flex min-h-12 items-center justify-center rounded-sm bg-iwima-blue px-6 text-sm font-semibold text-white transition-colors hover:bg-sky-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iwima-blue">
                         Masuk ke portal
-                    </a>
-                    <a href="/admin/login" class="inline-flex min-h-12 items-center gap-2 text-sm font-semibold text-iwima-blue underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-iwima-blue">
-                        Akses panel staf
-                        <span aria-hidden="true">→</span>
                     </a>
                 </div>
             </div>
@@ -67,7 +64,6 @@
                     <span class="font-medium text-ink">Institut Widya Pratama</span>
                     <span class="text-slate-500">Pekalongan, Jawa Tengah</span>
                 </figcaption>
-                <span aria-hidden="true" class="absolute -right-2 -top-2 -z-10 h-16 w-16 border-r-4 border-t-4 border-iwima-gold sm:-right-3 sm:-top-3 sm:h-20 sm:w-20"></span>
             </figure>
         </section>
 
@@ -157,45 +153,9 @@
             </div>
         </section>
 
-        <section class="mx-auto grid max-w-7xl gap-8 px-5 py-14 sm:px-8 sm:py-16 lg:grid-cols-[0.72fr_1.28fr] lg:px-12">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-iwima-blue">Informasi kampus</p>
-                <h2 class="mt-3 text-2xl font-semibold tracking-tight">Hubungi kami</h2>
-                <p class="mt-2 text-sm leading-6 text-slate-600">Kabid Teknis dan Perawatan Infrastruktur</p>
-            </div>
-            <dl class="grid gap-x-8 gap-y-5 border-t border-slate-200 pt-5 sm:grid-cols-3">
-                <div>
-                    <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Alamat</dt>
-                    <dd class="mt-2 text-sm leading-6">Jl. Patriot No. 25, Pekalongan, Jawa Tengah</dd>
-                </div>
-                <div>
-                    <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Telepon</dt>
-                    <dd class="mt-2 text-sm"><a href="tel:+62285427817" class="underline-offset-4 hover:text-iwima-blue hover:underline">(0285) 427817</a></dd>
-                </div>
-                <div>
-                    <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500">Faks</dt>
-                    <dd class="mt-2 text-sm">(0285) 427815</dd>
-                </div>
-            </dl>
-        </section>
     </main>
 
-    <footer class="border-t border-slate-200 bg-white">
-        <div class="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-6 text-sm sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12">
-            <a href="/" class="inline-flex items-center gap-3">
-                <img src="{{ asset('branding/logo.svg') }}" alt="" class="size-8">
-                <span>
-                    <span class="block font-semibold text-iwima-blue">Helpdesk IWIMA</span>
-                    <span class="block text-xs text-slate-500">Institut Widya Pratama Pekalongan</span>
-                </span>
-            </a>
-            <nav aria-label="Navigasi footer" class="flex flex-wrap gap-x-5 gap-y-2 text-slate-600">
-                <a href="{{ route('login') }}" class="underline-offset-4 hover:text-iwima-blue hover:underline">Masuk ke portal</a>
-                <a href="/admin/login" class="underline-offset-4 hover:text-iwima-blue hover:underline">Panel staf</a>
-            </nav>
-            <p class="text-xs text-slate-500">&copy; {{ date('Y') }} Institut Widya Pratama Pekalongan</p>
-        </div>
-    </footer>
+    <x-helpdesk-footer />
 </body>
 
 </html>
