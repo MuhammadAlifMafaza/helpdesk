@@ -44,9 +44,9 @@ class MasterKategoriBarangsTable
                     ->wrap()
                     ->toggleable(),
 
-                TextColumn::make('barang_count')
-                    ->label('Jumlah Barang')
-                    ->counts('barang')
+                TextColumn::make('pengajuan_barang_count')
+                    ->label('Jumlah Pengajuan')
+                    ->counts('pengajuanBarang')
                     ->badge()
                     ->alignCenter(),
 
@@ -90,36 +90,36 @@ class MasterKategoriBarangsTable
 
                 Action::make('toggle_active')
                     ->label(
-                        fn(MasterKategoriBarang $record): string => $record->isActive()
+                        fn (MasterKategoriBarang $record): string => $record->isActive()
                             ? 'Nonaktifkan'
                             : 'Aktifkan'
                     )
                     ->icon(
-                        fn(MasterKategoriBarang $record): string => $record->isActive()
+                        fn (MasterKategoriBarang $record): string => $record->isActive()
                             ? 'heroicon-o-x-circle'
                             : 'heroicon-o-check-circle'
                     )
                     ->color(
-                        fn(MasterKategoriBarang $record): string => $record->isActive()
+                        fn (MasterKategoriBarang $record): string => $record->isActive()
                             ? 'warning'
                             : 'success'
                     )
                     ->requiresConfirmation()
                     ->modalHeading(
-                        fn(MasterKategoriBarang $record): string => $record->isActive()
+                        fn (MasterKategoriBarang $record): string => $record->isActive()
                             ? 'Nonaktifkan Kategori?'
                             : 'Aktifkan Kategori?'
                     )
                     ->modalDescription(
-                        fn(MasterKategoriBarang $record): string => $record->isActive()
+                        fn (MasterKategoriBarang $record): string => $record->isActive()
                             ? 'Kategori tidak akan dapat digunakan '
-                            . 'untuk data baru.'
+                            .'untuk data baru.'
                             : 'Kategori akan dapat digunakan kembali '
-                            . 'untuk data baru.'
+                            .'untuk data baru.'
                     )
                     ->action(function (MasterKategoriBarang $record): void {
                         $record->update([
-                            'is_active' => !$record->is_active,
+                            'is_active' => ! $record->is_active,
                         ]);
 
                         Notification::make()
@@ -138,8 +138,8 @@ class MasterKategoriBarangsTable
                     ->modalHeading('Hapus Kategori Barang')
                     ->modalDescription(
                         'Kategori akan dihapus secara soft delete. '
-                        . 'Data barang dan transaksi yang sudah ada '
-                        . 'tetap dipertahankan.'
+                        .'Data pengajuan yang sudah ada '
+                        .'tetap dipertahankan.'
                     ),
 
                 ForceDeleteAction::make()
@@ -147,30 +147,29 @@ class MasterKategoriBarangsTable
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->visible(
-                        fn(MasterKategoriBarang $record): bool => $record->trashed()
+                        fn (MasterKategoriBarang $record): bool => $record->trashed()
                     )
                     ->requiresConfirmation()
                     ->modalHeading('Hapus Kategori Secara Permanen?')
                     ->modalDescription(
                         'Data yang dihapus secara permanen tidak dapat dipulihkan. '
-                        . 'Pastikan kategori tidak memiliki barang terkait.'
+                        .'Pastikan kategori tidak digunakan oleh pengajuan.'
                     )
                     ->before(
                         function (MasterKategoriBarang $record, Action $action): void {
-                            $jumlahBarang = $record->barang()
-                                ->withTrashed()
+                            $jumlahPengajuan = $record->pengajuanBarang()
                                 ->count();
 
-                            if ($jumlahBarang > 0) {
+                            if ($jumlahPengajuan > 0) {
                                 Notification::make()
                                     ->title('Kategori tidak dapat dihapus')
                                     ->body(
                                         'Kategori "'
-                                        . $record->nama_kategori
-                                        . '" masih memiliki '
-                                        . $jumlahBarang
-                                        . ' barang terkait. '
-                                        . 'Hapus atau pindahkan barang tersebut terlebih dahulu.'
+                                        .$record->nama_kategori
+                                        .'" masih memiliki '
+                                        .$jumlahPengajuan
+                                        .' pengajuan terkait. '
+                                        .'Pindahkan pengajuan ke kategori lain terlebih dahulu.'
                                     )
                                     ->danger()
                                     ->persistent()
@@ -197,8 +196,8 @@ class MasterKategoriBarangsTable
                         ->label('Hapus Permanen')
                         ->modalHeading('Hapus Kategori Secara Permanen?')
                         ->modalDescription(
-                            'Kategori yang masih memiliki barang terkait '
-                            . 'tidak akan dihapus.'
+                            'Kategori yang masih digunakan oleh pengajuan '
+                            .'tidak akan dihapus.'
                         )
                         ->successNotification(null)
                         ->action(function (Collection $records): void {
@@ -207,7 +206,7 @@ class MasterKategoriBarangsTable
 
                             foreach ($records as $record) {
                                 // Hapus permanen hanya berlaku untuk kategori yang sudah di-soft-delete.
-                                if (!$record->trashed()) {
+                                if (! $record->trashed()) {
                                     $blocked[] = [
                                         'nama' => $record->nama_kategori,
                                         'jumlah' => 0,
@@ -217,15 +216,14 @@ class MasterKategoriBarangsTable
                                     continue;
                                 }
 
-                                $jumlahBarang = $record->barang()
-                                    ->withTrashed()
+                                $jumlahPengajuan = $record->pengajuanBarang()
                                     ->count();
 
-                                if ($jumlahBarang > 0) {
+                                if ($jumlahPengajuan > 0) {
                                     $blocked[] = [
                                         'nama' => $record->nama_kategori,
-                                        'jumlah' => $jumlahBarang,
-                                        'alasan' => 'masih memiliki barang terkait',
+                                        'jumlah' => $jumlahPengajuan,
+                                        'alasan' => 'masih digunakan oleh pengajuan',
                                     ];
 
                                     continue;
@@ -243,7 +241,7 @@ class MasterKategoriBarangsTable
                                     ->title('Penghapusan berhasil')
                                     ->body(
                                         $deletedCount
-                                        . ' kategori berhasil dihapus secara permanen.'
+                                        .' kategori berhasil dihapus secara permanen.'
                                     )
                                     ->success()
                                     ->send();
@@ -257,12 +255,12 @@ class MasterKategoriBarangsTable
                             if ($deletedCount === 0) {
                                 $detail = collect($blocked)
                                     ->map(
-                                        fn(array $item): string => $item['nama']
-                                            . ' ('
-                                            . ($item['jumlah'] > 0
-                                                ? $item['jumlah'] . ' barang'
+                                        fn (array $item): string => $item['nama']
+                                            .' ('
+                                            .($item['jumlah'] > 0
+                                                ? $item['jumlah'].' pengajuan'
                                                 : $item['alasan'])
-                                            . ')'
+                                            .')'
                                     )
                                     ->implode(', ');
 
@@ -270,10 +268,10 @@ class MasterKategoriBarangsTable
                                     ->title('Tidak ada kategori yang dihapus')
                                     ->body(
                                         count($blocked)
-                                        . ' kategori tidak dapat dihapus secara permanen '
-                                        . 'karena belum berada di tempat sampah atau masih memiliki barang terkait: '
-                                        . $detail
-                                        . '.'
+                                        .' kategori tidak dapat dihapus secara permanen '
+                                        .'karena belum berada di tempat sampah atau masih digunakan oleh pengajuan: '
+                                        .$detail
+                                        .'.'
                                     )
                                     ->danger()
                                     ->persistent()
@@ -287,10 +285,10 @@ class MasterKategoriBarangsTable
                              */
                             $detail = collect($blocked)
                                 ->map(
-                                    fn(array $item): string => $item['nama']
-                                        . ' ('
-                                        . $item['jumlah']
-                                        . ' barang)'
+                                    fn (array $item): string => $item['nama']
+                                        .' ('
+                                        .$item['jumlah']
+                                        .' pengajuan)'
                                 )
                                 ->implode(', ');
 
@@ -298,12 +296,12 @@ class MasterKategoriBarangsTable
                                 ->title('Penghapusan sebagian berhasil')
                                 ->body(
                                     $deletedCount
-                                    . ' kategori berhasil dihapus permanen. '
-                                    . count($blocked)
-                                    . ' kategori tidak dapat dihapus karena belum berada '
-                                    . 'di tempat sampah atau masih memiliki barang terkait: '
-                                    . $detail
-                                    . '.'
+                                    .' kategori berhasil dihapus permanen. '
+                                    .count($blocked)
+                                    .' kategori tidak dapat dihapus karena belum berada '
+                                    .'di tempat sampah atau masih digunakan oleh pengajuan: '
+                                    .$detail
+                                    .'.'
                                 )
                                 ->warning()
                                 ->persistent()
@@ -321,7 +319,7 @@ class MasterKategoriBarangsTable
                         ->modalHeading('Aktifkan Kategori Terpilih?')
                         ->modalDescription(
                             'Semua kategori yang dipilih akan diubah menjadi aktif '
-                            . 'dan dapat digunakan untuk data baru.'
+                            .'dan dapat digunakan untuk data baru.'
                         )
                         ->action(function (Collection $records): void {
                             $records->each->update([
@@ -342,7 +340,7 @@ class MasterKategoriBarangsTable
                         ->modalHeading('Nonaktifkan Kategori Terpilih?')
                         ->modalDescription(
                             'Semua kategori yang dipilih akan dinonaktifkan '
-                            . 'dan tidak dapat digunakan untuk data baru.'
+                            .'dan tidak dapat digunakan untuk data baru.'
                         )
                         ->action(function (Collection $records): void {
                             $records->each->update([

@@ -75,6 +75,11 @@ class LogPengajuan extends Model
 
             str_contains(
                 $this->keterangan ?? '',
+                'Kategori Barang'
+            ) => 'Kategori Barang',
+
+            str_contains(
+                $this->keterangan ?? '',
                 'Nama Barang'
             ) => 'Nama Barang',
 
@@ -295,6 +300,9 @@ class LogPengajuan extends Model
                     ->where('nama_barang', 'like', "%{$search}%")
                     ->orWhere('jumlah', 'like', "%{$search}%")
                     ->orWhere('alasan', 'like', "%{$search}%")
+                    ->orWhereHas('kategoriBarang', function (Builder $query) use ($search): void {
+                        $query->where('nama_kategori', 'like', "%{$search}%");
+                    })
                     ->orWhere('status', 'like', "%{$search}%")
                     ->orWhere('kode_pengajuan', 'like', "%{$search}%");
             });

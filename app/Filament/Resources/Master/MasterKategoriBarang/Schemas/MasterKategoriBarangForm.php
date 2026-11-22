@@ -16,7 +16,7 @@ class MasterKategoriBarangForm
             ->components([
                 Section::make('Informasi Kategori')
                     ->description(
-                        'Masukkan informasi kategori barang yang akan digunakan dalam Master Barang.'
+                        'Masukkan informasi kategori yang akan digunakan pada pengajuan barang.'
                     )
                     ->schema([
                         TextInput::make('nama_kategori')

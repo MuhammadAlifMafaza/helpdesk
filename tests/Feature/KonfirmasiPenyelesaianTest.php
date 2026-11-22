@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Modules\Master\Barang\Models\MasterBarang;
 use App\Models\Modules\Master\Barang\Models\MasterKategoriBarang;
 use App\Models\Modules\Master\Ruangan\Models\MasterRuangan;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
@@ -24,7 +23,7 @@ class KonfirmasiPenyelesaianTest extends TestCase
 
     private MasterRuangan $ruangan;
 
-    private MasterBarang $barang;
+    private MasterKategoriBarang $kategori;
 
     private string $waktuMulaiUji;
 
@@ -56,17 +55,11 @@ class KonfirmasiPenyelesaianTest extends TestCase
         $this->ruangan->nama_gedung = 'GEDUNG UJI';
         $this->ruangan->save();
 
-        $kategori = new MasterKategoriBarang;
-        $kategori->nama_kategori = 'KATEGORI UJI KONFIRMASI';
-        $kategori->deskripsi = 'Kategori untuk pengujian konfirmasi';
-        $kategori->is_active = true;
-        $kategori->save();
-
-        $this->barang = new MasterBarang;
-        $this->barang->kategori_barang_id = $kategori->id;
-        $this->barang->nama_barang = 'MASTER BARANG UJI KONFIRMASI';
-        $this->barang->is_active = true;
-        $this->barang->save();
+        $this->kategori = new MasterKategoriBarang;
+        $this->kategori->nama_kategori = 'KATEGORI UJI KONFIRMASI';
+        $this->kategori->deskripsi = 'Kategori untuk pengujian konfirmasi';
+        $this->kategori->is_active = true;
+        $this->kategori->save();
     }
 
     protected function tearDown(): void
@@ -98,13 +91,8 @@ class KonfirmasiPenyelesaianTest extends TestCase
             ->where('keluhan', 'Tiket uji alur konfirmasi')
             ->pluck('id');
 
-        $barangIds = DB::table('master_barang')
-            ->where('nama_barang', 'MASTER BARANG UJI KONFIRMASI')
-            ->pluck('id');
-
         $pengajuanIds = DB::table('pengajuan_barang')
-            ->whereIn('barang_id', $barangIds)
-            ->orWhere('nama_barang', 'Barang Uji Konfirmasi')
+            ->where('nama_barang', 'Barang Uji Konfirmasi')
             ->pluck('id');
 
         $notifikasi = DB::table('notifications');
@@ -132,10 +120,6 @@ class KonfirmasiPenyelesaianTest extends TestCase
         $kategoriIds = DB::table('master_kategori_barang')
             ->where('nama_kategori', 'KATEGORI UJI KONFIRMASI')
             ->pluck('id');
-
-        DB::table('master_barang')
-            ->where('nama_barang', 'MASTER BARANG UJI KONFIRMASI')
-            ->delete();
 
         DB::table('master_kategori_barang')->whereIn('id', $kategoriIds)->delete();
 
@@ -359,7 +343,7 @@ class KonfirmasiPenyelesaianTest extends TestCase
     {
         $pengajuan = new PengajuanBarang;
         $pengajuan->user_id = $this->pemohon->id;
-        $pengajuan->barang_id = $this->barang->id;
+        $pengajuan->kategori_barang_id = $this->kategori->id;
         $pengajuan->nama_barang = 'Barang Uji Konfirmasi';
         $pengajuan->jumlah = 1;
         $pengajuan->alasan = 'Uji alur konfirmasi penyelesaian';

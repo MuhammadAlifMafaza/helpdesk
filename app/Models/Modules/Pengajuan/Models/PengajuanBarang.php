@@ -3,7 +3,7 @@
 namespace App\Models\Modules\Pengajuan\Models;
 
 use App\Events\HelpdeskActivityCreated;
-use App\Models\Modules\Master\Barang\Models\MasterBarang;
+use App\Models\Modules\Master\Barang\Models\MasterKategoriBarang;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -52,19 +52,24 @@ class PengajuanBarang extends Model
     public const KONFIRMASI_DITOLAK = 'ditolak_pemohon';
 
     public const ALLOWED_UPDATE_FIELDS = [
-        'barang_id' => 'Barang',
+        'kategori_barang_id' => 'Kategori Barang',
+        'nama_barang' => 'Nama Barang',
         'spesifikasi_barang' => 'Spesifikasi Barang',
         'jumlah' => 'Jumlah',
         'alasan' => 'Alasan',
+        'contoh_barang_path' => 'Gambar Contoh Barang',
+        'contoh_barang_url' => 'Tautan Contoh Barang',
     ];
 
     protected $fillable = [
         'user_id',
-        'barang_id',
+        'kategori_barang_id',
         'nama_barang',
         'spesifikasi_barang',
         'jumlah',
         'alasan',
+        'contoh_barang_path',
+        'contoh_barang_url',
         'status',
         'konfirmasi_status',
         'konfirmasi_at',
@@ -92,11 +97,11 @@ class PengajuanBarang extends Model
         );
     }
 
-    public function barang(): BelongsTo
+    public function kategoriBarang(): BelongsTo
     {
         return $this->belongsTo(
-            MasterBarang::class,
-            'barang_id'
+            MasterKategoriBarang::class,
+            'kategori_barang_id'
         )->withTrashed();
     }
 
@@ -145,7 +150,7 @@ class PengajuanBarang extends Model
                 $pengajuan->status = 'Open';
             }
 
-            $pengajuan->validateAndSyncBarang();
+            $pengajuan->validatePengajuanData();
         });
 
         /*
@@ -153,8 +158,12 @@ class PengajuanBarang extends Model
          */
         static::updating(function (self $pengajuan): void {
 
-            if ($pengajuan->isDirty('barang_id')) {
-                $pengajuan->validateAndSyncBarang();
+            if ($pengajuan->isDirty([
+                'kategori_barang_id',
+                'contoh_barang_path',
+                'contoh_barang_url',
+            ])) {
+                $pengajuan->validatePengajuanData();
             }
         });
 
@@ -217,41 +226,76 @@ class PengajuanBarang extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Master Barang Validation
+    | Pengajuan Data Validation
     |--------------------------------------------------------------------------
     */
 
-    protected function validateAndSyncBarang(): void
+    protected function validatePengajuanData(): void
     {
-        if (! $this->barang_id) {
+        if (! $this->exists || $this->isDirty('kategori_barang_id')) {
+            if (! $this->kategori_barang_id) {
+                throw ValidationException::withMessages([
+                    'kategori_barang_id' => 'Kategori barang wajib dipilih.',
+                ]);
+            }
+
+            $kategori = MasterKategoriBarang::query()
+                ->withTrashed()
+                ->find($this->kategori_barang_id);
+
+            if (! $kategori) {
+                throw ValidationException::withMessages([
+                    'kategori_barang_id' => 'Kategori barang tidak ditemukan.',
+                ]);
+            }
+
+            if (! $kategori->canBeUsedForNewPengajuan()) {
+                throw ValidationException::withMessages([
+                    'kategori_barang_id' => 'Kategori yang dipilih tidak aktif.',
+                ]);
+            }
+        }
+
+        if (blank($this->nama_barang)) {
             throw ValidationException::withMessages([
-                'barang_id' => 'Barang wajib dipilih dari Master Barang.',
+                'nama_barang' => 'Nama barang wajib diisi.',
             ]);
         }
 
-        $barang = MasterBarang::query()
-            ->withTrashed()
-            ->with('kategoriBarang')
-            ->find($this->barang_id);
-
-        if (! $barang) {
+        if (mb_strlen($this->nama_barang) > 255) {
             throw ValidationException::withMessages([
-                'barang_id' => 'Master Barang yang dipilih tidak ditemukan.',
+                'nama_barang' => 'Nama barang maksimal 255 karakter.',
             ]);
         }
 
-        if (! $barang->canBeUsedForNewTransaction()) {
+        if (filled($this->contoh_barang_path) && filled($this->contoh_barang_url)) {
             throw ValidationException::withMessages([
-                'barang_id' => 'Barang yang dipilih tidak aktif atau '
-                    .'kategorinya tidak aktif.',
+                'contoh_barang_url' => 'Pilih gambar atau tautan sebagai contoh barang.',
             ]);
         }
 
-        /*
-         * Snapshot nama barang.
-         */
-        $this->nama_barang =
-            $barang->nama_barang;
+        if (filled($this->contoh_barang_url)) {
+            if (mb_strlen($this->contoh_barang_url) > 2048) {
+                throw ValidationException::withMessages([
+                    'contoh_barang_url' => 'Tautan barang maksimal 2048 karakter.',
+                ]);
+            }
+
+            $url = filter_var($this->contoh_barang_url, FILTER_VALIDATE_URL);
+            $scheme = parse_url($this->contoh_barang_url, PHP_URL_SCHEME);
+
+            if ($url === false || ! in_array($scheme, ['http', 'https'], true)) {
+                throw ValidationException::withMessages([
+                    'contoh_barang_url' => 'Tautan barang harus berupa URL HTTP atau HTTPS yang valid.',
+                ]);
+            }
+        }
+
+        if (filled($this->contoh_barang_path) && mb_strlen($this->contoh_barang_path) > 1024) {
+            throw ValidationException::withMessages([
+                'contoh_barang_path' => 'Lokasi gambar tidak valid.',
+            ]);
+        }
     }
 
     /*
@@ -977,15 +1021,12 @@ class PengajuanBarang extends Model
             );
         }
 
-        if ($field === 'barang_id') {
-            return $this->updateBarang(
-                barangId: (int) $valueBaru,
-                catatan: $catatan
-            );
-        }
-
         $valueLama =
             $this->getAttribute($field);
+
+        $kategoriLama = $field === 'kategori_barang_id'
+            ? $this->kategoriBarang?->nama_kategori
+            : null;
 
         if (
             (string) $valueLama ===
@@ -1008,10 +1049,21 @@ class PengajuanBarang extends Model
             $field => $valueBaru,
         ]);
 
+        $nilaiLogLama = match (true) {
+            $field === 'kategori_barang_id' => (string) ($kategoriLama ?? '-'),
+            in_array($field, ['contoh_barang_path', 'contoh_barang_url'], true) => filled($valueLama) ? 'Tersedia' : '-',
+            default => (string) ($valueLama ?? '-'),
+        };
+        $nilaiLogBaru = match (true) {
+            $field === 'kategori_barang_id' => (string) MasterKategoriBarang::withTrashed()->find($valueBaru)?->nama_kategori,
+            in_array($field, ['contoh_barang_path', 'contoh_barang_url'], true) => filled($valueBaru) ? 'Tersedia' : '-',
+            default => (string) ($valueBaru ?? '-'),
+        };
+
         $log = $this->tambahLog(
             kategori: 'Update Data',
-            lama: (string) ($valueLama ?? '-'),
-            baru: (string) ($valueBaru ?? '-'),
+            lama: $nilaiLogLama,
+            baru: $nilaiLogBaru,
             keterangan: $catatan
             ?? 'Data pengajuan diperbarui oleh '
             .(
@@ -1032,85 +1084,6 @@ class PengajuanBarang extends Model
                 'old_value' => $valueLama,
                 'new_value' => $valueBaru,
                 'message' => "Data pada {$this->kode_pengajuan} diperbarui.",
-                'log_id' => $log->id,
-            ],
-        );
-
-        return true;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Update Barang
-    |--------------------------------------------------------------------------
-    */
-
-    public function updateBarang(
-        int $barangId,
-        ?string $catatan = null
-    ): bool {
-
-        $barangLama = $this->barang;
-
-        $namaLama =
-            $this->nama_barang
-            ?: $barangLama?->nama_barang
-            ?: '-';
-
-        if ((int) $this->barang_id === $barangId) {
-            return false;
-        }
-
-        $barangBaru = MasterBarang::query()
-            ->withTrashed()
-            ->with('kategoriBarang')
-            ->find($barangId);
-
-        if (! $barangBaru) {
-            throw ValidationException::withMessages([
-                'barang_id' => 'Master Barang yang dipilih '
-                    .'tidak ditemukan.',
-            ]);
-        }
-
-        if (! $barangBaru->canBeUsedForNewTransaction()) {
-            throw ValidationException::withMessages([
-                'barang_id' => 'Barang yang dipilih tidak aktif '
-                    .'atau kategorinya tidak aktif.',
-            ]);
-        }
-
-        $this->update([
-            'barang_id' => $barangId,
-        ]);
-
-        $namaBaru =
-            $barangBaru->nama_barang;
-
-        $log = $this->tambahLog(
-            kategori: 'Update Data',
-            lama: $namaLama,
-            baru: $namaBaru,
-            keterangan: $catatan
-            ?? 'Barang pengajuan diperbarui oleh '
-            .(
-                auth()->user()?->name
-                ?? 'System'
-            ),
-        );
-
-        HelpdeskActivityCreated::dispatch(
-            module: 'pengajuan',
-            activity: 'updated',
-            referenceId: $this->id,
-            kode: $this->kode_pengajuan,
-            actorId: auth()->id(),
-            data: [
-                'field' => 'barang_id',
-                'field_label' => 'Barang',
-                'old_value' => $namaLama,
-                'new_value' => $namaBaru,
-                'message' => "Barang pada {$this->kode_pengajuan} diperbarui.",
                 'log_id' => $log->id,
             ],
         );

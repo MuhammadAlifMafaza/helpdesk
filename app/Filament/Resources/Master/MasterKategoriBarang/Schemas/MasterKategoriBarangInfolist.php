@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources\Master\MasterKategoriBarang\Schemas;
 
-use Filament\Schemas\Schema;
 use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Schemas\Components\Section;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 
 class MasterKategoriBarangInfolist
 {
@@ -13,12 +13,6 @@ class MasterKategoriBarangInfolist
     {
         return $schema
             ->components([
-
-                /*
-                 * =========================================================
-                 * INFORMASI KATEGORI
-                 * =========================================================
-                 */
                 Section::make('Informasi Kategori Barang')
                     ->schema([
                         TextEntry::make('nama_kategori')
@@ -28,31 +22,16 @@ class MasterKategoriBarangInfolist
                         TextEntry::make('is_active')
                             ->label('Status')
                             ->badge()
-                            ->formatStateUsing(
-                                fn(bool $state): string => $state
-                                    ? 'Aktif'
-                                    : 'Tidak Aktif'
-                            )
-                            ->color(
-                                fn(bool $state): string => $state
-                                    ? 'success'
-                                    : 'gray'
-                            ),
+                            ->formatStateUsing(fn (bool $state): string => $state ? 'Aktif' : 'Tidak Aktif')
+                            ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
 
                         TextEntry::make('deskripsi')
                             ->label('Deskripsi')
                             ->placeholder('Tidak ada deskripsi.'),
 
-                        TextEntry::make('jumlah_barang')
-                            ->label('Jumlah Barang')
-                            ->state(
-                                fn($record): int => $record
-                                    ->barang()
-                                    ->count()
-                            )
-                            ->formatStateUsing(
-                                fn(int $state): string => "{$state} barang"
-                            )
+                        TextEntry::make('jumlah_pengajuan_barang')
+                            ->label('Jumlah Pengajuan')
+                            ->formatStateUsing(fn (int $state): string => "{$state} pengajuan")
                             ->badge()
                             ->color('info'),
 
@@ -69,54 +48,24 @@ class MasterKategoriBarangInfolist
                     ->columnSpanFull()
                     ->columns(2),
 
-                /*
-                 * =========================================================
-                 * BARANG TERDAFTAR
-                 * =========================================================
-                 */
-                Section::make('Barang Terdaftar')
-                    ->description(
-                        'Daftar barang yang terdaftar pada kategori ini, '
-                        . 'termasuk barang yang sedang tidak aktif.'
-                    )
+                Section::make('Pengajuan Terkait')
+                    ->description('Daftar pengajuan yang menggunakan kategori ini.')
                     ->schema([
-                        RepeatableEntry::make('barang')
-                            ->label('Daftar Barang')
-                            ->state(
-                                fn($record) => $record
-                                    ->barang()
-                                    ->withTrashed()
-                                    ->orderBy('nama_barang')
-                                    ->get()
-                            )
+                        RepeatableEntry::make('pengajuanBarang')
+                            ->label('Daftar Pengajuan')
                             ->schema([
-
                                 TextEntry::make('nama_barang')
                                     ->hiddenLabel()
-                                    ->weight('bold')
-                                    ->columnSpan(1),
+                                    ->weight('bold'),
 
-                                TextEntry::make('keterangan')
+                                TextEntry::make('user.name')
                                     ->hiddenLabel()
-                                    ->placeholder('Tidak ada keterangan.')
-                                    ->color('gray')
-                                    ->columnSpan(1),
+                                    ->placeholder('Pemohon tidak tersedia')
+                                    ->color('gray'),
 
-                                TextEntry::make('is_active')
+                                TextEntry::make('status')
                                     ->hiddenLabel()
-                                    ->badge()
-                                    ->formatStateUsing(
-                                        fn(bool $state): string => $state
-                                            ? 'Aktif'
-                                            : 'Tidak Aktif'
-                                    )
-                                    ->color(
-                                        fn(bool $state): string => $state
-                                            ? 'success'
-                                            : 'gray'
-                                    )
-                                    ->columnSpan(1),
-
+                                    ->badge(),
                             ])
                             ->columns(3)
                             ->contained(false)
@@ -124,7 +73,6 @@ class MasterKategoriBarangInfolist
                     ])
                     ->collapsible()
                     ->columnSpanFull(),
-
             ]);
     }
 }

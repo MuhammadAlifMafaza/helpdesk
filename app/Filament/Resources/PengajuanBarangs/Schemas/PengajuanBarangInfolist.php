@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PengajuanBarangs\Schemas;
 
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Section;
@@ -35,7 +36,7 @@ class PengajuanBarangInfolist
                             ->label('Nama Pemohon')
                             ->placeholder('Tidak diketahui'),
 
-                        TextEntry::make('barang.kategoriBarang.nama_kategori')
+                        TextEntry::make('kategoriBarang.nama_kategori')
                             ->label('Kategori Barang')
                             ->badge()
                             ->placeholder('Tidak tersedia'),
@@ -44,6 +45,17 @@ class PengajuanBarangInfolist
                             ->label('Nama Barang')
                             ->weight('bold')
                             ->placeholder('Tidak tersedia'),
+
+                        TextEntry::make('contoh_barang_url')
+                            ->label('Tautan Contoh Barang')
+                            ->url(fn (?string $state): ?string => $state, shouldOpenInNewTab: true)
+                            ->placeholder('Tidak ada tautan'),
+
+                        ImageEntry::make('contoh_barang_path')
+                            ->label('Gambar Contoh Barang')
+                            ->disk('public')
+                            ->visibility('public')
+                            ->visible(fn (?string $state): bool => filled($state)),
 
                         TextEntry::make('spesifikasi_barang')
                             ->label('Spesifikasi Barang')
@@ -58,7 +70,7 @@ class PengajuanBarangInfolist
                             ->label('Status Pengajuan')
                             ->badge()
                             ->icon(
-                                fn(?string $state): string => match ($state) {
+                                fn (?string $state): string => match ($state) {
                                     'Open' => 'heroicon-o-folder-open',
                                     'In Progress' => 'heroicon-o-arrow-path',
                                     'Close' => 'heroicon-o-check-circle',
@@ -66,7 +78,7 @@ class PengajuanBarangInfolist
                                 }
                             )
                             ->color(
-                                fn(?string $state): string => match ($state) {
+                                fn (?string $state): string => match ($state) {
                                     'Open' => 'info',
                                     'In Progress' => 'warning',
                                     'Close' => 'success',
@@ -78,7 +90,7 @@ class PengajuanBarangInfolist
                             ->label('Hasil Pengajuan')
                             ->badge()
                             ->icon(
-                                fn(?string $state): string => match ($state) {
+                                fn (?string $state): string => match ($state) {
                                     'Completed' => 'heroicon-o-check-circle',
                                     'Rejected' => 'heroicon-o-x-circle',
                                     'Reopen' => 'heroicon-o-arrow-path',
@@ -86,7 +98,7 @@ class PengajuanBarangInfolist
                                 }
                             )
                             ->color(
-                                fn(?string $state): string => match ($state) {
+                                fn (?string $state): string => match ($state) {
                                     'Completed' => 'success',
                                     'Rejected' => 'danger',
                                     'Reopen' => 'warning',

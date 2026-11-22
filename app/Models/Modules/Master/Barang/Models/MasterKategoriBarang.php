@@ -2,6 +2,7 @@
 
 namespace App\Models\Modules\Master\Barang\Models;
 
+use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,17 +27,13 @@ class MasterKategoriBarang extends Model
         'deleted_at' => 'datetime',
     ];
 
-    /**
-     * Relasi kategori ke Master Barang.
-     *
-     * Satu kategori dapat memiliki banyak barang.
-     */
-    public function barang(): HasMany
+    /** Pengajuan yang menggunakan kategori ini, termasuk pengajuan terhapus. */
+    public function pengajuanBarang(): HasMany
     {
         return $this->hasMany(
-            MasterBarang::class,
+            PengajuanBarang::class,
             'kategori_barang_id'
-        );
+        )->withTrashed();
     }
 
     /**
@@ -66,28 +63,21 @@ class MasterKategoriBarang extends Model
         return $this->is_active === true;
     }
 
-    /**
-     * Menentukan apakah kategori memiliki Master Barang.
-     */
-    public function hasBarang(): bool
+    public function hasPengajuanBarang(): bool
     {
-        return $this->barang()->exists();
+        return $this->pengajuanBarang()->exists();
     }
 
-    /**
-     * Mengambil jumlah Master Barang
-     * yang berada pada kategori ini.
-     */
-    public function getJumlahBarangAttribute(): int
+    public function getJumlahPengajuanBarangAttribute(): int
     {
-        return $this->barang()->count();
+        return $this->pengajuanBarang()->count();
     }
 
     /**
      * Menentukan apakah kategori dapat digunakan
-     * untuk data Master Barang baru.
+     * untuk pengajuan baru.
      */
-    public function canBeUsedForNewBarang(): bool
+    public function canBeUsedForNewPengajuan(): bool
     {
         return $this->deleted_at === null
             && $this->is_active === true;
@@ -98,13 +88,11 @@ class MasterKategoriBarang extends Model
      * untuk physical delete.
      *
      * Kategori tidak boleh dihapus permanen
-     * apabila masih memiliki relasi barang.
+     * apabila masih digunakan oleh pengajuan.
      */
     public function canBeForceDeleted(): bool
     {
-        return !$this->barang()
-            ->withTrashed()
-            ->exists();
+        return ! $this->pengajuanBarang()->exists();
     }
 
     /**
@@ -114,10 +102,10 @@ class MasterKategoriBarang extends Model
     {
         static::forceDeleting(
             function (MasterKategoriBarang $kategori): void {
-                if (!$kategori->canBeForceDeleted()) {
+                if (! $kategori->canBeForceDeleted()) {
                     throw new \RuntimeException(
                         'Kategori barang tidak dapat dihapus secara permanen '
-                        . 'karena masih memiliki relasi barang.'
+                        .'karena masih digunakan oleh pengajuan barang.'
                     );
                 }
             }

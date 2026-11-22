@@ -12,6 +12,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
 
 class PengajuanBarangsTable
 {
@@ -45,12 +46,22 @@ class PengajuanBarangsTable
                     ->copyMessageDuration(1500)
                     ->weight('bold'),
 
-                TextColumn::make('barang.kategoriBarang.nama_kategori')
+                TextColumn::make('kategoriBarang.nama_kategori')
                     ->label('Kategori Barang')
                     ->badge()
                     ->searchable()
                     ->placeholder('Tidak tersedia')
                     ->wrap(),
+
+                TextColumn::make('contoh_barang_url')
+                    ->label('Contoh Barang')
+                    ->state(fn (PengajuanBarang $record): ?string => filled($record->contoh_barang_url) ? 'Lihat tautan' : (filled($record->contoh_barang_path) ? 'Lihat gambar' : null))
+                    ->url(fn (PengajuanBarang $record): ?string => filled($record->contoh_barang_url)
+                        ? $record->contoh_barang_url
+                        : (filled($record->contoh_barang_path) ? Storage::disk('public')->url($record->contoh_barang_path) : null))
+                    ->openUrlInNewTab()
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->placeholder('-'),
 
                 TextColumn::make('nama_barang')
                     ->label('Nama Barang')
