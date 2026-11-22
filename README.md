@@ -1,4 +1,4 @@
-<p align="center">
+<p>
     <img src="public/branding/logo-tag.svg" alt="Helpdesk System" width="960">
 </p>
 
@@ -26,14 +26,14 @@ Sistem ini berdiri sendiri dan pada tahap saat ini tidak mencakup integrasi API 
 
 ## Gambaran Sistem
 
-<p align="center">
+<p>
     <img src="public/images/helpdesk-flow.svg" alt="Alur layanan Helpdesk System" width="100%">
 </p>
 
 ## Fitur Utama
 
 - Manajemen tiket perbaikan layanan.
-- Pengajuan barang dengan status dan histori proses.
+- Pengajuan barang dengan nama yang diketik langsung, kategori pada pengajuan, jumlah, spesifikasi, alasan, dan histori proses. Referensi barang dapat berupa unggahan gambar atau tautan produk.
 - Penugasan serta pencatatan kegiatan teknisi.
 - Monitoring log pengajuan dan log perbaikan.
 - Laporan kegiatan, perbaikan, dan permintaan barang.
@@ -43,6 +43,14 @@ Sistem ini berdiri sendiri dan pada tahap saat ini tidak mencakup integrasi API 
 - Reset password melalui email.
 - Manajemen pengguna dan role berbasis permission.
 - Filter data berdasarkan status, tanggal, kategori, dan kebutuhan operasional.
+
+## Pembaruan Sistem Terbaru
+
+- Form pengajuan barang tidak lagi memilih barang dari master barang. Nama barang diisi langsung, sedangkan kategori tetap dipilih dari kategori yang tersedia. Perubahan struktur ini diterapkan melalui migrasi database.
+- Referensi contoh barang menjadi satu bagian form dengan pilihan unggah gambar atau memasukkan tautan. Unggahan menerima JPEG, PNG, dan WebP hingga 5 MB.
+- Tombol **Create & create another** disembunyikan pada form create. Form dan fungsi pembuatan data tetap tersedia.
+- Dashboard pemohon, teknisi, dan admin dirapikan sesuai kebutuhan tiap role. Grafik tren menampilkan pesan saat tidak ada layanan dalam periode terpilih.
+- Akses pemohon tanpa login belum menjadi fitur; pemohon tetap menggunakan panel dan autentikasi yang tersedia.
 
 ## Role Pengguna
 
@@ -133,11 +141,7 @@ Mode development utama:
 composer run dev
 ```
 
-Perintah tersebut menjalankan server Laravel, queue listener, dan Vite secara bersamaan. Jika membutuhkan realtime notification, jalankan Reverb pada terminal terpisah:
-
-```bash
-php artisan reverb:start
-```
+Perintah tersebut menjalankan server Laravel, queue listener, Laravel Reverb, dan Vite secara bersamaan.
 
 Alternatif menjalankan server web dan Vite secara terpisah:
 
@@ -145,6 +149,8 @@ Alternatif menjalankan server web dan Vite secara terpisah:
 php artisan serve
 npm run dev
 ```
+
+Pada mode terpisah, jalankan `php artisan queue:listen --tries=1` untuk memproses queue dan `php artisan reverb:start` jika membutuhkan pembaruan realtime.
 
 Panel aplikasi tersedia pada:
 
@@ -192,20 +198,55 @@ Sistem ini ditujukan untuk mendukung operasional internal Institut Widya Pratama
 
 ## Pengujian
 
-Jalankan seluruh test suite dengan:
+Project menggunakan PHPUnit dengan suite `Unit` dan `Feature` yang dikonfigurasi di `phpunit.xml`. Saat ini test otomatis yang tersedia berada di `tests/Feature`; direktori `tests/Unit` belum berisi file test.
+
+Feature test mencakup autentikasi dan reset password, input serta resource pengajuan barang, dashboard dan aksi form, notifikasi realtime, laporan/cetak dokumen, kegiatan teknisi, role, dan seeder.
+
+Jalankan seluruh test suite:
 
 ```bash
 php artisan test --compact
 ```
+
+Jalankan feature test saja:
+
+```bash
+vendor/bin/phpunit --testsuite Feature
+```
+
 ## Status Dokumentasi
 
 Dokumentasi sistem didukung oleh:
 
 - Laporan Magang di Unit Teknisi dan Perawatan Infrastruktur Institut Widya Pratama.
-- Proposal Tugas Akhir berjudul *Implementasi Sistem Informasi Manajemen Pelayanan Internal (Helpdesk) pada Bidang Pelayanan dan Perawatan Infrastruktur di Institut Widya Pratama*.
+- Proposal Tugas Akhir berjudul _Implementasi Sistem Informasi Manajemen Pelayanan Internal (Helpdesk) pada Bidang Pelayanan dan Perawatan Infrastruktur di Institut Widya Pratama_.
 - Manual Book System.
 
 Dokumen tersebut menjadi referensi konteks bisnis, alur proses, kebutuhan sistem, desain database, dan rancangan implementasi. Detail regulasi penggunaan produksi tetap mengikuti keputusan resmi institusi.
+
+## Hasil Uji Beban
+
+Pengujian dilakukan secara lokal melalui Laragon Apache menggunakan database uji terisolasi. Skenario mencakup alur pemohon dan admin, termasuk melihat daftar layanan, membuat pengajuan/tiket, mengirim pesan, dan memperbarui status. Beban dinaikkan bertahap hingga 50 virtual users (VU), lalu dijalankan sekitar 4 menit 20 detik.
+
+| Metrik                         |                    Hasil |
+| ------------------------------ | -----------------------: |
+| Request HTTP                   |                   11.136 |
+| Kegagalan HTTP                 |                       0% |
+| Pemeriksaan respons            | 17.748 / 17.748 berhasil |
+| Durasi request p95 keseluruhan |               1,59 detik |
+| Durasi request maksimum        |               8,33 detik |
+| Beban puncak yang diuji        |                    50 VU |
+
+Dua perjalanan daftar pengajuan memiliki p95 di atas sasaran 2 detik:
+
+| Perjalanan               |        p95 |
+| ------------------------ | ---------: |
+| Daftar pengajuan pemohon | 2,01 detik |
+| Daftar pengajuan admin   | 2,14 detik |
+
+Sasaran p95 keseluruhan di bawah 2 detik tercapai, tetapi waktu respons kedua daftar pengajuan tersebut masih perlu diperhatikan. Pada sampel 50 VU, sekitar 50 worker PHP-FCGI menggunakan working set agregat kurang lebih 3,82 GiB. Angka penggunaan memori ini bergantung pada lingkungan pengujian.
+
+Pengujian belum mengukur titik overload karena beban maksimum yang dicoba adalah 50 VU. Karena itu, kapasitas di atas 50 VU belum dapat dipastikan; kisaran 50–60 VU hanya dapat dipakai sebagai sasaran uji lanjutan, bukan kapasitas terjamin atau hasil pengukuran. Hasil ini merupakan benchmark lokal dan tidak menjamin performa pada lingkungan produksi.
 
 ## Lisensi
 
