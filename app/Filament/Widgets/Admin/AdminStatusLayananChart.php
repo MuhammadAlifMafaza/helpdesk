@@ -6,6 +6,7 @@ use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use App\Services\DashboardMetrics;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Contracts\Support\Htmlable;
 
 class AdminStatusLayananChart extends ChartWidget
 {
@@ -17,13 +18,17 @@ class AdminStatusLayananChart extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
-    protected ?string $emptyStateHeading = 'Belum ada layanan';
-
-    public function isEmpty(): bool
+    public function getDescription(): string|Htmlable|null
     {
         $data = $this->getCachedData();
+        $total = array_sum(array_map(
+            fn (array $dataset): int|float => array_sum($dataset['data'] ?? []),
+            $data['datasets'] ?? [],
+        ));
 
-        return array_sum($data['datasets'][0]['data']) + array_sum($data['datasets'][1]['data']) === 0;
+        return $total === 0
+            ? 'Belum ada layanan.'
+            : $this->description;
     }
 
     protected ?string $pollingInterval = '60s';

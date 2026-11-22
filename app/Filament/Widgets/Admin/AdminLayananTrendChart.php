@@ -6,6 +6,7 @@ use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use App\Services\DashboardMetrics;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Contracts\Support\Htmlable;
 
 class AdminLayananTrendChart extends ChartWidget
 {
@@ -17,7 +18,10 @@ class AdminLayananTrendChart extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
-    protected ?string $emptyStateHeading = 'Belum ada layanan pada periode ini';
+    protected int|string|array $columnSpan = [
+        'default' => 'full',
+        'xl' => 1,
+    ];
 
     public ?string $filter = '30';
 
@@ -39,11 +43,17 @@ class AdminLayananTrendChart extends ChartWidget
         ];
     }
 
-    public function isEmpty(): bool
+    public function getDescription(): string|Htmlable|null
     {
         $data = $this->getCachedData();
+        $total = array_sum(array_map(
+            fn (array $dataset): int|float => array_sum($dataset['data'] ?? []),
+            $data['datasets'] ?? [],
+        ));
 
-        return array_sum($data['datasets'][0]['data']) + array_sum($data['datasets'][1]['data']) === 0;
+        return $total === 0
+            ? 'Belum ada layanan pada periode ini.'
+            : $this->description;
     }
 
     protected function getType(): string

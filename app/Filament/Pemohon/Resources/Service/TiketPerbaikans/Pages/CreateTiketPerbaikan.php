@@ -7,6 +7,8 @@ use Filament\Resources\Pages\CreateRecord;
 
 class CreateTiketPerbaikan extends CreateRecord
 {
+    protected static bool $canCreateAnother = false;
+
     protected static string $resource = TiketPerbaikanResource::class;
 
     protected function mutateFormDataBeforeCreate(array $data): array

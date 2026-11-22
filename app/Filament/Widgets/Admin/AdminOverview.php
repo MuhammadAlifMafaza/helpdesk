@@ -14,6 +14,8 @@ class AdminOverview extends StatsOverviewWidget
 
     protected ?string $description = 'Jumlah tiket dan pengajuan, beserta statusnya saat ini.';
 
+    protected int|string|array $columnSpan = 'full';
+
     protected function getColumns(): array
     {
         return ['default' => 1, 'md' => 3];

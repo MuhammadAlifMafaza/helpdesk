@@ -5,6 +5,7 @@ namespace App\Filament\Widgets\Teknisi;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use App\Services\DashboardMetrics;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Contracts\Support\Htmlable;
 
 class TeknisiStatusChart extends ChartWidget
 {
@@ -18,13 +19,6 @@ class TeknisiStatusChart extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
-    protected ?string $emptyStateHeading = 'Belum ada riwayat pekerjaan';
-
-    public function isEmpty(): bool
-    {
-        return array_sum($this->getCachedData()['datasets'][0]['data']) === 0;
-    }
-
     protected static ?int $sort = 2;
 
     protected int|string|array $columnSpan = 1;
@@ -35,23 +29,25 @@ class TeknisiStatusChart extends ChartWidget
 
         $query = TiketPerbaikan::query()->handledByTechnician($userId);
         $counts = DashboardMetrics::statusCounts($query);
+        $statusValues = [
+            $counts['Open'] ?? 0,
+            $counts['In Progress'] ?? 0,
+            $counts['Close'] ?? 0,
+        ];
+        $hasData = array_sum($statusValues) > 0;
 
         return [
             'datasets' => [
                 [
                     'label' => 'Tiket Saya',
 
-                    'data' => [
-                        $counts['Open'] ?? 0,
-                        $counts['In Progress'] ?? 0,
-                        $counts['Close'] ?? 0,
-                    ],
+                    'data' => $hasData ? $statusValues : [1],
 
-                    'backgroundColor' => [
+                    'backgroundColor' => $hasData ? [
                         '#F59E0B',
                         '#3B82F6',
                         '#10B981',
-                    ],
+                    ] : ['#D1D5DB'],
 
                     'borderWidth' => 2,
 
@@ -59,12 +55,21 @@ class TeknisiStatusChart extends ChartWidget
                 ],
             ],
 
-            'labels' => [
+            'labels' => $hasData ? [
                 'Menunggu',
                 'Diproses',
                 'Selesai',
-            ],
+            ] : ['Belum ada data'],
         ];
+    }
+
+    public function getDescription(): string|Htmlable|null
+    {
+        $data = $this->getCachedData();
+
+        return ($data['labels'] ?? []) === ['Belum ada data']
+            ? 'Belum ada riwayat pekerjaan.'
+            : $this->description;
     }
 
     protected function getType(): string
@@ -93,7 +98,7 @@ class TeknisiStatusChart extends ChartWidget
                 ],
 
                 'tooltip' => [
-                    'enabled' => true,
+                    'enabled' => ($this->getCachedData()['labels'] ?? []) !== ['Belum ada data'],
                 ],
             ],
         ];

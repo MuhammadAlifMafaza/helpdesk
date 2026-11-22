@@ -4,48 +4,49 @@ namespace App\Filament\Widgets\Admin;
 
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Contracts\Support\Htmlable;
 
 class AdminTiketStatusChart extends ChartWidget
 {
     protected ?string $heading = 'Status Perbaikan';
+
     protected ?string $description = 'Distribusi status tiket perbaikan saat ini.';
+
     protected ?string $pollingInterval = '60s';
+
     protected static bool $isLazy = true;
+
     protected static ?int $sort = 4;
+
     protected int|string|array $columnSpan = 1;
 
     protected function getData(): array
     {
+        $statusValues = [
+            TiketPerbaikan::query()->where('status', 'Open')->count(),
+            TiketPerbaikan::query()->where('status', 'In Progress')->count(),
+            TiketPerbaikan::query()->where('status', 'Close')->count(),
+        ];
+        $hasData = array_sum($statusValues) > 0;
+
         return [
             'datasets' => [
                 [
                     'label' => 'Tiket Perbaikan',
 
-                    'data' => [
-                        TiketPerbaikan::query()
-                            ->where('status', 'Open')
-                            ->count(),
+                    'data' => $hasData ? $statusValues : [1],
 
-                        TiketPerbaikan::query()
-                            ->where('status', 'In Progress')
-                            ->count(),
-
-                        TiketPerbaikan::query()
-                            ->where('status', 'Close')
-                            ->count(),
-                    ],
-
-                    'backgroundColor' => [
+                    'backgroundColor' => $hasData ? [
                         '#3B82F6',
                         '#F59E0B',
                         '#10B981',
-                    ],
+                    ] : ['#D1D5DB'],
 
-                    'borderColor' => [
+                    'borderColor' => $hasData ? [
                         '#2563EB',
                         '#D97706',
                         '#059669',
-                    ],
+                    ] : ['#9CA3AF'],
 
                     'borderWidth' => 2,
 
@@ -55,12 +56,21 @@ class AdminTiketStatusChart extends ChartWidget
                 ],
             ],
 
-            'labels' => [
+            'labels' => $hasData ? [
                 'Open',
                 'In Progress',
                 'Close',
-            ],
+            ] : ['Belum ada data'],
         ];
+    }
+
+    public function getDescription(): string|Htmlable|null
+    {
+        $data = $this->getCachedData();
+
+        return ($data['labels'] ?? []) === ['Belum ada data']
+            ? 'Belum ada tiket perbaikan.'
+            : $this->description;
     }
 
     protected function getType(): string
@@ -99,7 +109,7 @@ class AdminTiketStatusChart extends ChartWidget
                 ],
 
                 'tooltip' => [
-                    'enabled' => true,
+                    'enabled' => ($this->getCachedData()['labels'] ?? []) !== ['Belum ada data'],
 
                     'displayColors' => true,
                 ],

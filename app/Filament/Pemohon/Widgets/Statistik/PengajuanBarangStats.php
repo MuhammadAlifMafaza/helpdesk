@@ -15,9 +15,20 @@ class PengajuanBarangStats extends StatsOverviewWidget
 
     protected ?string $pollingInterval = '60s';
 
-    protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = [
+        'default' => 'full',
+        'xl' => 1,
+    ];
 
     protected static bool $isLazy = false;
+
+    protected function getColumns(): array
+    {
+        return [
+            'default' => 2,
+            'xl' => 2,
+        ];
+    }
 
     protected function getStats(): array
     {

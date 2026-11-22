@@ -7,5 +7,7 @@ use Filament\Resources\Pages\CreateRecord;
 
 class CreateMasterKategoriBarang extends CreateRecord
 {
+    protected static bool $canCreateAnother = false;
+
     protected static string $resource = MasterKategoriBarangResource::class;
 }

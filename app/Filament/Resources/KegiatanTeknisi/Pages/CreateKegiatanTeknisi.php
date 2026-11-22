@@ -7,6 +7,8 @@ use Filament\Resources\Pages\CreateRecord;
 
 class CreateKegiatanTeknisi extends CreateRecord
 {
+    protected static bool $canCreateAnother = false;
+
     protected static string $resource = KegiatanTeknisiResource::class;
 
     /**

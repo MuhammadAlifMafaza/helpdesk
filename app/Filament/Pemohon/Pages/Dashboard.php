@@ -15,6 +15,14 @@ class Dashboard extends BaseDashboard
 
     protected string $view = 'filament.pemohon.pages.dashboard';
 
+    public function getColumns(): int|array
+    {
+        return [
+            'default' => 1,
+            'xl' => 2,
+        ];
+    }
+
     public function getWidgets(): array
     {
         return auth()->user()?->hasRole('pemohon') ? [

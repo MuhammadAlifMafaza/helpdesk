@@ -4,6 +4,7 @@ namespace App\Filament\Widgets\Teknisi;
 
 use App\Models\Modules\Perbaikan\Models\LogPerbaikan;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Contracts\Support\Htmlable;
 
 class TeknisiAktivitasChart extends ChartWidget
 {
@@ -17,11 +18,17 @@ class TeknisiAktivitasChart extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
-    protected ?string $emptyStateHeading = 'Belum ada aktivitas pada periode ini';
-
-    public function isEmpty(): bool
+    public function getDescription(): string|Htmlable|null
     {
-        return array_sum($this->getCachedData()['datasets'][0]['data']) === 0;
+        $data = $this->getCachedData();
+        $total = array_sum(array_map(
+            fn (array $dataset): int|float => array_sum($dataset['data'] ?? []),
+            $data['datasets'] ?? [],
+        ));
+
+        return $total === 0
+            ? 'Belum ada aktivitas pada periode ini.'
+            : $this->description;
     }
 
     protected static ?int $sort = 3;

@@ -7,5 +7,7 @@ use Filament\Resources\Pages\CreateRecord;
 
 class CreateLaporanPermintaanBarang extends CreateRecord
 {
+    protected static bool $canCreateAnother = false;
+
     protected static string $resource = LaporanPermintaanBarangResource::class;
 }

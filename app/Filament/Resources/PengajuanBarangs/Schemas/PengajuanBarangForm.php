@@ -8,6 +8,8 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
@@ -88,41 +90,70 @@ class PengajuanBarangForm
                     ->rows(4)
                     ->maxLength(2000),
 
-                FileUpload::make('contoh_barang_path')
-                    ->label('Gambar Contoh Barang')
-                    ->image()
-                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-                    ->maxSize(5120)
-                    ->disk('public')
-                    ->directory('pengajuan-barang/contoh')
-                    ->visibility('public')
-                    ->helperText('Opsional. Unggah gambar JPEG, PNG, atau WebP maksimal 5 MB. Gunakan gambar atau tautan barang.')
-                    ->afterStateUpdated(function (Set $set, mixed $state): void {
-                        if (filled($state)) {
-                            $set('contoh_barang_url', null);
-                        }
-                    }),
-
-                TextInput::make('contoh_barang_url')
-                    ->label('Tautan Contoh Barang')
-                    ->url()
-                    ->maxLength(2048)
-                    ->placeholder('https://contoh-marketplace.com/produk')
-                    ->helperText('Opsional. Masukkan tautan produk dari marketplace atau e-commerce. Gunakan gambar atau tautan barang.')
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(function (Set $set, ?string $state): void {
-                        if (filled($state)) {
-                            $set('contoh_barang_path', null);
-                        }
-                    }),
-
                 Textarea::make('alasan')
-                    ->label('Alasan Pengajuan')
+                    ->label('Alasan / Tujuan Pengajuan Barang')
                     ->required()
                     ->rows(4)
                     ->maxLength(1000)
                     ->placeholder('Jelaskan alasan pengajuan barang atau tujuan dari penggunaannya')
                     ->columnSpanFull(),
+
+                Section::make('Contoh Barang')
+                    ->description('Pilih salah satu cara untuk memberikan referensi barang.')
+                    ->schema([
+                        Select::make('jenis_contoh_barang')
+                            ->label('Jenis Contoh Barang')
+                            ->options([
+                                'gambar' => 'Unggah gambar',
+                                'tautan' => 'Masukkan tautan',
+                            ])
+                            ->placeholder('Pilih jenis contoh barang')
+                            ->default(fn (?PengajuanBarang $record): ?string => filled($record?->contoh_barang_path)
+                                ? 'gambar'
+                                : (filled($record?->contoh_barang_url) ? 'tautan' : null))
+                            ->live()
+                            ->dehydrated(false)
+                            ->afterStateUpdated(function (Set $set, ?string $state): void {
+                                if ($state === 'gambar') {
+                                    $set('contoh_barang_url', null);
+                                } elseif ($state === 'tautan') {
+                                    $set('contoh_barang_path', null);
+                                } else {
+                                    $set('contoh_barang_path', null);
+                                    $set('contoh_barang_url', null);
+                                }
+                            }),
+
+                        FileUpload::make('contoh_barang_path')
+                            ->label('Gambar Contoh Barang')
+                            ->image()
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->maxSize(5120)
+                            ->disk('public')
+                            ->directory('pengajuan-barang/contoh')
+                            ->visibility('public')
+                            ->helperText('Format JPEG, PNG, atau WebP; ukuran maksimal 5 MB.')
+                            ->visible(fn (Get $get): bool => $get('jenis_contoh_barang') === 'gambar')
+                            ->afterStateUpdated(function (Set $set, mixed $state): void {
+                                if (filled($state)) {
+                                    $set('contoh_barang_url', null);
+                                }
+                            }),
+
+                        TextInput::make('contoh_barang_url')
+                            ->label('Tautan Contoh Barang')
+                            ->url()
+                            ->maxLength(2048)
+                            ->placeholder('https://contoh-marketplace.com/produk')
+                            ->helperText('Masukkan tautan produk dari marketplace atau e-commerce.')
+                            ->live(onBlur: true)
+                            ->visible(fn (Get $get): bool => $get('jenis_contoh_barang') === 'tautan')
+                            ->afterStateUpdated(function (Set $set, ?string $state): void {
+                                if (filled($state)) {
+                                    $set('contoh_barang_path', null);
+                                }
+                            }),
+                    ]),
             ]);
     }
 }

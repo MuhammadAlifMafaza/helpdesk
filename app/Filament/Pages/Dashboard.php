@@ -10,9 +10,17 @@ class Dashboard extends BaseDashboard
 {
     protected static ?string $title = 'Dashboard';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     protected string $view = 'filament.pages.admin-dashboard';
+
+    public function getColumns(): int|array
+    {
+        return [
+            'default' => 1,
+            'xl' => 2,
+        ];
+    }
 
     public function getWidgets(): array
     {

@@ -5,7 +5,12 @@ namespace Tests\Feature;
 use App\Filament\Pemohon\Widgets\AktivitasLayananChart;
 use App\Filament\Pemohon\Widgets\TiketPerbaikanTerbaru;
 use App\Filament\Widgets\Admin\AdminOverview;
+use App\Filament\Widgets\Admin\AdminPengajuanStatusChart;
+use App\Filament\Widgets\Admin\AdminStatusLayananChart;
+use App\Filament\Widgets\Admin\AdminTiketStatusChart;
+use App\Filament\Widgets\Teknisi\TeknisiAktivitasChart;
 use App\Filament\Widgets\Teknisi\TeknisiOverview;
+use App\Filament\Widgets\Teknisi\TeknisiStatusChart;
 use App\Filament\Widgets\Teknisi\TeknisiTiketAktif;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
@@ -88,8 +93,16 @@ class DashboardWidgetsTest extends TestCase
     public function test_dashboard_renders_only_the_widgets_for_its_role(array $roles, string $path, string $visible, string $hidden): void
     {
         $user = $this->userWithRoles($roles);
+        $dashboardRoute = $path === '/admin'
+            ? route('filament.admin.pages.dashboard')
+            : route('filament.pemohon.pages.dashboard');
 
-        $this->actingAs($user)->get($path)->assertOk()->assertSeeLivewire($visible)->assertDontSeeLivewire($hidden);
+        $this->actingAs($user)
+            ->get($path)
+            ->assertOk()
+            ->assertSee('href="'.$dashboardRoute.'"', false)
+            ->assertSeeLivewire($visible)
+            ->assertDontSeeLivewire($hidden);
     }
 
     public function test_pemohon_trend_and_table_exclude_other_users_and_respect_period(): void
@@ -103,12 +116,47 @@ class DashboardWidgetsTest extends TestCase
         Filament::setCurrentPanel(Filament::getPanel('pemohon'));
 
         $chart = Livewire::test(AktivitasLayananChart::class)->set('filter', '7');
-        $this->assertTrue($chart->instance()->isEmpty());
+        $this->assertFalse($chart->instance()->isEmpty());
+        $this->assertSame('Belum ada layanan pada periode ini.', $chart->instance()->getDescription());
+        $chart->assertSee('fi-wi-chart-canvas-ctn')->assertDontSee('fi-empty-state');
         $chart->set('filter', '30');
         $this->assertFalse($chart->instance()->isEmpty());
         Livewire::test(TiketPerbaikanTerbaru::class)
             ->assertCanSeeTableRecords([TiketPerbaikan::findOrFail($ownId)])
             ->assertCanNotSeeTableRecords([TiketPerbaikan::findOrFail($otherId)]);
+    }
+
+    public function test_empty_status_charts_keep_the_chart_visible_with_an_empty_message(): void
+    {
+        $admin = $this->userWithRoles(['admin']);
+        $technician = $this->userWithRoles(['teknisi']);
+
+        $this->actingAs($admin);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        Livewire::test(AdminStatusLayananChart::class)
+            ->assertSee('Belum ada layanan.')
+            ->assertSee('fi-wi-chart-canvas-ctn')
+            ->assertDontSee('fi-empty-state');
+        Livewire::test(AdminTiketStatusChart::class)
+            ->assertSee('Belum ada tiket perbaikan.')
+            ->assertSee('fi-wi-chart-canvas-ctn')
+            ->assertDontSee('fi-empty-state');
+        Livewire::test(AdminPengajuanStatusChart::class)
+            ->assertSee('Belum ada pengajuan barang.')
+            ->assertSee('fi-wi-chart-canvas-ctn')
+            ->assertDontSee('fi-empty-state');
+
+        $this->actingAs($technician);
+
+        Livewire::test(TeknisiStatusChart::class)
+            ->assertSee('Belum ada riwayat pekerjaan.')
+            ->assertSee('fi-wi-chart-canvas-ctn')
+            ->assertDontSee('fi-empty-state');
+        Livewire::test(TeknisiAktivitasChart::class)
+            ->assertSee('Belum ada aktivitas pada periode ini.')
+            ->assertSee('fi-wi-chart-canvas-ctn')
+            ->assertDontSee('fi-empty-state');
     }
 
     public function test_trend_fills_missing_days_and_excludes_deleted_or_out_of_range_tickets(): void

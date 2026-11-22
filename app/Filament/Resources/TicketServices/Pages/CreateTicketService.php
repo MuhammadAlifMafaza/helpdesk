@@ -7,6 +7,8 @@ use Filament\Resources\Pages\CreateRecord;
 
 class CreateTicketService extends CreateRecord
 {
+    protected static bool $canCreateAnother = false;
+
     protected static string $resource = TicketServiceResource::class;
 
     // protected function mutateFormDataBeforeCreate(array $data): array
