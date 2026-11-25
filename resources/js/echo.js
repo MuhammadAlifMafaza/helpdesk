@@ -8,6 +8,7 @@ if (!window.helpdeskRealtimeInitialized) {
     window.helpdeskRealtimeInitialized = true;
 
     const realtimeStatus = document.getElementById('helpdesk-realtime-status');
+    const realtimeWidget = document.getElementById('helpdesk-realtime-widget');
     let connectionState = 'connecting';
     let fallbackAttempts = 0;
     let lastFallbackAt = Date.now();
@@ -29,6 +30,9 @@ if (!window.helpdeskRealtimeInitialized) {
             realtimeStatus.textContent = labels[state] ?? `Realtime: ${state}`;
             realtimeStatus.dataset.state = state;
         }
+
+        realtimeWidget?.classList.toggle('hidden', state === 'connected');
+        realtimeWidget?.classList.toggle('flex', state !== 'connected');
 
         if (state === 'connected') {
             fallbackAttempts = 0;

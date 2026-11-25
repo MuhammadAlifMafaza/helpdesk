@@ -4,7 +4,11 @@ namespace App\Providers;
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +25,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('login', function (Request $request): Limit {
+            $identifier = mb_strtolower(trim((string) $request->input(
+                'identifier',
+                $request->input('email', ''),
+            )));
+
+            return Limit::perMinute(5)->by(Str::transliterate($identifier.'|'.$request->ip()));
+        });
+
         /*
         |----------------------------------------------------------------------
         | Locale Carbon → bahasa Indonesia

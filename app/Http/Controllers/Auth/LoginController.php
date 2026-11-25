@@ -3,24 +3,31 @@
 namespace App\Http\Controllers\Auth;
 
 // use App\Http\Controllers\Controller;
+use App\Services\Auth\LoginIdentifier;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class LoginController
 {
-    public function showLoginForm()
+    public function showLoginForm(): View
     {
         return view('auth.login');
     }
 
-    public function login(Request $request)
+    public function login(Request $request): RedirectResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+        $validated = $request->validate([
+            'identifier' => ['required_without:email', 'string', 'max:255'],
+            'email' => ['required_without:identifier', 'string', 'max:255'],
+            'password' => ['required', 'string'],
         ]);
 
-        if (Auth::attempt($request->only('email', 'password'))) {
+        $identifier = $validated['identifier'] ?? $validated['email'];
+        $credentials = LoginIdentifier::credentials($identifier, $validated['password']);
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
             $user = Auth::user();
@@ -28,8 +35,9 @@ class LoginController
             // Menolak login untuk user role admin atau teknisi melalui halaman login biasa
             if ($user->hasAnyRole(['super_admin', 'admin', 'teknisi'])) {
                 Auth::logout();
+
                 return back()->withErrors([
-                    'email' => 'Akses ditolak. Silakan gunakan login admin panel.',
+                    'identifier' => 'Akses ditolak. Silakan gunakan login panel Staff.',
                 ]);
             }
 
@@ -37,11 +45,11 @@ class LoginController
         }
 
         return back()->withErrors([
-            'email' => 'Email atau password salah',
+            'identifier' => 'Email atau ID login maupun kata sandi tidak sesuai.',
         ]);
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): RedirectResponse
     {
         Auth::logout();
 

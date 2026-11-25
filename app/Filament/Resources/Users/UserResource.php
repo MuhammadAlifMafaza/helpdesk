@@ -14,6 +14,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
@@ -67,33 +68,51 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Auth::user()->hasAnyRole([
+        return Auth::user()?->hasAnyRole([
             'super_admin',
             'admin',
-        ]);
+        ]) ?? false;
     }
 
     public static function canCreate(): bool
     {
-        return Auth::user()->hasAnyRole([
+        return Auth::user()?->hasAnyRole([
             'super_admin',
             'admin',
-        ]);
+        ]) ?? false;
     }
 
-    public static function canEdit($record): bool
+    public static function canEdit(Model $record): bool
     {
-        return Auth::user()->hasAnyRole([
-            'super_admin',
-            'admin',
-        ]);
+        if (! $record instanceof User) {
+            return false;
+        }
+
+        $actor = Auth::user();
+
+        if ($actor?->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $actor?->hasRole('admin') === true && ! $record->hasRole('super_admin');
     }
 
-    public static function canDelete($record): bool
+    public static function canDelete(Model $record): bool
     {
-        return Auth::user()->hasAnyRole([
-            'super_admin',
-            'admin',
-        ]);
+        if (! $record instanceof User) {
+            return false;
+        }
+
+        $actor = Auth::user();
+
+        if (! $actor?->hasAnyRole(['super_admin', 'admin']) || $record->is($actor)) {
+            return false;
+        }
+
+        if ($record->hasRole('super_admin')) {
+            return $actor->hasRole('super_admin') && User::role('super_admin')->count() > 1;
+        }
+
+        return true;
     }
 }

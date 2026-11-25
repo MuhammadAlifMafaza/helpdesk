@@ -4,7 +4,7 @@ namespace App\Filament\Widgets\Admin;
 
 use App\Filament\Resources\PengajuanBarangs\PengajuanBarangResource;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
@@ -14,8 +14,7 @@ class AdminPengajuanTerbaru extends TableWidget
 
     protected static ?string $heading = 'Pengajuan Barang Terbaru';
 
-    protected int|string|array $columnSpan = 'full';
-
+    // protected int|string|array $columnSpan = '';
     protected static ?int $sort = 6;
 
     protected function getTablePollingInterval(): ?string
@@ -36,24 +35,24 @@ class AdminPengajuanTerbaru extends TableWidget
             )
             ->columns([
 
-                Tables\Columns\TextColumn::make('kode_pengajuan')
+                TextColumn::make('kode_pengajuan')
                     ->label('Kode Pengajuan')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('user.name')
+                TextColumn::make('user.name')
                     ->label('Pemohon')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('nama_barang')
+                TextColumn::make('nama_barang')
                     ->label('Nama Barang')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('jumlah')
+                TextColumn::make('jumlah')
                     ->label('Jumlah')
                     ->numeric(),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label('Status')
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'Open' => 'Menunggu', 'In Progress' => 'Diproses', 'Close' => 'Selesai', default => $state
@@ -66,7 +65,7 @@ class AdminPengajuanTerbaru extends TableWidget
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Diajukan')
                     ->dateTime('d M Y H:i')
                     ->sortable(),

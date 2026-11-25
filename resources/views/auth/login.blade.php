@@ -41,19 +41,18 @@
                     @endif
 
                     <div>
-                        <label for="email" class="mb-2 block text-sm font-medium text-slate-700">Alamat email</label>
+                        <label for="identifier" class="mb-2 block text-sm font-medium text-slate-700">Email atau Username / NIM / NIDN</label>
                         <input
-                            id="email"
-                            type="email"
-                            name="email"
-                            value="{{ old('email') }}"
+                            id="identifier"
+                            type="text"
+                            name="identifier"
+                            value="{{ old('identifier', old('email')) }}"
                             autocomplete="username"
-                            inputmode="email"
                             required
                             autofocus
-                            aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}"
+                            aria-invalid="{{ $errors->has('identifier') || $errors->has('email') ? 'true' : 'false' }}"
                             class="w-full rounded-sm border border-slate-300 bg-white px-4 py-3 text-base text-ink placeholder:text-slate-400 focus:border-iwima-blue focus:outline-none focus:ring-2 focus:ring-iwima-blue/20"
-                            placeholder="nama@iwima.ac.id"
+                            placeholder="Email, username, NIM, atau NIDN"
                         >
                     </div>
 

@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\AccountProfile;
+use App\Filament\Pages\AccountSecurity;
+use App\Filament\Pages\AccountSettings;
 use App\Filament\Pemohon\Pages\Dashboard;
 use App\Http\Middleware\IsPemohon;
 use App\Http\Middleware\RedirectToAllowedPanel;
@@ -9,6 +12,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -29,18 +33,14 @@ class PemohonPanelProvider extends PanelProvider
         return $panel
             ->id('pemohon')
             ->path('pemohon')
-            // Login pemohon memakai halaman custom di "/login" (LoginController),
-            // bukan login bawaan panel. Menonaktifkan route login panel membuat
-            // Filament::getLoginUrl() bernilai null, sehingga tamu yang mencoba
-            // membuka panel dialihkan ke route('login') oleh konfigurasi bawaan
-            // Laravel (redirectGuestsTo). Lihat juga IsPemohon::handle().
             ->login(null)
-            ->profile()
+            ->profile(AccountProfile::class, isSimple: false)
             ->brandName('Helpdesk IWIMA')
             ->viteTheme('resources/css/filament/theme.css')
             ->brandLogo(asset('branding/logo-tag.svg'))
             ->brandLogoHeight('2.5rem')
             ->favicon(asset('branding/logo.svg'))
+            ->globalSearch(false)
             ->colors([
                 'primary' => Color::hex('#004B87'),
                 'edit' => Color::Yellow,
@@ -58,6 +58,11 @@ class PemohonPanelProvider extends PanelProvider
             )
             ->pages([
                 Dashboard::class,
+                AccountSettings::class,
+                AccountSecurity::class,
+            ])
+            ->userMenuItems([
+                'settings' => MenuItem::make()->label('Pengaturan akun')->icon('heroicon-o-adjustments-horizontal')->url(fn (): string => AccountSettings::getUrl()),
             ])
             ->discoverWidgets(
                 in: app_path('Filament/Pemohon/Widgets'),
@@ -86,10 +91,6 @@ class PemohonPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): View => view('components.helpdesk-panel-footer')
-            )
-            ->renderHook(
-                PanelsRenderHook::BODY_END,
-                fn (): View => view('components.helpdesk-realtime-notification')
             )
             ->navigationGroups([
                 NavigationGroup::make('Pelayanan')

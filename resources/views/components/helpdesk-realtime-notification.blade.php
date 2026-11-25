@@ -1,7 +1,7 @@
 @auth
     @vite('resources/js/app.js')
 
-    <div role="group" aria-label="Status realtime dan notifikasi" class="fixed bottom-4 right-4 z-40 flex max-w-[calc(100vw-2rem)] flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-xl border border-gray-200 bg-white/95 px-3 py-2 text-xs text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200 sm:flex-nowrap">
+    <div id="helpdesk-realtime-widget" role="group" aria-label="Status realtime dan notifikasi" class="fixed bottom-4 right-4 z-40 hidden max-w-[calc(100vw-2rem)] flex-wrap items-center justify-end gap-x-3 gap-y-1 rounded-xl border border-gray-200 bg-white/95 px-3 py-2 text-xs text-gray-700 shadow-lg dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-200 sm:flex-nowrap">
         <span id="helpdesk-realtime-status" class="min-w-0" role="status" aria-live="polite">Realtime menghubungkan…</span>
         <span aria-hidden="true" class="hidden text-gray-300 dark:text-gray-600 sm:inline">|</span>
         <button

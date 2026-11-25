@@ -4,6 +4,13 @@
 @source '../../views/filament/**/*.blade.php';
 @source '../../views/components/**/*.blade.php';
 
+@theme {
+    --color-iwima-blue: #004b87;
+    --color-iwima-gold: #ffca08;
+    --color-paper: #f7f6f1;
+    --color-ink: #17232d;
+}
+
 /* Keep native layout and interaction states; simplify surface treatment. */
 .fi-section,
 .fi-ta-ctn {

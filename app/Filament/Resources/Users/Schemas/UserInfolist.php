@@ -27,6 +27,11 @@ class UserInfolist
                             ->copyable()
                             ->copyMessage('Email berhasil disalin'),
 
+                        TextEntry::make('login_id')
+                            ->label('Username / ID')
+                            ->placeholder('-')
+                            ->copyable(),
+
                         TextEntry::make('unit_bidang')
                             ->label('Unit / Bidang')
                             ->placeholder('-'),

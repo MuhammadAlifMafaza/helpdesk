@@ -24,14 +24,16 @@ return new class extends Migration
             $table->string('contoh_barang_url', 2048)->nullable();
         });
 
-        DB::statement(<<<'SQL'
-            UPDATE pengajuan_barang AS pengajuan
-            INNER JOIN master_barang AS barang ON barang.id = pengajuan.barang_id
-            SET pengajuan.kategori_barang_id = barang.kategori_barang_id
-            SQL);
+        DB::table('pengajuan_barang')
+            ->whereNotNull('barang_id')
+            ->update([
+                'kategori_barang_id' => DB::table('master_barang')
+                    ->select('kategori_barang_id')
+                    ->whereColumn('master_barang.id', 'pengajuan_barang.barang_id'),
+            ]);
 
         Schema::table('pengajuan_barang', function (Blueprint $table): void {
-            $table->dropForeign('pengajuan_barang_barang_id_foreign');
+            $table->dropForeign(['barang_id']);
             $table->dropIndex('pengajuan_barang_barang_id_index');
             $table->dropColumn('barang_id');
         });
@@ -88,7 +90,7 @@ return new class extends Migration
             });
 
         Schema::table('pengajuan_barang', function (Blueprint $table): void {
-            $table->dropForeign('pengajuan_barang_kategori_barang_id_foreign');
+            $table->dropForeign(['kategori_barang_id']);
             $table->dropColumn([
                 'kategori_barang_id',
                 'contoh_barang_path',

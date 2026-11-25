@@ -14,7 +14,7 @@ class AdminTiketTerbaru extends TableWidget
 
     protected static ?string $heading = 'Tiket Perbaikan Terbaru';
 
-    protected int|string|array $columnSpan = 'full';
+    // protected int|string|array $columnSpan = 'full';
 
     protected static ?int $sort = 5;
 

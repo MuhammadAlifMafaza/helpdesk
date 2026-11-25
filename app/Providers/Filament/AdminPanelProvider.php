@@ -2,6 +2,12 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Auth\StaffLogin;
+use App\Filament\Auth\StaffRequestPasswordReset;
+use App\Filament\Auth\StaffResetPassword;
+use App\Filament\Pages\AccountProfile;
+use App\Filament\Pages\AccountSecurity;
+use App\Filament\Pages\AccountSettings;
 use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\RedirectToAllowedPanel;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -9,6 +15,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -28,9 +35,9 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->default()
-            ->login()
-            ->passwordReset()
-            ->profile()
+            ->login(StaffLogin::class)
+            ->passwordReset(StaffRequestPasswordReset::class, StaffResetPassword::class)
+            ->profile(AccountProfile::class, isSimple: false)
             ->id('admin')
             ->path('admin')
             ->brandName('Helpdesk IWIMA')
@@ -38,6 +45,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('branding/logo-tag.svg'))
             ->brandLogoHeight('2.5rem')
             ->favicon(asset('branding/logo.svg'))
+            ->globalSearch(false)
             ->colors([
                 'primary' => Color::hex('#004B87'),
                 'pending' => Color::Amber,
@@ -59,6 +67,11 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
+                AccountSettings::class,
+                AccountSecurity::class,
+            ])
+            ->userMenuItems([
+                'settings' => MenuItem::make()->label('Pengaturan akun')->icon('heroicon-o-adjustments-horizontal')->url(fn (): string => AccountSettings::getUrl()),
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
@@ -90,10 +103,6 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): View => view('components.helpdesk-panel-footer')
-            )
-            ->renderHook(
-                PanelsRenderHook::BODY_END,
-                fn (): View => view('components.helpdesk-realtime-notification')
             )
             ->navigationGroups([
                 NavigationGroup::make('Service Desk')

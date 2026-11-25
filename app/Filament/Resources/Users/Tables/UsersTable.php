@@ -4,13 +4,13 @@ namespace App\Filament\Resources\Users\Tables;
 
 use App\Models\User;
 use Filament\Actions\Action;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class UsersTable
 {
@@ -35,6 +35,12 @@ class UsersTable
                     ->searchable()
                     ->sortable()
                     ->copyable(),
+
+                TextColumn::make('login_id')
+                    ->label('Username / ID')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('-'),
 
                 TextColumn::make('unit_bidang')
                     ->label('Unit / Bidang')
@@ -69,6 +75,7 @@ class UsersTable
                     ->label('Reset Password')
                     ->icon('heroicon-o-key')
                     ->color('warning')
+                    ->authorize(fn (User $record): bool => Auth::user()?->hasRole('super_admin') === true || ! $record->hasRole('super_admin'))
                     ->requiresConfirmation()
                     ->modalHeading('Reset Password Pengguna')
                     ->modalDescription('Masukkan password baru untuk pengguna ini.')
@@ -94,7 +101,6 @@ class UsersTable
                         ]);
                     })
                     ->successNotificationTitle('Password pengguna berhasil direset'),
-            ])
-        ;
+            ]);
     }
 }
