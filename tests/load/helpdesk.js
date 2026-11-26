@@ -4,6 +4,7 @@ import { check, sleep } from 'k6';
 const baseUrl = (__ENV.BASE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
 const maxVus = Number.parseInt(__ENV.MAX_VUS || '50', 10);
 const isSmokeTest = __ENV.LOAD_TEST_SMOKE === '1';
+const auditMarker = (__ENV.AUDIT_MARKER || 'AUDIT-PERF').replace(/[^a-zA-Z0-9-]/g, '');
 const targetMatch = baseUrl.match(/^https?:\/\/([^/:]+|\[[^\]]+\])(?::\d+)?(?:\/|$)/i);
 const targetHost = targetMatch ? targetMatch[1].toLowerCase() : '';
 const isLocalTarget = ['localhost', '127.0.0.1', '[::1]'].includes(targetHost)
@@ -14,8 +15,8 @@ if (!isLocalTarget) {
     throw new Error('Stress test dibatasi untuk host lokal (localhost, loopback, atau domain .test).');
 }
 
-if (!Number.isInteger(maxVus) || maxVus < 1 || maxVus > 50) {
-    throw new Error('MAX_VUS harus berupa bilangan bulat dari 1 sampai 50.');
+if (!Number.isInteger(maxVus) || maxVus < 1 || maxVus > 75) {
+    throw new Error('MAX_VUS harus berupa bilangan bulat dari 1 sampai 75.');
 }
 
 const pemohonEmail = __ENV.PEMOHON_EMAIL;
@@ -24,9 +25,11 @@ const adminEmail = __ENV.ADMIN_EMAIL;
 const adminPassword = __ENV.ADMIN_PASSWORD;
 const ruanganId = __ENV.LOAD_TEST_RUANGAN_ID || '1';
 const kategoriId = __ENV.LOAD_TEST_KATEGORI_ID || '1';
+const exampleProductUrl = __ENV.LOAD_TEST_PRODUCT_URL
+    || 'https://www.tokopedia.com/search?st=product&q=access%20point%20wi-fi%206';
 
 if (!pemohonEmail || !pemohonPassword || !adminEmail || !adminPassword) {
-    throw new Error('PEMOHON_EMAIL, PEMOHON_PASSWORD, ADMIN_EMAIL, dan ADMIN_PASSWORD wajib memakai akun khusus database uji.');
+    throw new Error('PEMOHON_EMAIL, PEMOHON_PASSWORD, ADMIN_EMAIL, dan ADMIN_PASSWORD wajib memakai akun lokal yang sudah diverifikasi.');
 }
 
 const stages = isSmokeTest
@@ -35,6 +38,9 @@ const stages = isSmokeTest
         { duration: '20s', target: 1 },
         { duration: '30s', target: Math.min(10, maxVus) },
         { duration: '30s', target: Math.min(25, maxVus) },
+        { duration: '30s', target: Math.min(50, maxVus) },
+        { duration: '30s', target: Math.min(60, maxVus) },
+        { duration: '30s', target: Math.min(70, maxVus) },
         { duration: '30s', target: maxVus },
         { duration: '2m', target: maxVus },
         { duration: '30s', target: 0 },
@@ -50,6 +56,7 @@ export const options = {
         },
     },
     thresholds: {
+        checks: ['rate>0.99'],
         http_req_failed: ['rate<0.01'],
         http_req_duration: ['p(95)<2000'],
     },
@@ -217,7 +224,7 @@ function loginAsAdmin(csrfToken) {
         snapshot,
         adminCsrfToken,
         {
-            'data.email': adminEmail,
+            'data.identifier': adminEmail,
             'data.password': adminPassword,
         },
         'authenticate',
@@ -295,15 +302,15 @@ export default function () {
         checkResponse(response, `${journey} responds successfully`);
     }
 
-    const uniqueSuffix = `${__VU}-${__ITER}-${Date.now()}`;
+    const uniqueSuffix = `${auditMarker}-${__VU}-${__ITER}-${Date.now()}`;
     const ticketId = createRecord(
         '/pemohon/ticket-perbaikan/create',
         csrfToken,
         {
             'data.ruangan_id': ruanganId,
             'data.kepemilikan': 'Inventaris Kantor',
-            'data.keluhan': `Load test ${uniqueSuffix}`,
-            'data.deskripsi': 'Permintaan sintetis untuk pengujian beban lokal.',
+            'data.keluhan': `${uniqueSuffix}: PC ruang kuliah tidak terhubung ke jaringan.`,
+            'data.deskripsi': `Simulasi audit performa. Perangkat di ruang kuliah memerlukan pemeriksaan koneksi jaringan dan konfigurasi adaptor. Penanda data: ${uniqueSuffix}.`,
         },
         'create',
         'ticket_create',
@@ -315,7 +322,7 @@ export default function () {
         sendChatMessage(
             `/pemohon/ticket-perbaikan/${ticketId}`,
             csrfToken,
-            `Pesan uji tiket ${uniqueSuffix}`,
+            `Simulasi audit performa ${uniqueSuffix}: teknisi dimohon memeriksa koneksi dan memberi pembaruan setelah pemeriksaan awal.`,
             'ticket',
             'ViewTiketPerbaikan',
         );
@@ -326,9 +333,11 @@ export default function () {
         csrfToken,
         {
             'data.kategori_barang_id': kategoriId,
-            'data.nama_barang': `Barang uji ${uniqueSuffix}`,
+            'data.nama_barang': `${uniqueSuffix} Access point Wi-Fi 6`,
             'data.jumlah': '1',
-            'data.alasan': 'Pengujian beban lokal dengan data sintetis.',
+            'data.alasan': `Simulasi audit performa untuk pengadaan access point ruang kuliah dengan cakupan perangkat yang memadai. Penanda data: ${uniqueSuffix}.`,
+            'data.jenis_contoh_barang': 'tautan',
+            'data.contoh_barang_url': exampleProductUrl,
         },
         'create',
         'request_create',
@@ -340,7 +349,7 @@ export default function () {
         sendChatMessage(
             `/pemohon/pengajuan-barang/${requestId}`,
             csrfToken,
-            `Pesan uji pengajuan ${uniqueSuffix}`,
+            `Simulasi audit performa ${uniqueSuffix}: pengajuan dicatat untuk mengukur alur komunikasi dan pembaruan status.`,
             'request',
             'ViewPengajuanBarang',
         );

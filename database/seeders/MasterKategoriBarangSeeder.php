@@ -8,63 +8,97 @@ use Illuminate\Support\Facades\DB;
 
 class MasterKategoriBarangSeeder extends Seeder
 {
+    /**
+     * @var list<string>
+     */
+    private const LEGACY_CATEGORIES = [
+        'Komponen Komputer & Laptop',
+        'Perangkat & Aksesori Jaringan',
+        'Perangkat & Suku Cadang Printer',
+        'Peralatan Pendukung Infrastruktur IT',
+        'Tools & Peralatan Teknisi',
+        'Komputer & Laptop',
+        'Monitor & Display',
+        'Perangkat Jaringan',
+        'Printer & Scanner',
+        'Perangkat Presentasi & Multimedia',
+        'Aksesori & Periferal Komputer',
+        'Server & Data Center',
+        'CCTV & Keamanan IT',
+    ];
+
     public function run(): void
     {
         LoadTestSeederGuard::assertSafeTarget();
 
+        $allCategories = [
+            ['Komputer', 'Komputer desktop dan workstation untuk kebutuhan operasional kampus.'],
+            ['Laptop', 'Komputer jinjing untuk kebutuhan kerja, mengajar, dan kegiatan akademik.'],
+            ['Komponen Komputer', 'Komponen pengganti khusus untuk komputer desktop dan workstation.'],
+            ['Komponen Laptop', 'Komponen pengganti khusus untuk laptop dan notebook.'],
+            ['Monitor', 'Monitor untuk komputer, laboratorium, ruang kerja, dan fasilitas institut.'],
+            ['Proyektor', 'Proyektor dan perangkat display untuk kegiatan presentasi dan pembelajaran.'],
+            ['Perangkat Jaringan', 'Perangkat inti untuk membangun dan memelihara jaringan komputer.'],
+            ['Aksesori Jaringan', 'Kabel, konektor, adapter, dan aksesori instalasi jaringan.'],
+            ['Printer', 'Perangkat pencetak untuk kebutuhan administrasi dan akademik.'],
+            ['Scanner', 'Perangkat pemindai dokumen dan gambar.'],
+            ['Suku Cadang Printer', 'Komponen pengganti untuk perawatan dan perbaikan printer.'],
+            ['Bahan Habis Pakai Printer', 'Tinta, toner, kertas, dan bahan habis pakai untuk printer.'],
+            ['Peralatan Infrastruktur IT', 'Peralatan dan material pendukung infrastruktur teknologi informasi dan ruang server.'],
+            ['Tools Teknisi', 'Peralatan kerja untuk instalasi, perawatan, dan troubleshooting perangkat TI.'],
+            ['Perangkat Presentasi', 'Perangkat untuk mendukung presentasi, rapat, dan kegiatan pembelajaran.'],
+            ['Perangkat Audio', 'Mikrofon, speaker, headset, dan perangkat pengolah suara.'],
+            ['Perangkat Video', 'Kamera, webcam, capture device, dan perangkat pengolah video.'],
+            ['Aksesori Komputer', 'Aksesori pendukung komputer seperti keyboard, mouse, dan adapter.'],
+            ['Periferal Komputer', 'Perangkat periferal komputer seperti webcam, headset, dan perangkat input tambahan.'],
+            ['Server', 'Server dan komponen pemrosesan untuk layanan dan sistem kampus.'],
+            ['Penyimpanan Data', 'Media dan perangkat penyimpanan data untuk workstation, server, dan cadangan.'],
+            ['CCTV', 'Kamera dan perangkat perekaman untuk pemantauan fasilitas kampus.'],
+            ['Perangkat Keamanan IT', 'Perangkat pendukung keamanan jaringan, sistem, dan infrastruktur TI.'],
+        ];
+
+        $categoryCount = max(0, (int) config('load_test.master_kategori_count', count($allCategories)));
+        $categories = array_slice($allCategories, 0, $categoryCount);
+        $allManagedNames = array_values(array_unique([
+            ...self::LEGACY_CATEGORIES,
+            ...array_column($allCategories, 0),
+        ]));
         $now = now();
-        $categories = array_slice([
-            ['Komponen Komputer & Laptop', 'Komponen pengganti dan perangkat pendukung untuk perawatan, perbaikan, dan upgrade komputer serta laptop.'],
-            ['Perangkat & Aksesori Jaringan', 'Perangkat dan aksesori untuk instalasi, pemeliharaan, serta troubleshooting jaringan komputer.'],
-            ['Perangkat & Suku Cadang Printer', 'Perangkat, komponen, dan bahan habis pakai untuk perawatan serta perbaikan printer.'],
-            ['Peralatan Pendukung Infrastruktur IT', 'Peralatan dan material pendukung infrastruktur TI, ruang server, jaringan, dan fasilitas kampus.'],
-            ['Tools & Peralatan Teknisi', 'Peralatan kerja untuk instalasi, perawatan, perbaikan, dan troubleshooting perangkat TI.'],
-            ['Komputer & Laptop', 'Komputer, laptop, workstation, dan perangkat komputasi untuk operasional institut.'],
-            ['Monitor & Display', 'Monitor dan display untuk ruang kerja, laboratorium, dan fasilitas institut.'],
-            ['Perangkat Jaringan', 'Perangkat untuk membangun, mengembangkan, dan memelihara jaringan institut.'],
-            ['Printer & Scanner', 'Perangkat pencetak, pemindai, dan pendukung kebutuhan administrasi serta akademik.'],
-            ['Perangkat Presentasi & Multimedia', 'Perangkat presentasi, audio, video, dan multimedia untuk pembelajaran dan rapat.'],
-            ['Aksesori & Periferal Komputer', 'Keyboard, mouse, webcam, headset, adapter, dan aksesori komputer lainnya.'],
-            ['Server & Data Center', 'Perangkat dan komponen untuk server, penyimpanan data, dan infrastruktur data center.'],
-            ['CCTV & Keamanan IT', 'Perangkat CCTV dan pendukung keamanan infrastruktur teknologi informasi.'],
-        ], 0, max(0, (int) config('load_test.master_kategori_count', 0)));
-        $names = array_column($categories, 0);
 
-        $existingNames = DB::table('master_kategori_barang')
-            ->whereIn('nama_kategori', $names)
-            ->pluck('nama_kategori')
-            ->all();
-        $existingNameLookup = array_fill_keys($existingNames, true);
-
-        foreach (array_chunk($existingNames, 500) as $nameChunk) {
+        DB::transaction(function () use ($allManagedNames, $categories, $now): void {
             DB::table('master_kategori_barang')
-                ->whereIn('nama_kategori', $nameChunk)
+                ->whereIn('nama_kategori', $allManagedNames)
                 ->update([
-                    'deskripsi' => 'Data sintetis untuk pengujian beban lokal.',
-                    'is_active' => true,
-                    'deleted_at' => null,
+                    'is_active' => false,
                     'updated_at' => $now,
                 ]);
-        }
 
-        $categoryRows = [];
+            foreach ($categories as [$name, $description]) {
+                $existingCategory = DB::table('master_kategori_barang')
+                    ->where('nama_kategori', $name)
+                    ->first(['id']);
 
-        foreach ($categories as [$name, $description]) {
-            if (isset($existingNameLookup[$name])) {
-                continue;
+                if ($existingCategory) {
+                    DB::table('master_kategori_barang')
+                        ->where('nama_kategori', $name)
+                        ->update([
+                            'deskripsi' => $description,
+                            'is_active' => true,
+                            'deleted_at' => null,
+                            'updated_at' => $now,
+                        ]);
+
+                    continue;
+                }
+
+                DB::table('master_kategori_barang')->insert([
+                    'nama_kategori' => $name,
+                    'deskripsi' => $description,
+                    'is_active' => true,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
             }
-
-            $categoryRows[] = [
-                'nama_kategori' => $name,
-                'deskripsi' => $description,
-                'is_active' => true,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
-        }
-
-        foreach (array_chunk($categoryRows, 500) as $categoryChunk) {
-            DB::table('master_kategori_barang')->insert($categoryChunk);
-        }
+        });
     }
 }

@@ -32,6 +32,7 @@ use Filament\Tables\Filters\TrashedFilter;
 // Filament Table import
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use UnitEnum;
 
@@ -73,7 +74,11 @@ class TicketServiceResource extends Resource
                 Select::make('ruangan_id')
                     ->relationship(
                         'ruangan',
-                        'nama_ruangan'
+                        'nama_ruangan',
+                        modifyQueryUsing: fn (Builder $query, ?Model $record): Builder => $query
+                            ->where(fn (Builder $query): Builder => $query
+                                ->where('is_active', true)
+                                ->when($record?->ruangan_id, fn (Builder $query, int $roomId): Builder => $query->orWhereKey($roomId))),
                     )
                     ->label('Nama Ruangan')
                     ->searchable()

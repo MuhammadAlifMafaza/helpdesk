@@ -21,8 +21,8 @@ if (!appKey) {
     throw new Error('REVERB_APP_KEY wajib menggunakan key sintetis database uji.');
 }
 
-if (!Number.isInteger(maxVus) || maxVus < 1 || maxVus > 50) {
-    throw new Error('MAX_VUS harus berupa bilangan bulat dari 1 sampai 50.');
+if (!Number.isInteger(maxVus) || maxVus < 1 || maxVus > 75) {
+    throw new Error('MAX_VUS harus berupa bilangan bulat dari 1 sampai 75.');
 }
 
 export const options = {
@@ -35,6 +35,7 @@ export const options = {
         },
     },
     thresholds: {
+        checks: ['rate>0.99'],
         ws_connecting: ['p(95)<1000'],
         ws_sessions: ['count>0'],
     },

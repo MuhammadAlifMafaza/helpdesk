@@ -8,6 +8,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class KegiatanTeknisiForm
 {
@@ -22,7 +23,14 @@ class KegiatanTeknisiForm
 
                 Select::make('ruangan_id')
                     ->label('Ruangan')
-                    ->relationship('ruangan', 'nama_ruangan')
+                    ->relationship(
+                        'ruangan',
+                        'nama_ruangan',
+                        modifyQueryUsing: fn (Builder $query, ?Model $record): Builder => $query
+                            ->where(fn (Builder $query): Builder => $query
+                                ->where('is_active', true)
+                                ->when($record?->ruangan_id, fn (Builder $query, int $roomId): Builder => $query->orWhereKey($roomId))),
+                    )
                     ->searchable()
                     ->preload()
                     ->required(),

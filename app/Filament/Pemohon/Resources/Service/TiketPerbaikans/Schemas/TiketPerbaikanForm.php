@@ -2,10 +2,12 @@
 
 namespace App\Filament\Pemohon\Resources\Service\TiketPerbaikans\Schemas;
 
-use Filament\Schemas\Schema;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class TiketPerbaikanForm
 {
@@ -18,7 +20,11 @@ class TiketPerbaikanForm
                     ->label('Lokasi')
                     ->relationship(
                         name: 'ruangan',
-                        titleAttribute: 'nama_ruangan'
+                        titleAttribute: 'nama_ruangan',
+                        modifyQueryUsing: fn (Builder $query, ?Model $record): Builder => $query
+                            ->where(fn (Builder $query): Builder => $query
+                                ->where('is_active', true)
+                                ->when($record?->ruangan_id, fn (Builder $query, int $roomId): Builder => $query->orWhereKey($roomId))),
                     )
                     ->searchable()
                     ->preload()

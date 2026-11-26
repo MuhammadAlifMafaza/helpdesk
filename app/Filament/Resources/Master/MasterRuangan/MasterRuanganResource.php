@@ -16,10 +16,12 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use UnitEnum;
 
@@ -52,6 +54,10 @@ class MasterRuanganResource extends Resource
                     ->required()
                     ->maxLength(255),
 
+                Toggle::make('is_active')
+                    ->label('Ruangan Aktif')
+                    ->default(true),
+
                 DateTimePicker::make('created_at')
                     ->disabled()
                     ->label('Tanggal Dibuat')
@@ -83,8 +89,22 @@ class MasterRuanganResource extends Resource
                 TextColumn::make('nama_gedung')
                     ->searchable(),
 
+                TextColumn::make('is_active')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Aktif' : 'Diarsipkan')
+                    ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
+
                 TextColumn::make('created_at')
                     ->dateTime('d M Y H:i'),
+            ])
+            ->filters([
+                SelectFilter::make('is_active')
+                    ->label('Status Ruangan')
+                    ->options([
+                        1 => 'Aktif',
+                        0 => 'Diarsipkan',
+                    ]),
             ])
             ->actions([
                 ViewAction::make()

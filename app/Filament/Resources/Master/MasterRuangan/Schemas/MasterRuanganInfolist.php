@@ -20,6 +20,12 @@ class MasterRuanganInfolist
 
                         TextEntry::make('nama_gedung')
                             ->label('Nama Gedung'),
+
+                        TextEntry::make('is_active')
+                            ->label('Status')
+                            ->badge()
+                            ->formatStateUsing(fn (bool $state): string => $state ? 'Aktif' : 'Diarsipkan')
+                            ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
                     ]),
 
                 Section::make('Metadata')
