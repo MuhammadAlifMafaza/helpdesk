@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Table;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -25,6 +27,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Table::configureUsing(function (Table $table): void {
+            $table
+                ->filtersLayout(FiltersLayout::Dropdown)
+                ->columnManagerColumns(2)
+                ->deferColumnManager(false);
+        });
+
         RateLimiter::for('login', function (Request $request): Limit {
             $identifier = mb_strtolower(trim((string) $request->input(
                 'identifier',

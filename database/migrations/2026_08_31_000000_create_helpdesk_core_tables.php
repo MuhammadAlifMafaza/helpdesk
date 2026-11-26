@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -77,7 +78,11 @@ return new class extends Migration
             $table->increments('id');
             $table->unsignedInteger('tiket_id');
             $table->unsignedInteger('user_id');
-            $table->enum('kategori_log', ['Status', 'Chat', 'Update Data', 'Delete Data']);
+            if (DB::getDriverName() === 'mysql') {
+                $table->enum('kategori_log', ['Status', 'Chat', 'Update Data', 'Delete Data']);
+            } else {
+                $table->string('kategori_log', 30);
+            }
             $table->string('data_lama', 255)->nullable();
             $table->string('data_baru', 255)->nullable();
             $table->text('keterangan')->nullable();
@@ -91,7 +96,11 @@ return new class extends Migration
             $table->increments('id');
             $table->unsignedInteger('pengajuan_id');
             $table->unsignedInteger('user_id');
-            $table->enum('kategori_log', ['Status', 'Chat', 'Update Data', 'Delete Data']);
+            if (DB::getDriverName() === 'mysql') {
+                $table->enum('kategori_log', ['Status', 'Chat', 'Update Data', 'Delete Data']);
+            } else {
+                $table->string('kategori_log', 30);
+            }
             $table->string('data_lama', 255)->nullable();
             $table->string('data_baru', 255)->nullable();
             $table->text('keterangan')->nullable();

@@ -5,6 +5,7 @@ namespace App\Filament\Widgets\Admin;
 use App\Filament\Resources\TicketServices\TicketServiceResource;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Tables;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
@@ -46,7 +47,8 @@ class AdminTiketTerbaru extends TableWidget
 
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Pemohon')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('keluhan')
                     ->label('Keluhan')
@@ -57,7 +59,8 @@ class AdminTiketTerbaru extends TableWidget
 
                 Tables\Columns\TextColumn::make('ruangan.nama_ruangan')
                     ->label('Ruangan')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
@@ -70,13 +73,29 @@ class AdminTiketTerbaru extends TableWidget
                         'In Progress' => 'info',
                         'Close' => 'success',
                         default => 'gray',
-                    }),
+                    })
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y H:i')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
 
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'Open' => 'Menunggu',
+                        'In Progress' => 'Diproses',
+                        'Close' => 'Ditutup',
+                    ]),
+                SelectFilter::make('ruangan_id')
+                    ->label('Ruangan')
+                    ->relationship('ruangan', 'nama_ruangan')
+                    ->searchable()
+                    ->preload(),
             ])
             ->defaultPaginationPageOption(5)
             ->paginated([5, 10, 25]);

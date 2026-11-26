@@ -45,7 +45,8 @@ class LaporanPerbaikansTable
                     ->sortable(),
 
                 TextColumn::make('tiket.keluhan')
-                    ->label('Keluhan Kerusakan'),
+                    ->label('Keluhan Kerusakan')
+                    ->toggleable(),
 
                 TextColumn::make('lokasi')
                     ->label('Lokasi')
@@ -61,6 +62,7 @@ class LaporanPerbaikansTable
 
                 TextColumn::make('nama_teknisi_label')
                     ->label('Nama Teknisi')
+                    ->toggleable()
                     ->sortable(),
 
                 BadgeColumn::make('status_label')
@@ -69,10 +71,12 @@ class LaporanPerbaikansTable
 
                 BadgeColumn::make('service_category')
                     ->label('Kategori')
+                    ->toggleable()
                     ->color(fn ($record) => $record->service_category_color),
 
                 TextColumn::make('tanggal_mulai')
                     ->label('Mulai')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Tiket Masih Belum Dikerjakan')
                     ->description(
                         fn ($record) => $record->Jam_mulai
@@ -80,6 +84,7 @@ class LaporanPerbaikansTable
 
                 TextColumn::make('tanggal_selesai')
                     ->label('Selesai')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('Masih Dikerjakan')
                     ->description(
                         fn ($record) => $record->jam_selesai
@@ -87,6 +92,7 @@ class LaporanPerbaikansTable
 
                 TextColumn::make('durasi')
                     ->label('Durasi Pengerjaan')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->timezone('Asia/Jakarta'),
 
             ])

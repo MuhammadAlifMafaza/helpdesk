@@ -54,6 +54,7 @@ class KegiatanTeknisiTable
                 TextColumn::make('created_at')
                     ->label('Dibuat Pada')
                     ->since()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->timezone('Asia/Jakarta'),
             ])
 

@@ -40,23 +40,27 @@ class UsersTable
                     ->label('Username / ID')
                     ->searchable()
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('-'),
 
                 TextColumn::make('unit_bidang')
                     ->label('Unit / Bidang')
                     ->searchable()
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('-'),
 
                 TextColumn::make('roles.name')
                     ->label('Peran')
                     ->badge()
+                    ->toggleable()
                     ->separator(', '),
 
                 TextColumn::make('created_at')
                     ->label('Terdaftar')
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
             ])
 

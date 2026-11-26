@@ -38,11 +38,13 @@ class LaporanKegiatansTable
 
                 TextColumn::make('lokasi')
                     ->label('Lokasi')
+                    ->toggleable()
                     ->state(fn ($record) => $record->lokasi ?? '-')
                     ->placeholder('-'),
 
                 TextColumn::make('deskripsi')
                     ->label('Deskripsi Kegiatan')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(['deskripsi_kegiatan'])
                     ->wrap(),
             ])

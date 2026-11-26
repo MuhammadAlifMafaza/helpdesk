@@ -3,26 +3,22 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class PemohonLoginRedirectTest extends TestCase
 {
+    use RefreshDatabase;
+
     private User $pemohon;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        config([
-            'database.default' => 'mysql',
-            'database.connections.mysql.database' => 'helpdesk_dev',
-            'queue.default' => 'sync',
-        ]);
-
-        DB::purge('mysql');
-        DB::reconnect('mysql');
+        config(['queue.default' => 'sync']);
 
         foreach (['admin', 'pemohon'] as $role) {
             Role::findOrCreate($role, 'web');

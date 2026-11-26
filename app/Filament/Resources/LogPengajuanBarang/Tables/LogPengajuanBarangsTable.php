@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\LogPengajuanBarang\Tables;
 
-use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -31,6 +30,7 @@ class LogPengajuanBarangsTable
 
                 TextColumn::make('event_description')
                     ->label('Deskripsi')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->wrap()
                     ->limit(80),
             ])

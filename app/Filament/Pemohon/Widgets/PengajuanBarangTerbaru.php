@@ -5,6 +5,7 @@ namespace App\Filament\Pemohon\Widgets;
 use App\Filament\Pemohon\Resources\Service\PengajuanBarangs\PengajuanBarangResource;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use Filament\Tables;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
@@ -49,6 +50,7 @@ class PengajuanBarangTerbaru extends TableWidget
 
                 Tables\Columns\TextColumn::make('jumlah')
                     ->label('Jumlah')
+                    ->toggleable()
                     ->alignCenter(),
 
                 Tables\Columns\TextColumn::make('status')
@@ -62,12 +64,28 @@ class PengajuanBarangTerbaru extends TableWidget
                         'In Progress' => 'info',
                         'Close' => 'success',
                         default => 'gray',
-                    }),
+                    })
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Diajukan')
                     ->dateTime('d M Y H:i')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'Open' => 'Menunggu',
+                        'In Progress' => 'Diproses',
+                        'Close' => 'Selesai',
+                    ]),
+                SelectFilter::make('kategori_barang_id')
+                    ->label('Kategori Barang')
+                    ->relationship('kategoriBarang', 'nama_kategori')
+                    ->searchable()
+                    ->preload(),
             ])
             ->defaultSort('created_at', 'desc')
             ->defaultPaginationPageOption(5)

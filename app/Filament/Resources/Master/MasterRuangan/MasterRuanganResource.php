@@ -87,7 +87,8 @@ class MasterRuanganResource extends Resource
                     ->searchable(),
 
                 TextColumn::make('nama_gedung')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
 
                 TextColumn::make('is_active')
                     ->label('Status')
@@ -96,7 +97,8 @@ class MasterRuanganResource extends Resource
                     ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
 
                 TextColumn::make('created_at')
-                    ->dateTime('d M Y H:i'),
+                    ->dateTime('d M Y H:i')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('is_active')

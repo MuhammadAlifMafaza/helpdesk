@@ -5,6 +5,7 @@ namespace App\Filament\Pemohon\Widgets;
 use App\Filament\Pemohon\Resources\Service\TiketPerbaikans\TiketPerbaikanResource;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Tables;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
@@ -50,6 +51,7 @@ class TiketPerbaikanTerbaru extends TableWidget
 
                 Tables\Columns\TextColumn::make('ruangan.nama_ruangan')
                     ->label('Ruangan')
+                    ->toggleable()
                     ->placeholder('-'),
 
                 Tables\Columns\TextColumn::make('status')
@@ -63,12 +65,23 @@ class TiketPerbaikanTerbaru extends TableWidget
                         'In Progress' => 'info',
                         'Close' => 'success',
                         default => 'gray',
-                    }),
+                    })
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Diajukan')
                     ->dateTime('d M Y H:i')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'Open' => 'Menunggu',
+                        'In Progress' => 'Diproses',
+                        'Close' => 'Selesai',
+                    ]),
             ])
             ->defaultSort('created_at', 'desc')
             ->defaultPaginationPageOption(5)

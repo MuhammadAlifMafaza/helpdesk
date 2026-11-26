@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Events\HelpdeskActivityCreated;
 
@@ -276,6 +277,19 @@ class TiketPerbaikan extends Model
         return $this->hasMany(
             LogPerbaikan::class,
             'tiket_id'
+        );
+    }
+
+    public function latestCloseLog(): HasOne
+    {
+        return $this->logs()->one()->ofMany(
+            [
+                'created_at' => 'max',
+                'id' => 'max',
+            ],
+            fn (Builder $query): Builder => $query
+                ->where('kategori_log', 'Status')
+                ->where('data_baru', 'Close')
         );
     }
 
@@ -784,11 +798,9 @@ class TiketPerbaikan extends Model
             return null;
         }
 
-        $closeLog = $this->logs()
-            ->where('kategori_log', 'Status')
-            ->where('data_baru', 'Close')
-            ->latest('created_at')
-            ->first();
+        $closeLog = $this->relationLoaded('latestCloseLog')
+            ? $this->getRelation('latestCloseLog')
+            : $this->latestCloseLog()->first();
 
         if (! $closeLog) {
             return null;
@@ -842,6 +854,40 @@ class TiketPerbaikan extends Model
     public function isRejected(): bool
     {
         return $this->status_outcome === 'Rejected';
+    }
+
+    public function scopeWhereOutcome(Builder $query, string $outcome): Builder
+    {
+        if (! in_array($outcome, ['Completed', 'Rejected'], true)) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query
+            ->where('status', 'Close')
+            ->whereHas('logs', function (Builder $logQuery) use ($outcome): void {
+                $logQuery
+                    ->where('kategori_log', 'Status')
+                    ->where('data_baru', 'Close')
+                    ->where('id', function ($latestCloseLog): void {
+                        $latestCloseLog
+                            ->select('id')
+                            ->from('log_data_tiket_perbaikan as latest_close_logs')
+                            ->whereColumn('latest_close_logs.tiket_id', 'tiket_perbaikan.id')
+                            ->where('latest_close_logs.kategori_log', 'Status')
+                            ->where('latest_close_logs.data_baru', 'Close')
+                            ->orderByDesc('latest_close_logs.created_at')
+                            ->orderByDesc('latest_close_logs.id')
+                            ->limit(1);
+                    })
+                    ->when(
+                        $outcome === 'Completed',
+                        fn (Builder $query): Builder => $query->where('keterangan', 'like', '%[SELESAI]%')
+                    )
+                    ->when(
+                        $outcome === 'Rejected',
+                        fn (Builder $query): Builder => $query->where('keterangan', 'like', '%[DITOLAK]%')
+                    );
+            });
     }
 
     /*

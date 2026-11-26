@@ -22,7 +22,7 @@ class PublicPagesRenderTest extends TestCase
             ->get('/login')
             ->assertOk()
             ->assertSee('Masuk ke Helpdesk')
-            ->assertSee('Alamat email')
+            ->assertSee('Email atau Username / NIM / NIDN')
             ->assertSee('Kata sandi')
             ->assertSee('Lupa kata sandi?');
     }

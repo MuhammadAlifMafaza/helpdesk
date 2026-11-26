@@ -40,13 +40,15 @@ class KegiatanTeknisiForm
                     ->relationship(
                         'petugas',
                         'name',
-                        fn (Builder $query) => $query->role(['teknisi', 'admin'])
+                        fn (Builder $query): Builder => $query->role(['teknisi', 'admin'])
                     )
                     ->multiple()
-                    ->default([auth()->id()])
+                    ->default(fn (): array => auth()->user()?->hasAnyRole(['teknisi', 'admin'])
+                        ? [auth()->id()]
+                        : [])
                     ->searchable()
                     ->preload()
-                    ->nullable(),
+                    ->required(),
 
                 Textarea::make('deskripsi_kegiatan')
                     ->label('Catatan Kegiatan')

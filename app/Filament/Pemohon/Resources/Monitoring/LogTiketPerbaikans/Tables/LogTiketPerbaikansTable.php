@@ -2,11 +2,11 @@
 
 namespace App\Filament\Pemohon\Resources\Monitoring\LogTiketPerbaikans\Tables;
 
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\Grid;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 class LogTiketPerbaikansTable
@@ -28,7 +28,7 @@ class LogTiketPerbaikansTable
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
-                        fn($record) => $record->created_at?->timezone('Asia/Jakarta')->format('H:i:s') ?? '-'
+                        fn ($record) => $record->created_at?->timezone('Asia/Jakarta')->format('H:i:s') ?? '-'
                     )
                     ->sortable(),
 
@@ -36,10 +36,10 @@ class LogTiketPerbaikansTable
                     ->label('Kode Tiket')
                     ->copyable()
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchTimeline($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchTimeline($search)
                     )->weight('bold'),
 
                 TextColumn::make('tiket.keluhan')
@@ -49,30 +49,30 @@ class LogTiketPerbaikansTable
                     ->label('Ruangan')
                     ->placeholder('-')
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchTimeline($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchTimeline($search)
                     ),
 
                 TextColumn::make('tiket.user.name')
                     ->label('Pemohon')
                     ->placeholder('-')
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchTimeline($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchTimeline($search)
                     ),
 
                 TextColumn::make('user.name')
                     ->label('Teknisi')
                     ->placeholder('-')
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchTimeline($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchTimeline($search)
                     ),
 
                 TextColumn::make('tiket.status')
@@ -88,25 +88,26 @@ class LogTiketPerbaikansTable
                 TextColumn::make('event_name')
                     ->label('Aktivitas')
                     ->badge()
-                    ->icon(fn($record) => $record->event_icon)
-                    ->color(fn($record) => $record->event_color)
+                    ->icon(fn ($record) => $record->event_icon)
+                    ->color(fn ($record) => $record->event_color)
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchTimeline($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchTimeline($search)
                     ),
 
                 TextColumn::make('event_description')
                     ->label('Deskripsi')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->wrap()
                     ->limit(70)
-                    ->tooltip(fn($record) => $record->event_description)
+                    ->tooltip(fn ($record) => $record->event_description)
                     ->searchable(
-                        query: fn(
-                        Builder $query,
-                        string $search
-                    ) => $query->searchTimeline($search)
+                        query: fn (
+                            Builder $query,
+                            string $search
+                        ) => $query->searchTimeline($search)
                     ),
 
             ])
@@ -189,9 +190,9 @@ class LogTiketPerbaikansTable
 
                         return $query->when(
                             filled($data['value']),
-                            fn($q) => $q->whereHas(
+                            fn ($q) => $q->whereHas(
                                 'tiket',
-                                fn($q2) => $q2->where(
+                                fn ($q2) => $q2->where(
                                     'status',
                                     $data['value']
                                 )
@@ -210,14 +211,14 @@ class LogTiketPerbaikansTable
                                 DatePicker::make('until')
                                     ->label('Sampai Tanggal')
                                     ->native(false),
-                            ])
+                            ]),
                     ])
                     ->query(function (Builder $query, array $data) {
 
                         return $query
                             ->when(
                                 $data['from'],
-                                fn($q, $date) => $q->whereDate(
+                                fn ($q, $date) => $q->whereDate(
                                     'created_at',
                                     '>=',
                                     $date
@@ -225,7 +226,7 @@ class LogTiketPerbaikansTable
                             )
                             ->when(
                                 $data['until'],
-                                fn($q, $date) => $q->whereDate(
+                                fn ($q, $date) => $q->whereDate(
                                     'created_at',
                                     '<=',
                                     $date

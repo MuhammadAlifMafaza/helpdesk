@@ -5,6 +5,7 @@ namespace App\Filament\Widgets\Admin;
 use App\Filament\Resources\PengajuanBarangs\PengajuanBarangResource;
 use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
@@ -42,7 +43,8 @@ class AdminPengajuanTerbaru extends TableWidget
 
                 TextColumn::make('user.name')
                     ->label('Pemohon')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
 
                 TextColumn::make('nama_barang')
                     ->label('Nama Barang')
@@ -50,6 +52,7 @@ class AdminPengajuanTerbaru extends TableWidget
 
                 TextColumn::make('jumlah')
                     ->label('Jumlah')
+                    ->toggleable()
                     ->numeric(),
 
                 TextColumn::make('status')
@@ -63,13 +66,29 @@ class AdminPengajuanTerbaru extends TableWidget
                         'In Progress' => 'info',
                         'Close' => 'success',
                         default => 'gray',
-                    }),
+                    })
+                    ->toggleable(),
 
                 TextColumn::make('created_at')
                     ->label('Diajukan')
                     ->dateTime('d M Y H:i')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
 
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'Open' => 'Menunggu',
+                        'In Progress' => 'Diproses',
+                        'Close' => 'Selesai',
+                    ]),
+                SelectFilter::make('kategori_barang_id')
+                    ->label('Kategori Barang')
+                    ->relationship('kategoriBarang', 'nama_kategori')
+                    ->searchable()
+                    ->preload(),
             ])
             ->defaultPaginationPageOption(5)
             ->paginated([5, 10, 25]);

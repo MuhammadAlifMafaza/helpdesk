@@ -17,6 +17,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -28,6 +29,8 @@ use Filament\Schemas\Components\Section;
 // Filament Resources imports
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 // Filament Table import
 use Filament\Tables\Table;
@@ -226,10 +229,12 @@ class TicketServiceResource extends Resource
                     ->weight('bold'),
 
                 TextColumn::make('user.name')
-                    ->label('Pemohon'),
+                    ->label('Pemohon')
+                    ->toggleable(),
 
                 TextColumn::make('ruangan.nama_ruangan')
-                    ->label('Ruangan'),
+                    ->label('Ruangan')
+                    ->toggleable(),
 
                 TextColumn::make('keluhan')
                     ->label('Keluhan')
@@ -256,6 +261,7 @@ class TicketServiceResource extends Resource
                     }),
 
                 TextColumn::make('status_outcome')
+                    ->toggleable()
                     ->badge()
                     ->icon(fn (?string $state) => match ($state) {
                         'Completed' => 'heroicon-o-check-circle',
@@ -279,6 +285,7 @@ class TicketServiceResource extends Resource
                     ),
 
                 TextColumn::make('waktu_mulai')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
@@ -286,6 +293,7 @@ class TicketServiceResource extends Resource
                     ),
 
                 TextColumn::make('waktu_selesai')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->description(
@@ -293,11 +301,54 @@ class TicketServiceResource extends Resource
                     ),
 
                 TextColumn::make('durasi_pengerjaan')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->timezone(''),
 
             ])
 
             ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'Open' => 'Menunggu',
+                        'In Progress' => 'Diproses',
+                        'Close' => 'Ditutup',
+                    ]),
+
+                SelectFilter::make('status_outcome')
+                    ->label('Hasil Penanganan')
+                    ->options([
+                        'Completed' => 'Selesai',
+                        'Rejected' => 'Ditolak',
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => in_array($data['value'] ?? null, ['Completed', 'Rejected'], true)
+                        ? $query->whereOutcome($data['value'])
+                        : $query),
+
+                SelectFilter::make('kepemilikan')
+                    ->label('Kepemilikan')
+                    ->options([
+                        'Inventaris Kantor' => 'Inventaris Kantor',
+                        'Pribadi' => 'Pribadi',
+                        'Lainnya' => 'Lainnya',
+                    ]),
+
+                SelectFilter::make('ruangan_id')
+                    ->label('Ruangan')
+                    ->relationship('ruangan', 'nama_ruangan')
+                    ->searchable()
+                    ->preload(),
+
+                Filter::make('created_at')
+                    ->label('Tanggal Pengajuan')
+                    ->schema([
+                        DatePicker::make('from')->label('Dari tanggal')->native(false),
+                        DatePicker::make('until')->label('Sampai tanggal')->native(false),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when(filled($data['from'] ?? null), fn (Builder $query): Builder => $query->whereDate('created_at', '>=', $data['from']))
+                        ->when(filled($data['until'] ?? null), fn (Builder $query): Builder => $query->whereDate('created_at', '<=', $data['until']))),
+
                 TrashedFilter::make(),
 
             ])
@@ -478,7 +529,8 @@ class TicketServiceResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with('latestCloseLog');
     }
 
     public static function canViewAny(): bool

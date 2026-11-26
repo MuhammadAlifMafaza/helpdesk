@@ -7,9 +7,13 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class TiketPerbaikansTable
 {
@@ -62,6 +66,7 @@ class TiketPerbaikansTable
                 TextColumn::make('status_outcome')
                     ->label('Hasil')
                     ->badge()
+                    ->toggleable()
                     ->placeholder('-')
                     ->icon(
                         fn (?string $state): string => match ($state) {
@@ -91,6 +96,7 @@ class TiketPerbaikansTable
 
                 TextColumn::make('waktu_mulai')
                     ->label('Mulai')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->placeholder('-')
@@ -104,6 +110,7 @@ class TiketPerbaikansTable
 
                 TextColumn::make('waktu_selesai')
                     ->label('Selesai')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->dateTime('d M Y')
                     ->timezone('Asia/Jakarta')
                     ->placeholder('-')
@@ -117,12 +124,37 @@ class TiketPerbaikansTable
 
                 TextColumn::make('durasi_pengerjaan')
                     ->label('Durasi')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->placeholder('-'),
 
             ])
 
             ->filters([
-                //
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'Open' => 'Menunggu',
+                        'In Progress' => 'Diproses',
+                        'Close' => 'Ditutup',
+                    ]),
+                SelectFilter::make('status_outcome')
+                    ->label('Hasil Penanganan')
+                    ->options([
+                        'Completed' => 'Selesai',
+                        'Rejected' => 'Ditolak',
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => in_array($data['value'] ?? null, ['Completed', 'Rejected'], true)
+                        ? $query->whereOutcome($data['value'])
+                        : $query),
+                Filter::make('created_at')
+                    ->label('Tanggal Pengajuan')
+                    ->schema([
+                        DatePicker::make('from')->label('Dari tanggal')->native(false),
+                        DatePicker::make('until')->label('Sampai tanggal')->native(false),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when(filled($data['from'] ?? null), fn (Builder $query): Builder => $query->whereDate('created_at', '>=', $data['from']))
+                        ->when(filled($data['until'] ?? null), fn (Builder $query): Builder => $query->whereDate('created_at', '<=', $data['until']))),
             ])
 
             ->recordActions([

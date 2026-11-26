@@ -25,11 +25,28 @@ class ViewKegiatanTeknisi extends ViewRecord
     public function getRecordTitle(): string
     {
         $record = $this->getRecord();
+        $tanggal = $record->tanggal;
+        $namaBulan = match ((int) $tanggal->format('n')) {
+            1 => 'Jan',
+            2 => 'Feb',
+            3 => 'Mar',
+            4 => 'Apr',
+            5 => 'Mei',
+            6 => 'Jun',
+            7 => 'Jul',
+            8 => 'Agu',
+            9 => 'Sep',
+            10 => 'Okt',
+            11 => 'Nov',
+            12 => 'Des',
+        };
 
         return sprintf(
-            'Kegiatan %s %s',
+            'Kegiatan %s %s %s %s',
             $record->teknisi?->name,
-            $record->tanggal->translatedFormat('d M Y')
+            $tanggal->format('d'),
+            $namaBulan,
+            $tanggal->format('Y')
         );
     }
 }

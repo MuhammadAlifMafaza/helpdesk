@@ -8,6 +8,7 @@ use App\Models\Modules\Pengajuan\Models\PengajuanBarang;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use App\Models\User;
 use App\Notifications\HelpdeskNotification;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Spatie\Permission\Models\Role;
@@ -15,6 +16,8 @@ use Tests\TestCase;
 
 class KonfirmasiPenyelesaianTest extends TestCase
 {
+    use RefreshDatabase;
+
     private User $pemohon;
 
     private User $teknisi;
@@ -32,8 +35,6 @@ class KonfirmasiPenyelesaianTest extends TestCase
         parent::setUp();
 
         config([
-            'database.default' => 'mysql',
-            'database.connections.mysql.database' => 'helpdesk_dev',
             'queue.default' => 'sync',
             'helpdesk.notifications.broadcast_enabled' => false,
         ]);

@@ -66,7 +66,8 @@ class PengajuanBarangResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with('latestCloseLog');
     }
 
     public static function getRelations(): array

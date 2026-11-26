@@ -30,7 +30,13 @@ class MasterRuanganTable
                 TextColumn::make('nama_gedung')
                     ->label('Nama Gedung')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
+
+                TextColumn::make('created_at')
+                    ->label('Dibuat Pada')
+                    ->dateTime('d M Y H:i')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -572,6 +573,19 @@ class PengajuanBarang extends Model
         return $this->hasMany(
             LogPengajuan::class,
             'pengajuan_id'
+        );
+    }
+
+    public function latestCloseLog(): HasOne
+    {
+        return $this->logs()->one()->ofMany(
+            [
+                'created_at' => 'max',
+                'id' => 'max',
+            ],
+            fn (Builder $query): Builder => $query
+                ->where('kategori_log', 'Status')
+                ->where('data_baru', 'Close')
         );
     }
 
@@ -1265,17 +1279,9 @@ class PengajuanBarang extends Model
             return null;
         }
 
-        $closeLog = $this->logs()
-            ->where(
-                'kategori_log',
-                'Status'
-            )
-            ->where(
-                'data_baru',
-                'Close'
-            )
-            ->latest('created_at')
-            ->first();
+        $closeLog = $this->relationLoaded('latestCloseLog')
+            ? $this->getRelation('latestCloseLog')
+            : $this->latestCloseLog()->first();
 
         if (! $closeLog) {
             return null;

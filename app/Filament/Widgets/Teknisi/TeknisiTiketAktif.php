@@ -5,6 +5,7 @@ namespace App\Filament\Widgets\Teknisi;
 use App\Filament\Resources\TicketServices\TicketServiceResource;
 use App\Models\Modules\Perbaikan\Models\TiketPerbaikan;
 use Filament\Tables;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
@@ -57,27 +58,38 @@ class TeknisiTiketAktif extends TableWidget
 
                 Tables\Columns\TextColumn::make('ruangan.nama_ruangan')
                     ->label('Ruangan')
+                    ->toggleable()
                     ->placeholder('-'),
 
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Pemohon')
                     ->searchable()
+                    ->toggleable()
                     ->placeholder('-'),
 
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Terakhir Diperbarui')
                     ->dateTime('d M Y H:i')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color('warning')
+                    ->toggleable()
                     ->formatStateUsing(
                         fn ($state) => match ($state) {
                             'In Progress' => 'Sedang Dikerjakan',
                             default => $state,
                         }
                     ),
+            ])
+            ->filters([
+                SelectFilter::make('ruangan_id')
+                    ->label('Ruangan')
+                    ->relationship('ruangan', 'nama_ruangan')
+                    ->searchable()
+                    ->preload(),
             ])
 
             ->defaultSort(

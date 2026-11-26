@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\Laporan\LaporanExportService;
 use App\Services\Laporan\Pdf\LaporanKegiatanPdf;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Role;
@@ -14,6 +15,8 @@ use Tests\TestCase;
 
 class LaporanPrintTest extends TestCase
 {
+    use RefreshDatabase;
+
     private User $staff;
 
     private User $pemohon;
@@ -22,14 +25,7 @@ class LaporanPrintTest extends TestCase
     {
         parent::setUp();
 
-        config([
-            'database.default' => 'mysql',
-            'database.connections.mysql.database' => 'helpdesk_dev',
-            'queue.default' => 'sync',
-        ]);
-
-        DB::purge('mysql');
-        DB::reconnect('mysql');
+        config(['queue.default' => 'sync']);
 
         foreach (['admin', 'pemohon'] as $role) {
             Role::findOrCreate($role, 'web');
@@ -202,6 +198,21 @@ class LaporanPrintTest extends TestCase
 
     public function test_service_print_menyimpan_payload_dan_url_relatif(): void
     {
+        Schema::create('view_laporan_kegiatan', function (Blueprint $table): void {
+            $table->unsignedBigInteger('id_log');
+            $table->string('nama_teknisi');
+            $table->string('unit_bidang')->nullable();
+            $table->date('tanggal');
+            $table->text('deskripsi_kegiatan');
+            $table->dateTime('waktu_dibuat')->nullable();
+        });
+        if (! Schema::hasTable('log_harian_teknisi')) {
+            Schema::create('log_harian_teknisi', function (Blueprint $table): void {
+                $table->id();
+                $table->softDeletes();
+            });
+        }
+
         $url = app(LaporanExportService::class)->print(
             query: LaporanKegiatan::query()->whereRaw('1 = 0'),
             exportClass: LaporanKegiatanPdf::class,

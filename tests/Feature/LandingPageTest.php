@@ -3,26 +3,22 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class LandingPageTest extends TestCase
 {
+    use RefreshDatabase;
+
     private User $staff;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        config([
-            'database.default' => 'mysql',
-            'database.connections.mysql.database' => 'helpdesk_dev',
-            'queue.default' => 'sync',
-        ]);
-
-        DB::purge('mysql');
-        DB::reconnect('mysql');
+        config(['queue.default' => 'sync']);
 
         foreach (['admin', 'pemohon'] as $role) {
             Role::findOrCreate($role, 'web');
@@ -66,7 +62,7 @@ class LandingPageTest extends TestCase
             ->assertOk()
             ->assertSee('Tiket perbaikan')
             ->assertSee('Tiket selesai')
-            ->assertSee('Pengajuan Barang')
+            ->assertSee('Pengajuan barang')
             ->assertSee('Kegiatan teknisi');
     }
 
